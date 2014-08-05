@@ -46,12 +46,10 @@ public:
       offset_(0) { }
   ~RecordBuff() { }
 
-  RecordBuff(RecordBuff && other):
+  RecordBuff(RecordBuff const& other):
       mem_(other.mem_),
       mem_size_(other.mem_size_),
-      offset_(other.offset_) {
-    //VLOG(0) << "mem_size_ = " << mem_size_;
-  };
+      offset_(other.offset_) { }
 
   // does not take ownership of the memory
   void *ResetMem(void *mem, size_t size) {
