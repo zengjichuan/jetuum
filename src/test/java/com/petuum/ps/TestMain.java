@@ -1,5 +1,6 @@
 package com.petuum.ps;
 
+import com.google.common.primitives.Ints;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -22,14 +23,14 @@ public class TestMain {
         //test hash
         long start = System.nanoTime();
         long start_mill = System.currentTimeMillis();
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             test_hash.put(i, rand.nextDouble());
         }
         double time_hash = (System.nanoTime() - start) / 1e9f;
         test_hash = null;
         //test tree
         start = System.nanoTime();
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             test_tree.put(i, rand.nextDouble());
         }
         double time_tree = (System.nanoTime() - start) / 1e9f;
