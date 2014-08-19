@@ -1,5 +1,7 @@
-package com.petuum.ps.common;
-import com.petuum.VectorClockMT;
+package com.petuum.ps.common.client;
+import com.petuum.ps.common.util.VectorClockMT;
+import com.petuum.ps.common.ClientTableConfig;
+import com.petuum.ps.common.TableGroupConfig;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -11,13 +13,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class TableGroup {
 
-	private ClockFunc ClockInternal;
 	/**
 	 * Max staleness among all tables.
 	 */
 	private int max_table_staleness_;
 	private AtomicInteger num_app_threads_registered_;
-	private pthread_barrier_t register_barrier_;
 	private Map<Integer, ClientTable> tables_;
 	private VectorClockMT vector_clock_;
 
@@ -57,6 +57,7 @@ public class TableGroup {
 	 * @param table_config
 	 */
 	public boolean CreateTable(int table_id, final ClientTableConfig table_config){
+        return false;
 	}
 
 	public void CreateTableDone(){
@@ -72,7 +73,7 @@ public class TableGroup {
 	 * @param table_id
 	 */
 	public ClientTable GetTableOrDie(int table_id){
-
+        return null;
 	}
 
 	public void GlobalBarrier(){
@@ -80,7 +81,7 @@ public class TableGroup {
 	}
 
 	public int RegisterThread(){
-
+        return 0;
 	}
 
 	public void WaitThreadRegister(){

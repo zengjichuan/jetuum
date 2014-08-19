@@ -1,5 +1,6 @@
 package com.petuum.ps.common;
-import com.petuum.TableInfo;
+
+import com.petuum.ps.common.TableInfo;
 
 /**
  * ClientTableConfig is used by client only.

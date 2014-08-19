@@ -1,6 +1,6 @@
 package com.petuum.ps.thread;
 
-import com.petuum.ps.common.ClientTable;
+import com.petuum.ps.common.client.ClientTable;
 import com.petuum.ps.common.comm.CommBus;
 import com.petuum.ps.common.util.VectorClock;
 import zmq.Msg;

@@ -1,6 +1,8 @@
-package com.petuum.ps.common;
+package com.petuum.ps.common.consistency;
 
 import com.google.common.cache.LoadingCache;
+import com.petuum.ps.common.Row;
+
 import java.util.Map;
 
 /**
@@ -52,7 +54,7 @@ public abstract class ConsistencyController {
 	 * @param row_id
 	 * @param updates    updates
 	 */
-	public abstract void BatchInc(int row_id, final Map<Integer, Object> updates);
+	public abstract void BatchInc(int row_id,  Map<Integer, Object> updates);
 
 	public abstract void Clock();
 
@@ -62,7 +64,7 @@ public abstract class ConsistencyController {
 	 * 
 	 * @param row_id    row_id
 	 */
-	public abstract RowAccessor Get(int row_id);
+	public abstract Row Get(int row_id);
 
 	/**
 	 * 
@@ -89,7 +91,7 @@ public abstract class ConsistencyController {
 	 * 
 	 * @param row_id    row_id
 	 */
-	public abstract RowAccessor ThreadGet(int row_id);
+	public abstract Row ThreadGet(int row_id);
 
 	/**
 	 * 
