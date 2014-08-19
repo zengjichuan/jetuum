@@ -1,6 +1,8 @@
 package com.petuum.ps.common.consistency;
 import com.petuum.ps.common.Row;
+import com.petuum.ps.common.client.ClientRow;
 import com.petuum.ps.common.client.ThreadTable;
+import com.petuum.ps.thread.ThreadContext;
 
 import java.util.Map;
 
@@ -18,6 +20,7 @@ public class SSPConsistencyController extends ConsistencyController {
 	protected ThreadTable thread_cache_;
 
 	public SSPConsistencyController(){
+
 
 	}
 
@@ -56,8 +59,19 @@ public class SSPConsistencyController extends ConsistencyController {
 	 * 
 	 * @param row_id
 	 */
-	public Row Get(int row_id) {
-        return null;
+	public ClientRow Get(int row_id, int clock) {
+        int stalest_clock = ThreadContext.getClock() - staleness_;
+        if(stalest_clock < 0){
+            stalest_clock = 0;
+        }
+        ClientRow row = process_storage_.get(row_id);
+
+        if(clock >= stalest_clock) {
+            return row;
+        }else {
+            process_storage_.refresh(row_id);
+            return process_storage_.get(row_id);
+        }
     }
 
 	/**
