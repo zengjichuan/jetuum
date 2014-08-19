@@ -42,8 +42,8 @@ namespace petuum {
 class PartitionOpLogIndex : boost::noncopyable {
 public:
   explicit PartitionOpLogIndex(size_t capacity);
-  PartitionOpLogIndex(PartitionOpLogIndex && other);
-  PartitionOpLogIndex & operator = (PartitionOpLogIndex && other) = delete;
+  PartitionOpLogIndex(PartitionOpLogIndex const & other);
+  PartitionOpLogIndex & operator = (PartitionOpLogIndex const & other) = delete;
 
   ~PartitionOpLogIndex();
   void AddIndex(const std::unordered_set<int32_t> &oplog_index);

@@ -53,7 +53,7 @@ public:
       delete row_data_;
   }
 
-  ServerRow(ServerRow && other):
+  ServerRow(ServerRow const& other):
       row_data_(other.row_data_),
       num_clients_subscribed_(other.num_clients_subscribed_),
       dirty_(other.dirty_) {

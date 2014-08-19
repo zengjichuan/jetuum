@@ -48,7 +48,7 @@ PartitionOpLogIndex::~PartitionOpLogIndex() {
 }
 
 
-PartitionOpLogIndex::PartitionOpLogIndex(PartitionOpLogIndex && other):
+PartitionOpLogIndex::PartitionOpLogIndex(PartitionOpLogIndex const& other):
   capacity_(other.capacity_),
   shared_oplog_index_(other.shared_oplog_index_) {
   other.shared_oplog_index_ = 0;
