@@ -518,13 +518,13 @@ void BgWorkers::ApplyOldOpLogsToRowData(int32_t table_id,
       // OpLogs that are after (exclusively) version should be applied
       const RowOpLog *row_oplog = bg_oplog_partition->FindOpLog(row_id);
       if (row_oplog != 0) {
-	int32_t column_id;
-	const void *update;
-	update = row_oplog->BeginIterateConst(&column_id);
-	while (update != 0) {
-	  row_data->ApplyIncUnsafe(column_id, update);
-	  update = row_oplog->NextConst(&column_id);
-	}
+        int32_t column_id;
+        const void *update;
+        update = row_oplog->BeginIterateConst(&column_id);
+        while (update != 0) {
+          row_data->ApplyIncUnsafe(column_id, update);
+          update = row_oplog->NextConst(&column_id);
+        }
       }
       bg_oplog
           = bg_context_->row_request_oplog_mgr->OpLogIterNext(&oplog_version);
