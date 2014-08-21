@@ -7,5 +7,5 @@ import java.util.Map;
  */
 public class RowOpLog {
     private int updateSize;
-    Map<Integer, >
+
 }
