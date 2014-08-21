@@ -3,6 +3,7 @@ package com.petuum.ps.thread;
 import com.google.common.base.Preconditions;
 import com.petuum.ps.common.HostInfo;
 import com.petuum.ps.common.comm.CommBus;
+import com.petuum.ps.common.consistency.ConsistencyModel;
 
 import java.util.Map;
 import java.util.Vector;

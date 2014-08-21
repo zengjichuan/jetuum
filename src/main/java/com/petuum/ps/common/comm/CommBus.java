@@ -7,6 +7,7 @@ import org.zeromq.ZMQ;
 import zmq.Msg;
 import zmq.ZError;
 
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.util.Vector;
 
@@ -18,7 +19,7 @@ public class CommBus {
     public static final int K_IN_PROC=1;
     public static final int K_INTER_PROC=2;
 
-    public class Config{
+    public static class Config{
         /**
          *  My thread id.
          */
@@ -163,6 +164,13 @@ public class CommBus {
         }
     }
 
+    public boolean commBusRecvAsyncAny(Integer senderId, Msg msg) {
+        return true;
+    }
+
+    public void commBusRecvAny(Integer senderId, Msg msg) {
+
+    }
     public void threadDeregister(){
         threadInfo.remove();
     }

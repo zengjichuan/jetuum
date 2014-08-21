@@ -33,8 +33,9 @@ public class SSPConsistencyController extends ConsistencyController {
                             if(stalest_clock < 0){
                                 stalest_clock = 0;
                             }
-                            BgWorkers.RequestRow(table_id, key, stalest_clock);
+//                            BgWorkers.RequestRow(table_id, key, stalest_clock);
                             //need receive row data
+                            return null;
                         }
                     }
                 );

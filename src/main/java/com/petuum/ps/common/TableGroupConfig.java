@@ -1,6 +1,7 @@
 package com.petuum.ps.common;
 
 import com.petuum.ps.common.HostInfo;
+import com.petuum.ps.common.consistency.ConsistencyModel;
 
 import java.util.Map;
 import java.util.Vector;
@@ -84,8 +85,4 @@ public class TableGroupConfig {
     public String resumeDir;
 
     public String occPathPrefix;
-}
-
-enum ConsistencyModel {
-    SSP, SSPPush, SSPValue, LocalOOC
 }
