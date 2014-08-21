@@ -1,6 +1,6 @@
 package com.petuum.ps.thread;
 
-import com.petuum.ps.common.ClientTable;
+import com.petuum.ps.common.client.ClientTable;
 import com.petuum.ps.common.comm.CommBus;
 import com.petuum.ps.common.util.VectorClock;
 import zmq.Msg;
@@ -14,6 +14,12 @@ import java.util.concurrent.CyclicBarrier;
  */
 public class BgWorkers {
     private class BgContext {
+        /**
+         * version of the data, increment when a set of OpLogs
+         * are sent out; may wrap around
+         * More specifically, version denotes the version of the
+         * OpLogs that haven't been sent out.
+         */
         public int version;
         public RowRequestOpLogMgr rowRequestOpLogMgr;
         /**

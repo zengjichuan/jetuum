@@ -44,14 +44,14 @@ public class ZmqUtil {
     }
 
     public static void zmqConnectSend(ZMQ.Socket socket, String connectAddr, int zmqId,
-                                 byte[] msg, int size){
+                                 ByteBuffer msgBuf){
         socket.connect(connectAddr);
         boolean suc = false;
 
         do{
             suc = socket.send(Integer.toString(zmqId).getBytes(), 0);
             if (suc == true) {
-                suc = socket.send(msg, 0);
+                socket.sendByteBuffer(msgBuf, 0);
                 break;
             }
             try {
@@ -99,8 +99,8 @@ public class ZmqUtil {
      * @param flag
      * @return
      */
-    public static int zmqSend(ZMQ.Socket sock, byte[] data, int flag){
-        return sock.sendByteBuffer(ByteBuffer.wrap(data), flag);
+    public static int zmqSend(ZMQ.Socket sock, ByteBuffer data, int flag){
+        return sock.sendByteBuffer(data, flag);
     }
 
     /**
@@ -112,13 +112,13 @@ public class ZmqUtil {
      * @param flag
      * @return
      */
-    public static int zmqSend(ZMQ.Socket sock, int zmqId, byte[] data, int flag){
-        int zidSend = zmqSend(sock, ByteBuffer.allocate(Integer.SIZE).putInt(zmqId).array(), flag | ZMQ.SNDMORE);
+    public static int zmqSend(ZMQ.Socket sock, int zmqId, ByteBuffer data, int flag){
+        int zidSend = zmqSend(sock, ByteBuffer.allocate(Integer.SIZE).putInt(zmqId), flag | ZMQ.SNDMORE);
         if (zidSend == 0)   return 0;
         return zmqSend(sock, data, flag);
     }
     public static int zmqSend(ZMQ.Socket sock, int zmqId, Msg msg, int flag){
-        int zidSentSize = zmqSend(sock, ByteBuffer.allocate(Integer.SIZE).putInt(zmqId).array() ,flag | ZMQ.SNDMORE);
+        int zidSentSize = zmqSend(sock, ByteBuffer.allocate(Integer.SIZE).putInt(zmqId) ,flag | ZMQ.SNDMORE);
         if (zidSentSize == 0) return 0;
         return zmqSend(sock, msg,flag);
     }

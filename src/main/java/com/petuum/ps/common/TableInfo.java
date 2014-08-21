@@ -1,4 +1,4 @@
-package com.petuum;
+package com.petuum.ps.common;
 
 /**
  * TableInfo is shared between client and server.

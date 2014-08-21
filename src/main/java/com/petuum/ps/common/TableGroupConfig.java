@@ -1,5 +1,7 @@
 package com.petuum.ps.common;
 
+import com.petuum.ps.common.HostInfo;
+
 import java.util.Map;
 import java.util.Vector;
 
