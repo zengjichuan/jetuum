@@ -3,6 +3,7 @@ package com.petuum.ps.server;
 
 import com.google.common.primitives.Ints;
 import com.petuum.ps.common.AbstractRow;
+import com.petuum.ps.common.Row;
 import com.petuum.ps.common.util.RecordBuff;
 
 import java.util.HashMap;
@@ -15,7 +16,7 @@ import java.util.Objects;
 */
 public class ServerRow {
     private CallBackSubs callBackSubs;
-    private AbstractRow rowData;
+    private Row rowData;
     private int numClientsSubscribed;
     private boolean dirty;
 
@@ -23,7 +24,7 @@ public class ServerRow {
         this.dirty = dirty;
     }
 
-    public ServerRow(AbstractRow rowData) {
+    public ServerRow(Row rowData) {
         this.rowData = rowData;
         this.numClientsSubscribed=0;
         this.dirty=false;

@@ -1,5 +1,6 @@
 package com.petuum.ps.thread;
 
+import com.google.common.base.Preconditions;
 import com.petuum.ps.common.Row;
 import com.petuum.ps.common.client.ClientTable;
 import com.petuum.ps.common.comm.CommBus;
@@ -11,6 +12,7 @@ import com.petuum.ps.common.util.VectorClockMT;
 import com.petuum.ps.server.CallBackSubs;
 import zmq.Msg;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -226,7 +228,151 @@ public class BgWorkers {
 
             bgServerHandshake();
 
+            try {
+                initBarrier.await();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (BrokenBarrierException e) {
+                e.printStackTrace();
+            }
+            IntBox numConnectedAppThreads = new IntBox(0);
+            IntBox numDeregisteredAppThreads = new IntBox(0);
+            IntBox numShutdownAckedServers = new IntBox(0);
 
+            recvAppInitThreadConnection(numConnectedAppThreads);
+
+            if(myId == idStart){
+                handleCreateTables();
+                try {
+                    createTableBarrier.await();         //there are 2 createTable threads?
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (BrokenBarrierException e) {
+                    e.printStackTrace();
+                }
+            }
+            Msg zmqMsg = new Msg();
+            IntBox senderId = new IntBox();
+            MsgType msgType;
+            ByteBuffer msgMem;
+            boolean destroyMem = false;
+            while(true){
+                try {
+                    commBusRecvAnyWrapper.invoke(BgWorkers.class,
+                            new Object []{senderId, zmqMsg});
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+                msgType = MsgBase.getMsgType(zmqMsg.buf());
+                destroyMem = false;
+                if (msgType == MsgType.kMemTransfer) {
+                    MemTransferMsg memTransferMsg = new MemTransferMsg(zmqMsg.buf());
+                    msgMem = memTransferMsg.getMem();
+                    msgType = MsgBase.getMsgType(msgMem);
+                    destroyMem = true;
+                }else{
+                    msgMem = zmqMsg.buf();
+                }
+
+                switch (msgType){
+                    case kAppConnect:
+                    {
+                        numConnectedAppThreads.intValue++;
+                        Preconditions.checkArgument(
+                                numConnectedAppThreads.intValue<=GlobalContext.getNumAppThreads());
+                    }
+                    break;
+                    case kAppThreadDereg:
+                    {
+                        numDeregisteredAppThreads.intValue++;
+                        if (numDeregisteredAppThreads.intValue == GlobalContext.getNumAppThreads()){
+                            try {
+                                ClientShutdownMsg msg = new ClientShutdownMsg();
+                                int nameNodeId = GlobalContext.getNameNodeId();
+                                commBusSendAny.invoke(commBus,
+                                        new Object[]{nameNodeId, msg.getMem()});
+                                int numServers = GlobalContext.getNumServers();
+                                Vector<Integer> serverIds = GlobalContext.getServerIds();
+                                for(int i = 0 ; i < numServers; i++){
+                                    commBusSendAny.invoke(commBus,
+                                            new Object[]{serverIds.get(i), msg.getMem()});
+                                }
+                            } catch (IllegalAccessException e) {
+                                e.printStackTrace();
+                            } catch (InvocationTargetException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                    break;
+                    case kServerShutDownAck:
+                    {
+                        numShutdownAckedServers.intValue++;
+                        if(numShutdownAckedServers.intValue == GlobalContext.getNumServers() + 1){
+                            commBus.threadDeregister();
+                            shutdownClean();
+                            return;
+                        }
+                    }
+                    break;
+                    case kRowRequest:
+                    {
+                        RowRequestMsg rowRequestMsg = new RowRequestMsg(msgMem);
+                        checkForwardRowRequestToServer(senderId, rowRequestMsg);
+                    }
+                    break;
+                    case kServerRowRequestReply:
+                    {
+                        ServerRowRequestReplyMsg serverRowRequestReplyMsg =
+                                new ServerRowRequestReplyMsg(msgMem);
+                        handleServerRowRequestReply(senderId, serverRowRequestReplyMsg);
+                    }
+                    break;
+                    case kBgClock:
+                    {
+                        handleClockMsg(true);
+                        //STATS_BG_CLOCK();
+                    }
+                    break;
+                    case kBgSendOpLog:
+                    {
+                        handleClockMsg(false);
+                    }
+                    break;
+                    case kServerPushRow:
+                    {
+                        ServerPushRowMsg serverPushRowMsg = new ServerPushRowMsg(msgMem);
+                        int version = serverPushRowMsg.getVersion();
+                        bgContext.rowRequestOpLogMgr.serverAcknowledgeVersion(senderId, version);
+                        applyServerPushedRow(version, serverPushRowMsg.getData());
+//                        STATS_BG_ADD_PER_CLOCK_SERVER_PUSH_ROW_SIZE(
+//                                server_push_row_msg.get_size());
+                        boolean isClock = serverPushRowMsg.getIsClock();
+                        if (isClock){
+                            int serverClock = serverPushRowMsg.getClock();
+                            Preconditions.checkArgument(
+                                    bgContext.serverVectorClock.getClock(senderId)+1 == serverClock);
+                            int newClock = bgContext.serverVectorClock.tick(senderId);
+                            if (newClock != 0){
+                                int newSystemClock = bgServerClock.tick(myId);
+                                if (newSystemClock != 0){
+                                    systemClock.incrementAndGet();
+                                    systemClockLock.lock();
+//                                    system_clock_cv_.notify_all();            //condition variable
+                                }
+                            }
+                        }
+                    }
+                    break;
+                    default:
+                }
+                if (destroyMem){
+                    MemTransfer.destroyTransferredMem(msgMem);
+                }
+            }
+            return;
         }
     }
 }
