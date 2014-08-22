@@ -82,7 +82,7 @@ public class CommBus {
     private ZContext zmqContext;
     private int eStart;
     private int eEnd;
-    private ThreadLocal<ThreadCommInfo> threadInfo;
+    private ThreadLocal<ThreadCommInfo> threadInfo = new ThreadLocal<ThreadCommInfo>();
 
 
     private static void makeInprocAddr(int entityId, StringBuffer result){
@@ -237,7 +237,7 @@ public class CommBus {
         else
             sock = threadInfo.get().interprocSock;
         int recvId = ZmqUtil.entityID2ZmqID(entityId);
-        return ZmqUtil.zmqSend(sock, recvId, msg, 0);         //is necessary to return size?
+         return ZmqUtil.zmqSend(sock, recvId, msg, 0);         //is necessary to return size?
     }
     public int sendInproc(int entityId, ByteBuffer data){
         ZMQ.Socket sock = threadInfo.get().inprocSock;
