@@ -16,38 +16,29 @@ public class TableGroup {
 	/**
 	 * Max staleness among all tables.
 	 */
-	private int max_table_staleness_;
-	private AtomicInteger num_app_threads_registered_;
-	private Map<Integer, ClientTable> tables_;
-	private VectorClockMT vector_clock_;
-
-	public TableGroup(){
-
-	}
-
-	public void finalize() throws Throwable {
-
-	}
+	private  int max_table_staleness_;
+	private  AtomicInteger num_app_threads_registered_;
+	private  Map<Integer, ClientTable> tables_;
+	private  VectorClockMT vector_clock_;
 
 	/**
 	 * 
 	 * @param table_group_config
 	 * @param table_access
-	 * @param init_thread_id
 	 */
-	public TableGroup(final TableGroupConfig table_group_config, boolean table_access, int init_thread_id){
+	public TableGroup(final TableGroupConfig table_group_config, boolean table_access){
 
 	}
 
-	public void Clock(){
+	public void clock(){
 
 	}
 
-	private void ClockAggressive(){
+	private void clockAggressive(){
 
 	}
 
-	private void ClockConservative(){
+	private void clockConservative(){
 
 	}
 
@@ -56,15 +47,15 @@ public class TableGroup {
 	 * @param table_id
 	 * @param table_config
 	 */
-	public boolean CreateTable(int table_id, final ClientTableConfig table_config){
+	public boolean createTable(int table_id, final ClientTableConfig table_config){
         return false;
 	}
 
-	public void CreateTableDone(){
+	public void createTableDone(){
 
 	}
 
-	public void DeregisterThread(){
+	public void deregisterThread(){
 
 	}
 
@@ -72,19 +63,19 @@ public class TableGroup {
 	 * 
 	 * @param table_id
 	 */
-	public ClientTable GetTableOrDie(int table_id){
+	public ClientTable getTableOrDie(int table_id){
         return null;
 	}
 
-	public void GlobalBarrier(){
+	public void globalBarrier(){
 
 	}
 
-	public int RegisterThread(){
+	public int registerThread(){
         return 0;
 	}
 
-	public void WaitThreadRegister(){
+	public void waitThreadRegister(){
 
 	}
 

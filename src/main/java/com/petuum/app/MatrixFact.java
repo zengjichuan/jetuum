@@ -1,6 +1,8 @@
 package com.petuum.app;
 
+import com.petuum.ps.common.PSTableGroup;
 import com.petuum.ps.common.TableGroupConfig;
+import com.petuum.ps.common.client.TableGroup;
 import com.petuum.ps.common.consistency.ConsistencyModel;
 
 import java.io.IOException;
@@ -38,6 +40,10 @@ public class MatrixFact {
         tableGroupconfig.numLocalBgThreads = 1;
         tableGroupconfig.numLocalAppThreads = numWorkerThreads + 1;
         tableGroupconfig.clientId = clientID;
+        //need to register row type
+        //register DenseRow<float> as 0.
 
+        //next..
+        PSTableGroup.init(tableGroupconfig, false);
     }
 }
