@@ -9,8 +9,9 @@ import com.petuum.ps.common.client.TableGroup;
 public class PSTableGroup {
     private static TableGroup tableGroup;
 
-    public static void init(TableGroupConfig config, boolean tableAccess) {
-        tableGroup = new TableGroup(config, tableAccess);
+    public static void init(TableGroupConfig config, boolean tableAccess) throws NoSuchMethodException {
+        Integer initThreadID = new Integer(0);
+        tableGroup = new TableGroup(config, tableAccess, initThreadID);
     }
 
     public static void shutDown() {
