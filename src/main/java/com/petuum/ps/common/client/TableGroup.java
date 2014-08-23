@@ -3,6 +3,7 @@ import com.petuum.ps.common.comm.CommBus;
 import com.petuum.ps.common.util.VectorClockMT;
 import com.petuum.ps.common.ClientTableConfig;
 import com.petuum.ps.common.TableGroupConfig;
+import com.petuum.ps.server.NameNodeThread;
 import com.petuum.ps.thread.BgWorkers;
 import com.petuum.ps.thread.GlobalContext;
 import com.petuum.ps.thread.ThreadContext;
@@ -32,7 +33,7 @@ public class TableGroup {
 	 * @param tableGroupConfig
 	 * @param tableAccess
 	 */
-	public TableGroup(final TableGroupConfig tableGroupConfig, boolean tableAccess, Integer initThreadID) throws NoSuchMethodException {
+	public TableGroup(final TableGroupConfig tableGroupConfig, boolean tableAccess, Integer initThreadID) throws NoSuchMethodException, InterruptedException {
         GlobalContext.init(tableGroupConfig.numTotalServerThreads,
                 tableGroupConfig.numLocalServerThreads,
                 tableGroupConfig.numLocalAppThreads,
@@ -54,10 +55,10 @@ public class TableGroup {
         GlobalContext.commBus.threadRegister(config);
 
         if(GlobalContext.getNameNodeClientId() == tableGroupConfig.clientId) {
-            NameNodeThread::init();
-            ServerThreads::init(localIDMin + 1);
+            NameNodeThread.init();
+            ServerThreads.init(localIDMin + 1);
         } else {
-            ServerThreads::init(localIDMin);
+            ServerThreads.init(localIDMin);
         }
 
         BgWorkers.init(tables_);
