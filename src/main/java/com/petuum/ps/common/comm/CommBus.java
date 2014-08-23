@@ -381,6 +381,13 @@ public class CommBus {
 
         return true;
     }
+
+    public Method recvFunc;
+    public Method recvTimeOutFunc;
+    public Method recvAsyncFunc;
+    public Method recvWrapperFunc;
+    public Method sendFunc;
+
     public boolean isLocalEntity(int entityId){
         return (eStart <= entityId) && (entityId <= eEnd);
     }

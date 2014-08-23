@@ -47,7 +47,7 @@ public class Server {
         clientClocks.addClock(clientId, 0);
     }
     public void CreateTable(int tableId, TableInfo tableInfo){
-        tables.putIfAbsent(tableId, new ServerTable(tableInfo));
+        tables.put(tableId, new ServerTable(tableInfo));//putIfAbsent
 
         if (GlobalContext.getResumeClock() > 0){
           //  tables.get(tableId).readSnapShot(GlobalContext.getResumeDir(),
@@ -73,7 +73,7 @@ public class Server {
                     || newClock % GlobalContext.getSnapshotClock() != 0){
                 return true;
             }
-            for (HashMap.Entry<Integer, ServerTable> entry : tables.entrySet()){
+            for (Map.Entry<Integer, ServerTable> entry : tables.entrySet()){
                 entry.getValue().takeSnapshot(GlobalContext.getSnapshotDir(),serverId,
                         entry.getKey(), newClock );
             }
