@@ -1,12 +1,16 @@
 package com.petuum.ps.server;
 
 import com.petuum.ps.common.HostInfo;
+import com.petuum.ps.common.MsgType;
 import com.petuum.ps.common.comm.CommBus;
 import com.petuum.ps.common.util.IntBox;
 import com.petuum.ps.thread.GlobalContext;
 import com.petuum.ps.thread.ThreadContext;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import zmq.Msg;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Queue;
@@ -44,6 +48,11 @@ class NameNodeContext {
     public int numShutdownBgs;
 }
 
+class ConnectionResult {
+    public int senderID;
+    public boolean isClient;
+    public int clientID;
+}
 
 public class NameNodeThread {
     private static CountDownLatch latch;
@@ -53,6 +62,7 @@ public class NameNodeThread {
     private static Method commBusRecvTimeOutAny;
     private static Method commBusSendAny;
     private static CommBus commbus;
+    private static Logger log = LogManager.getLogger(NameNodeThread.class);
 
     private static Thread thread = new Thread(new Runnable() {//NameNodeThreadMain
         public void run() {
@@ -118,10 +128,33 @@ public class NameNodeThread {
             config.lType = CommBus.K_IN_PROC;
         }
         commbus.threadRegister(config);
-        System.out.println("NameNode is ready to accept connections!");
+        log.info("NameNode is ready to accept connections!");
     }
 
     private static void initNameNode() {
-        
+        int numBgs = 0;
+        int numServers = 0;
+        int numExpectedConns = GlobalContext.getNumTotalBgThreads() + GlobalContext.getNumServers();
+        log.info("Number totalBgThreads() = " + String.valueOf(GlobalContext.getNumTotalBgThreads()));
+        log.info("Number totalServerThreads() = " + String.valueOf(GlobalContext.getNumServers()));
+        for(int numConnections = 0; numConnections < numExpectedConns; numConnections++) {
+
+        }
+
+    }
+
+    private static ConnectionResult getConnection() throws InvocationTargetException, IllegalAccessException {
+        IntBox senderID = new IntBox();
+        Msg msg = new Msg();
+        commBusRecvAny.invoke(commbus, senderID, msg);
+        MsgType msgType = MsgType.convertFromMsg(msg);
+        ConnectionResult result = new ConnectionResult();
+        if(msgType.equals(MsgType.K_CLIENT_CONNECT)) {
+
+        } else {
+            assert msgType.equals(MsgType.K_SERVER_CONNECT);
+            result.isClient = false;
+        }
+        return result;
     }
 }

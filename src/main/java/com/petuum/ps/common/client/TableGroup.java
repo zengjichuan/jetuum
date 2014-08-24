@@ -56,12 +56,12 @@ public class TableGroup {
 
         if(GlobalContext.getNameNodeClientId() == tableGroupConfig.clientId) {
             NameNodeThread.init();
-            ServerThreads.init(localIDMin + 1);
+           // ServerThreads.init(localIDMin + 1);
         } else {
-            ServerThreads.init(localIDMin);
+           // ServerThreads.init(localIDMin);
         }
 
-        BgWorkers.init(tables_);
+        //BgWorkers.init(tables_);
         ThreadContext.registerThread(initThreadID);
         if(tableAccess) {
             vector_clock_.addClock(initThreadID, 0);

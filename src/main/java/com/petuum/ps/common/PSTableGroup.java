@@ -11,7 +11,7 @@ public class PSTableGroup {
 
     public static void init(TableGroupConfig config, boolean tableAccess) throws NoSuchMethodException {
         Integer initThreadID = new Integer(0);
-        tableGroup = new TableGroup(config, tableAccess, initThreadID);
+       // tableGroup = new TableGroup(config, tableAccess, initThreadID);
     }
 
     public static void shutDown() {
