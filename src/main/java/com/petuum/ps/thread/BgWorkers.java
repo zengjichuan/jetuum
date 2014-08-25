@@ -1,31 +1,47 @@
 package com.petuum.ps.thread;
 
 import com.google.common.base.Preconditions;
+import com.petuum.ps.common.ClientTableConfig;
+import com.petuum.ps.common.HostInfo;
 import com.petuum.ps.common.Row;
 import com.petuum.ps.common.client.ClientTable;
 import com.petuum.ps.common.comm.CommBus;
+import com.petuum.ps.common.comm.Config;
 import com.petuum.ps.common.oplog.RowOpLog;
 import com.petuum.ps.common.util.IntBox;
 import com.petuum.ps.common.util.RecordBuff;
 import com.petuum.ps.common.util.VectorClock;
 import com.petuum.ps.common.util.VectorClockMT;
 import com.petuum.ps.server.CallBackSubs;
+import com.sun.deploy.util.SessionState;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import zmq.Msg;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by zjc on 2014/8/14.
  */
 public class BgWorkers {
-    private class BgContext {
+    private static class BgContext {
+        private BgContext() {
+            serverTableOpLogSizeMap = new HashMap<Integer, Map<Integer, Integer>>();
+            serverOpLogMsgMap = new HashMap<Integer, ClientSendOpLogMsg>();
+            serverOpLogMsgSizeMap = new HashMap<Integer, Integer>();
+            tableServerOpLogSizeMap = new HashMap<Integer, Integer>();
+
+
+        }
+
         /**
          * version of the data, increment when a set of OpLogs
          * are sent out; may wrap around
@@ -87,6 +103,9 @@ public class BgWorkers {
     private static VectorClockMT bgServerClock;
     private static ReentrantLock systemClockLock;
 
+    private static Condition systemClockCv;
+    private static HashMap<Integer, HashMap<Integer, Boolean>> tableOpLogIndex;
+
     private static void commBusRecvAnyBusy(Integer senderId, Msg msg){
         boolean received = commBus.commBusRecvAsyncAny(senderId, msg);
         while (!received){
@@ -100,6 +119,10 @@ public class BgWorkers {
         tables = rTables;
         idStart = GlobalContext.getHeadBgId(GlobalContext.getClientId());
         commBus = GlobalContext.commBus;
+
+        //condition variable
+        systemClockLock = new ReentrantLock();
+        systemClockCv = systemClockLock.newCondition();
 
         int myClientId = GlobalContext.getClientId();
         int myHeadBgId = GlobalContext.getHeadBgId(myClientId);
@@ -359,8 +382,8 @@ public class BgWorkers {
                                 int newSystemClock = bgServerClock.tick(myId);
                                 if (newSystemClock != 0){
                                     systemClock.incrementAndGet();
-                                    systemClockLock.lock();
 //                                    system_clock_cv_.notify_all();            //condition variable
+                                    systemClockCv.signalAll();
                                 }
                             }
                         }
@@ -373,6 +396,195 @@ public class BgWorkers {
                 }
             }
             return;
+        }
+
+        private static void checkForwardRowRequestToServer(IntBox senderId, RowRequest rowRequestMsg) {
+            int tableId = rowRequestMsg.getTableId();
+            int rowId = rowRequestMsg.getRowId();
+            int clock = rowRequestMsg.getClock();
+            ClientTable table = tables.get(tableId);
+            ProcessStorage tableStorage = table.getProcessStorage();
+            RowAccessor rowAccessor =
+        }
+
+        private static void shutdownClean() {
+            //delete bg_context_->row_request_oplog_mgr;
+        }
+
+        private static void handleCreateTables() {
+            for (int numCreatedTables = 0; numCreatedTables < GlobalContext.getNumTables();
+                 numCreatedTables++) {
+                int tableId;
+                IntBox senderId = new IntBox();
+                ClientTableConfig clientTableConfig = new ClientTableConfig();
+                {
+                    Msg zmqMsg = new Msg();
+                    commBus.recvInproc(senderId, zmqMsg);
+                    MsgType msgType = MsgBase.getMsgType(zmqMsg.buf());
+                    Preconditions.checkArgument(msgType == MsgType.kBgCreateTable);
+                    BgCreateTableMsg bgCreateTableMsg = new BgCreateTableMsg(zmqMsg.buf());
+                    //set up client table config
+                    clientTableConfig.tableInfo.tableStaleness = bgCreateTableMsg.getStaleness();
+                    clientTableConfig.tableInfo.rowType = bgCreateTableMsg.getRowType();
+                    clientTableConfig.processCacheCapacity =
+                            bgCreateTableMsg.getProcessCacheCapacity();
+                    clientTableConfig.threadCacheCapacity =
+                            bgCreateTableMsg.getThreadCacheCapacity();
+                    clientTableConfig.opLogCapacity = bgCreateTableMsg.getOpLogCapacity();
+
+                    CreateTableMsg createTableMsg = new CreateTableMsg();
+                    createTableMsg.setTableId(bgCreateTableMsg.getTableId());
+                    createTableMsg.setStaleness(bgCreateTableMsg.getStaleness());
+                    createTableMsg.setRowType(bgCreateTableMsg.getRowType());
+                    createTableMsg.setRowCapacity(bgCreateTableMsg.getRowCapacity());
+                    tableId = createTableMsg.getTableId();
+
+                    //send msg to name node
+                    int nameNodeId = GlobalContext.getNameNodeId();
+                    try {
+                        int sendSize = commBusSendAny.invoke(commBus,
+                                new Object[]{nameNodeId, createTableMsg.getMem()});
+                        Preconditions.checkArgument(sendSize == createTableMsg.getSize());
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    } catch (InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                }
+                //wait for response from name node
+                {
+                    Msg zmqMsg = new Msg();
+                    IntBox nameNodeId = new IntBox();
+                    try {
+                        commBusRecvAny.invoke(commBus, new Object[]{nameNodeId, zmqMsg});
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    } catch (InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                    MsgType msgType = MsgBase.getMsgType(zmqMsg.buf());
+                    Preconditions.checkArgument(msgType == MsgType.kCreateTableReply);
+                    CreateTableReplyMsg createTableReplyMsg = new CreateTableReplyMsg(zmqMsg.buf());
+                    Preconditions.checkArgument(createTableReplyMsg.getTableId() == tableId);
+                    //Create ClientTable
+                    ClientTable clientTable = new ClientTable(tableId, clientTableConfig);
+                    tables.put(tableId, clientTable);   //not thread safe
+                    int sentSize = commBus.sendInproc(senderId.intValue, zmqMsg.buf());
+                }
+            }
+            {
+                Msg zmqMsg = new Msg();
+                IntBox senderId = new IntBox();
+                try {
+                    commBusRecvAny.invoke(commBus, new Object[]{senderId, zmqMsg});
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+                MsgType msgType = MsgBase.getMsgType(zmqMsg.buf());
+                Preconditions.checkArgument(msgType == MsgType.kCreatedAllTables);
+            }
+        }
+
+        private static void recvAppInitThreadConnection(IntBox numConnectedAppThreads) {
+            Msg zmqMsg = new Msg();
+            IntBox senderId = new IntBox();
+            commBus.recvInproc(senderId, zmqMsg);
+            MsgType msgType = MsgBase.getMsgType(zmqMsg.buf());
+            Preconditions.checkArgument(msgType == MsgType.kAppConnect);
+            numConnectedAppThreads.intValue++;
+            Preconditions.checkArgument(
+                    numConnectedAppThreads.intValue <= GlobalContext.getNumAppThreads());
+        }
+
+        /**
+         * Connect to namenode and each server
+         */
+        private static void bgServerHandshake() {
+            //connect to the namenode
+            int nameNodeId = GlobalContext.getNameNodeId();
+            connectToNameNodeOrServer(nameNodeId);
+            //wait for connectServerMsg
+            Msg zmqMsg = new Msg();
+            IntBox senderId = new IntBox();
+            if(commBus.isLocalEntity(nameNodeId)){
+                commBus.recvInproc(senderId, zmqMsg);
+            }else{
+                commBus.recvInterproc(senderId, zmqMsg);
+            }
+            MsgType msgType = MsgBase.getMsgType(zmqMsg.buf());
+            Preconditions.checkArgument(senderId.intValue == nameNodeId);
+            Preconditions.checkArgument(msgType == MsgType.kConnectServer);
+
+            //connect to servers
+            int numServers = GlobalContext.getNumServers();
+            Vector<Integer> serverIds = GlobalContext.getServerIds();
+            for (int serverId : serverIds){
+                connectToNameNodeOrServer(serverId);
+            }
+
+            //get message from servers for permission to start
+            for (int numStartedServers = 0; numStartedServers < GlobalContext.getNumServers();
+                 numStartedServers++){
+                Msg zmqMsg_ = new Msg();
+                IntBox senderId_ = new IntBox();
+                try {
+                    commBusRecvAny.invoke(commBus, new Object []{senderId_, zmqMsg_});
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+                MsgType msgType_ = MsgBase.getMsgType(zmqMsg_.buf());
+                Preconditions.checkArgument(msgType_ == MsgType.kClientStart);
+            }
+        }
+
+        private static void connectToNameNodeOrServer(int serverId) {
+            ClientConnectMsg clientConnectMsg = new ClientConncetMsg();
+            clientConnectMsg.setClientId(GlobalContext.getClientId());
+            ByteBuffer msg = clientConnectMsg.getMem();
+
+            if (commBus.isLocalEntity(serverId)){
+                commBus.connectTo(serverId, msg);
+            }else {
+                HostInfo serverInfo = GlobalContext.getHostInfo(serverId);
+                String serverAddr = new String(serverInfo.ip+":"+serverInfo.port);
+                commBus.connectTo(serverId, serverAddr, msg);
+            }
+        }
+
+        private static void initCommBus(int myId) {
+            Config commConfig = new Config();
+            commConfig.entityId = myId;
+            commConfig.lType = CommBus.K_IN_PROC;
+            commBus.threadRegister(commConfig);
+        }
+
+        /**
+         * initialize local storage
+         */
+        private static void initBgContext() {
+            bgContext.set(new BgContext());
+            bgContext.get().version = 0;
+            switch (GlobalContext.getConsistencyModel()){
+                case SSP:
+                    bgContext.get().rowRequestOpLogMgr = new SSPRowRequestOpLogMgr();
+                    break;
+                case SSPPush:
+                    bgContext.get().rowRequestOpLogMgr = new SSPPushRowRequestOpLogMgr();
+                    break;
+                default:
+            }
+            Vector<Integer> serverIds = GlobalContext.getServerIds();
+            for (int serverId : serverIds){
+                bgContext.get().serverTableOpLogSizeMap.put(serverId, new HashMap<Integer, Integer>());
+                bgContext.get().serverOpLogMsgMap.put(serverId, null);
+                bgContext.get().serverOpLogMsgSizeMap.put(serverId, null);
+                bgContext.get().tableServerOpLogSizeMap.put(serverId, 0);
+                bgContext.get().serverVectorClock.addClock(serverId, 0);
+            }
         }
     }
 }
