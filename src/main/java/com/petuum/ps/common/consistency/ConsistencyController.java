@@ -2,8 +2,10 @@ package com.petuum.ps.common.consistency;
 
 import com.google.common.cache.LoadingCache;
 import com.petuum.ps.common.Row;
+import com.petuum.ps.common.client.ClientRow;
 
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Interface for consistency controller modules. For each table we associate a
@@ -20,7 +22,7 @@ public abstract class ConsistencyController {
 	 * common class members for all controller modules. Process cache, highly
 	 * concurrent.
 	 */
-	protected LoadingCache process_storage_;
+	protected LoadingCache<Integer, ClientRow> process_storage_;
 	/**
 	 * We use sample_row_.AddUpdates(), SubstractUpdates() as static method.
 	 */
@@ -64,7 +66,7 @@ public abstract class ConsistencyController {
 	 * 
 	 * @param row_id    row_id
 	 */
-	public abstract Row Get(int row_id);
+	public abstract ClientRow Get(int row_id, int clock) throws ExecutionException;
 
 	/**
 	 * 

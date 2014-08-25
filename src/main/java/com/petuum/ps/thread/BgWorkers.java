@@ -58,7 +58,7 @@ public class BgWorkers {
         /**
          * The OpLog msg to each server
          */
-        public Map<Integer, ClientSendOpLogMsg> serverOpLogMsgMap;
+//        public Map<Integer, ClientSendOpLogMsg> serverOpLogMsgMap;
         /**
          * map server id to oplog msg size
          */
@@ -200,38 +200,38 @@ public class BgWorkers {
         commBus.commBusRecvAny(senderId, msg);
     }
 
-    private static boolean SSPGetRowOpLog(TableOpLog tableOpLog, int rowId, RowOpLog rowOpLog){
-        return tableOpLog.getEraseOpLog(rowId, rowOpLog);
-    }
+   // private static boolean SSPGetRowOpLog(TableOpLog tableOpLog, int rowId, RowOpLog rowOpLog){
+   //     return tableOpLog.getEraseOpLog(rowId, rowOpLog);
+   // }
     private BgOpLog getOpLogAndIndex(){
         Vector<Integer> serverIds = GlobalContext.getServerIds();
         int localBgIndex = ThreadContext.getId() - idStart;
         // get thread-specific data structure to assist oplog message creation
         // those maps may contain legacy data from previous runs
-        Map<Integer, Map<Integer, Integer>> serverTableOpLogSizeMap = bgContext.serverTableOpLogSizeMap;
-        Map<Integer, Integer> tableNumBytesByServer = bgContext.tableServerOpLogSizeMap;
+     //   Map<Integer, Map<Integer, Integer>> serverTableOpLogSizeMap = bgContext.serverTableOpLogSizeMap;
+     //   Map<Integer, Integer> tableNumBytesByServer = bgContext.tableServerOpLogSizeMap;
 
         BgOpLog bgOplog = new BgOpLog();
         for(Map.Entry<Integer, ClientTable> entry : tables.entrySet()){
             int tableId = entry.getKey();
-            TableOpLog tableOpLog = entry.getValue().getOpLog();
+       //     TableOpLog tableOpLog = entry.getValue().getOpLog();
 
             //Get OpLog index
             /**
              * ...
              */
-            int tableUpdataSize = entry.getValue().getSampleRow().getUpdateSize();
-            BgOpLogPartition bgTableOpLog = new BgOpLogPartition(tableId, tableUpdataSize);
+         //   int tableUpdataSize = entry.getValue().getSampleRow().getUpdateSize();
+         //   BgOpLogPartition bgTableOpLog = new BgOpLogPartition(tableId, tableUpdataSize);
 
             for (int i = 0; i < GlobalContext.getNumServers(); i++) {
-                tableNumBytesByServer.put(serverIds.get(i), Integer.SIZE);
+           //     tableNumBytesByServer.put(serverIds.get(i), Integer.SIZE);
             }
             /**
              * ...
              */
-            for ( Map.Entry<Integer, Integer> serverEntry : tableNumBytesByServer.entrySet()){
-                serverTableOpLogSizeMap.get(serverEntry.getKey()).put(tableId, serverEntry.getValue());
-            }
+            //for ( Map.Entry<Integer, Integer> serverEntry : tableNumBytesByServer.entrySet()){
+            //    serverTableOpLogSizeMap.get(serverEntry.getKey()).put(tableId, serverEntry.getValue());
+            //}
         }
         return bgOplog;
     }

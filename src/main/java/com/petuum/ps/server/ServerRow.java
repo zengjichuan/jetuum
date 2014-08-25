@@ -2,7 +2,6 @@ package com.petuum.ps.server;
 
 
 import com.google.common.primitives.Ints;
-import com.petuum.ps.common.AbstractRow;
 import com.petuum.ps.common.Row;
 import com.petuum.ps.common.util.RecordBuff;
 
@@ -30,15 +29,15 @@ public class ServerRow {
         this.dirty=false;
     }
     public void applyBatchInc(Integer columnIds, Object updateBatch, int numUpdate){
-        rowData.applyBatchIncUnsafe(columnIds, updateBatch, numUpdate);
+        //rowData.applyBatchIncUnsafe(columnIds, updateBatch, numUpdate);
         dirty = true;
     }
-    public int serializedSize(){   //const
-        return rowData.getSerializedSize();
-    }
-    public int serialize(Byte[] bytes){      //const
-        return rowData.serialize(bytes);
-    }
+   // public int serializedSize(){   //const
+   //     return rowData.getSerializedSize();
+   // }
+   // public int serialize(Byte[] bytes){      //const
+   //     return rowData.serialize(bytes);
+   // }
     public void subscribe(int clientId){
         if(callBackSubs.subscribe(clientId))
             ++numClientsSubscribed;

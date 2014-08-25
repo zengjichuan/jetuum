@@ -7,6 +7,7 @@ import org.zeromq.ZMQ;
 import zmq.Msg;
 import zmq.ZError;
 
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.util.Vector;
 
@@ -18,14 +19,13 @@ public class CommBus {
     public static final int K_IN_PROC=1;
     public static final int K_INTER_PROC=2;
 
-
     private static String kInProcPrefix ="inproc://comm_bus";
     private static String kInterProcPrefix="tcp://";
 
     private ZContext zmqContext;
     private int eStart;
     private int eEnd;
-    private ThreadLocal<ThreadCommInfo> threadInfo;
+    private ThreadLocal<ThreadCommInfo> threadInfo = new ThreadLocal<ThreadCommInfo>();
 
 
     private static void makeInprocAddr(int entityId, StringBuffer result){
@@ -107,6 +107,13 @@ public class CommBus {
         }
     }
 
+    public boolean commBusRecvAsyncAny(Integer senderId, Msg msg) {
+        return true;
+    }
+
+    public void commBusRecvAny(Integer senderId, Msg msg) {
+
+    }
     public void threadDeregister(){
         threadInfo.remove();
     }
@@ -173,7 +180,7 @@ public class CommBus {
         else
             sock = threadInfo.get().interprocSock;
         int recvId = ZmqUtil.entityID2ZmqID(entityId);
-        return ZmqUtil.zmqSend(sock, recvId, msg, 0);         //is necessary to return size?
+         return ZmqUtil.zmqSend(sock, recvId, msg, 0);         //is necessary to return size?
     }
     public int sendInproc(int entityId, ByteBuffer data){
         ZMQ.Socket sock = threadInfo.get().inprocSock;
@@ -317,6 +324,13 @@ public class CommBus {
 
         return true;
     }
+
+    public Method recvFunc;
+    public Method recvTimeOutFunc;
+    public Method recvAsyncFunc;
+    public Method recvWrapperFunc;
+    public Method sendFunc;
+
     public boolean isLocalEntity(int entityId){
         return (eStart <= entityId) && (entityId <= eEnd);
     }

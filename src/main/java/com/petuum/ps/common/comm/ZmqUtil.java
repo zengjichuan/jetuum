@@ -100,6 +100,7 @@ public class ZmqUtil {
      * @return
      */
     public static int zmqSend(ZMQ.Socket sock, ByteBuffer data, int flag){
+        data.flip();
         return sock.sendByteBuffer(data, flag);
     }
 

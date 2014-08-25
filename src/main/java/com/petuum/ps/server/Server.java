@@ -18,7 +18,7 @@ public class Server {
     private Map<Integer, Vector<Integer>> clientBgMap;
     private HashMap<Integer, ServerTable> tables;
     // mapping <clock, table id> to an array of read requests
-    private Map<Integer, HashMap<Integer, Vector<ServerRowRequest>>> clockBgRowRequests;
+  //  private Map<Integer, HashMap<Integer, Vector<ServerRowRequest>>> clockBgRowRequests;
     private Vector<Integer> clinetIds;
     // latest oplog version that I have received from a bg thread
     private Map<Integer, Integer> bgVersionMap;
@@ -47,11 +47,11 @@ public class Server {
         clientClocks.addClock(clientId, 0);
     }
     public void CreateTable(int tableId, TableInfo tableInfo){
-        tables.putIfAbsent(tableId, new ServerTable(tableInfo));
+        tables.put(tableId, new ServerTable(tableInfo));//putIfAbsent
 
         if (GlobalContext.getResumeClock() > 0){
-            tables.get(tableId).readSnapShot(GlobalContext.getResumeDir(),
-                    serverId, tableId, GlobalContext.getReusmeClock());
+          //  tables.get(tableId).readSnapShot(GlobalContext.getResumeDir(),
+         //           serverId, tableId, GlobalContext.getReusmeClock());
         }
     }
     public ServerRow findCreateRow(int tableId, int rowId){
@@ -73,7 +73,7 @@ public class Server {
                     || newClock % GlobalContext.getSnapshotClock() != 0){
                 return true;
             }
-            for (HashMap.Entry<Integer, ServerTable> entry : tables.entrySet()){
+            for (Map.Entry<Integer, ServerTable> entry : tables.entrySet()){
                 entry.getValue().takeSnapshot(GlobalContext.getSnapshotDir(),serverId,
                         entry.getKey(), newClock );
             }

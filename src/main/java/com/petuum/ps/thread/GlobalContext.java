@@ -3,6 +3,7 @@ package com.petuum.ps.thread;
 import com.google.common.base.Preconditions;
 import com.petuum.ps.common.HostInfo;
 import com.petuum.ps.common.comm.CommBus;
+import com.petuum.ps.common.consistency.ConsistencyModel;
 
 import java.util.Map;
 import java.util.Vector;
@@ -59,7 +60,38 @@ public class GlobalContext {
     public static int getSerializedTableSeparator(){  return -1;  }
     public static int getSerializedTableEnd(){ return -2; }
 
+    public static void init(int numServers,
+                            int numLocalServerThreads,
+                            int numAppThreads,
+                            int numTableThreads,
+                            int numBgThreads,
+                            int numTotalBgThreads,
+                            int numTables,
+                            int numClients,
+                            Vector<Integer> serverIds,
+                            Map<Integer, HostInfo> hostMap,
+                            int clientId,
+                            int serverRingSize,
+                            ConsistencyModel model,
+                            boolean aggressiveCpu) {
+        GlobalContext.numServers = numServers;
+        GlobalContext.numLocalServerThreads = numLocalServerThreads;
+        GlobalContext.numAppThreads = numAppThreads;
+        GlobalContext.numTableThreads = numTableThreads;
+        GlobalContext.numBgThreads = numBgThreads;
+        GlobalContext.numTotalBgThreads = numTotalBgThreads;
+        GlobalContext.numTables = numTables;
+        GlobalContext.numClients = numClients;
+        GlobalContext.serverIds = serverIds;
+        GlobalContext.hostMap = hostMap;
+        GlobalContext.clientId = clientId;
+        GlobalContext.serverRingSize = serverRingSize;
+        GlobalContext.consistencyModel = model;
+        GlobalContext.aggressiveCpu = aggressiveCpu;
 
+        commBus = new CommBus(getThreadIdMin(clientId), getThreadIdMax(clientId), 1);
+
+    }
 
     public static int getNumServers() {
         return numServers;

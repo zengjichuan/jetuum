@@ -1,7 +1,6 @@
 package com.petuum.ps.server;
 
 import com.google.common.io.ByteStreams;
-import com.petuum.ps.common.AbstractRow;
 import com.petuum.ps.common.TableInfo;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.Options;
@@ -38,10 +37,10 @@ public class ServerTable {
     }
 
     public ServerRow createRow(int rowId){
-        int rowType = tableInfo.rowType;
-        AbstractRow rowData = ClassRegeistry<AbstractRow>.GetRegistry().CreateObject(rowType);
-        rowData.init(tableInfo.rowCapacity);
-        storage.put(rowId, new ServerRow(rowData));
+//        int rowType = tableInfo.rowType;
+//        AbstractRow rowData = ClassRegeistry<AbstractRow>.GetRegistry().CreateObject(rowType);
+//        rowData.init(tableInfo.rowCapacity);
+//        storage.put(rowId, new ServerRow(rowData));
         return storage.get(rowId);
     }
 

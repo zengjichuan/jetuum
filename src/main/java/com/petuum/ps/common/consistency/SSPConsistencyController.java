@@ -1,10 +1,14 @@
 package com.petuum.ps.common.consistency;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
 import com.petuum.ps.common.Row;
 import com.petuum.ps.common.client.ClientRow;
 import com.petuum.ps.common.client.ThreadTable;
+import com.petuum.ps.thread.BgWorkers;
 import com.petuum.ps.thread.ThreadContext;
 
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Su Yuxin
@@ -20,8 +24,21 @@ public class SSPConsistencyController extends ConsistencyController {
 	protected ThreadTable thread_cache_;
 
 	public SSPConsistencyController(){
-
-
+        process_storage_ = CacheBuilder.newBuilder()
+                .build(
+                    new CacheLoader<Integer, ClientRow>() {
+                        @Override
+                        public ClientRow load(Integer key) throws Exception {
+                            int stalest_clock = ThreadContext.getClock() - staleness_;
+                            if(stalest_clock < 0){
+                                stalest_clock = 0;
+                            }
+//                            BgWorkers.RequestRow(table_id, key, stalest_clock);
+                            //need receive row data
+                            return null;
+                        }
+                    }
+                );
 	}
 
 	public void finalize() throws Throwable {
@@ -59,7 +76,7 @@ public class SSPConsistencyController extends ConsistencyController {
 	 * 
 	 * @param row_id
 	 */
-	public ClientRow Get(int row_id, int clock) {
+	public ClientRow Get(int row_id, int clock) throws ExecutionException {
         int stalest_clock = ThreadContext.getClock() - staleness_;
         if(stalest_clock < 0){
             stalest_clock = 0;
@@ -69,7 +86,7 @@ public class SSPConsistencyController extends ConsistencyController {
         if(clock >= stalest_clock) {
             return row;
         }else {
-            process_storage_.refresh(row_id);
+            process_storage_.invalidate(row_id);
             return process_storage_.get(row_id);
         }
     }

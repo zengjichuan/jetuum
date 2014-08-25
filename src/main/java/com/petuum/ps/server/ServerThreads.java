@@ -1,3 +1,4 @@
+/*
 package com.petuum.ps.server;
 
 import com.petuum.ps.common.comm.CommBus;
@@ -5,9 +6,11 @@ import com.petuum.ps.common.comm.CommBus;
 import java.util.Vector;
 import java.util.concurrent.CyclicBarrier;
 
+*/
 /**
  * Created by admin on 2014/8/13.
- */
+ *//*
+
 public class ServerThreads {
     class ServerContext{
         Vector<Integer> bgThreadIds;
@@ -47,9 +50,11 @@ public class ServerThreads {
     private static int getConnection(boolean isClient, int clientId){
 
     }
-    /**
+    */
+/**
      * Functions that operate on the particular thread's specific ServerContext.
-     */
+     *//*
+
     private static void setupServerContext(){
 
     }
@@ -83,3 +88,4 @@ public class ServerThreads {
     }
 
 }
+*/
