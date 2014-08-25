@@ -1,7 +1,7 @@
 package com.petuum.ps.server;
 
 import com.petuum.ps.common.HostInfo;
-import com.petuum.ps.common.MsgType;
+import com.petuum.ps.common.NumberedMsg;
 import com.petuum.ps.common.comm.CommBus;
 import com.petuum.ps.common.util.IntBox;
 import com.petuum.ps.thread.GlobalContext;
@@ -12,6 +12,7 @@ import zmq.Msg;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Vector;
@@ -147,12 +148,12 @@ public class NameNodeThread {
         IntBox senderID = new IntBox();
         Msg msg = new Msg();
         commBusRecvAny.invoke(commbus, senderID, msg);
-        MsgType msgType = MsgType.convertFromMsg(msg);
+        int msgType = ByteBuffer.wrap(msg.data()).getInt();
         ConnectionResult result = new ConnectionResult();
-        if(msgType.equals(MsgType.K_CLIENT_CONNECT)) {
+        if(msgType == NumberedMsg.K_CLIENT_CONNECT) {
 
         } else {
-            assert msgType.equals(MsgType.K_SERVER_CONNECT);
+            assert msgType == NumberedMsg.K_SERVER_CONNECT;
             result.isClient = false;
         }
         return result;

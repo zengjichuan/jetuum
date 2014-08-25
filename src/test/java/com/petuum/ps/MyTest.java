@@ -1,11 +1,9 @@
 package com.petuum.ps;
 
-import com.petuum.ps.common.MsgType;
+import com.petuum.ps.common.NumberedMsg;
 import com.petuum.ps.common.util.IntBox;
 
-import java.nio.ByteBuffer;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by admin on 2014/8/6.
@@ -24,8 +22,8 @@ public class MyTest {
 
         System.out.println(tint.intValue);
 
-        MsgType mt = MsgType.valueOf(Objects.toString(MsgType.K_APP_CONNECT));
-        if(mt.equals(MsgType.K_APP_CONNECT)){
+        NumberedMsg mt = NumberedMsg.valueOf(Objects.toString(NumberedMsg.K_APP_CONNECT));
+        if(mt.equals(NumberedMsg.K_APP_CONNECT)){
             System.out.println("Success");
         }
 
