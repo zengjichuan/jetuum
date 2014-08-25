@@ -27,33 +27,33 @@ public abstract interface Row extends Serializable {
 	 * @param update1
 	 * @param update2
 	 */
-	public abstract void AddUpdates(int column_id, Object update1, final Object update2);
+	public abstract void addUpdates(int column_id, Object update1, final Object update2);
 
 	/**
 	 * 
 	 * @param update_batch
 	 */
-	public abstract void ApplyBatchInc(Map<Integer, Object> update_batch);
+	public abstract void applyBatchInc(Map<Integer, Object> update_batch);
 
 	/**
 	 * 
 	 * @param update_batch
 	 */
-	public abstract void ApplyBatchIncUnsafe(final Map<Integer, Object> update_batch);
+	public abstract void applyBatchIncUnsafe(final Map<Integer, Object> update_batch);
 
 	/**
 	 * 
 	 * @param column_id
 	 * @param update
 	 */
-	public abstract void ApplyInc(int column_id, final Object update);
+	public abstract void applyInc(int column_id, final Object update);
 
 	/**
 	 * 
 	 * @param column_id
 	 * @param update
 	 */
-	public abstract void ApplyIncUnsafe(int column_id, final Object update);
+	public abstract void applyIncUnsafe(int column_id, final Object update);
 
 	public abstract int get_update_size();
 
@@ -61,7 +61,7 @@ public abstract interface Row extends Serializable {
 	 * 
 	 * @param capacity
 	 */
-	public abstract void Init(int capacity);
+	public abstract void init(int capacity);
 
 	/**
 	 * Initialize update. Initialized update represents "zero update". In other words,
@@ -70,7 +70,7 @@ public abstract interface Row extends Serializable {
 	 * @param column_id
 	 * @param zero
 	 */
-	public abstract void InitUpdate(int column_id, Object zero);
+	public abstract void initUpdate(int column_id, Object zero);
 
 	/**
 	 * 
@@ -78,6 +78,6 @@ public abstract interface Row extends Serializable {
 	 * @param update1
 	 * @param update2
 	 */
-	public abstract void SubtractUpdates(int column_id, Object update1, final Object update2);
+	public abstract void subtractUpdates(int column_id, Object update1, final Object update2);
 
 }

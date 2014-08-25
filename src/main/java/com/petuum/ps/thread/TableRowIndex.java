@@ -6,4 +6,10 @@ package com.petuum.ps.thread;
 public class TableRowIndex{
     public int tableId;
     public int rowId;
+
+    public TableRowIndex(){}
+    public TableRowIndex(int tableId, int rowId) {
+        this.tableId = tableId;
+        this.rowId = rowId;
+    }
 }
