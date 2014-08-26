@@ -2,6 +2,7 @@ package com.petuum.ps.common.client;
 import com.petuum.ps.common.ClientTableConfig;
 import com.petuum.ps.common.Row;
 import com.petuum.ps.common.consistency.ConsistencyController;
+import com.petuum.ps.oplog.TableOpLog;
 
 import java.util.Map;
 
@@ -13,10 +14,11 @@ import java.util.Map;
 public class ClientTable {
 
 	private ConsistencyController consistency_controller_;
-	private int row_type_;
-	private Row sample_row_;
-	private int table_id_;
-	private ThreadTable thread_cache_;
+	private int rowType;
+	private Row sampleTow;
+	private int tableId;
+	private ThreadLocal<ThreadTable> threadCache;
+    private TableOpLog opLog;
 
 	public ClientTable(){
 
@@ -69,6 +71,14 @@ public class ClientTable {
 		return 0;
 	}
 
+    /**
+     *
+     * @return opLog
+     */
+    public TableOpLog getOpLog(){
+        return opLog;
+    }
+
 	public final Row getSampleRow(){
 		return null;
 	}
@@ -108,7 +118,7 @@ public class ClientTable {
 	 * @param rowId
 	 * @param updates
 	 */
-	public void ThreadBatchInc(int rowId, Map<Integer, Object> updates){
+	public void threadBatchInc(int rowId, Map<Integer, Object> updates){
 
 	}
 

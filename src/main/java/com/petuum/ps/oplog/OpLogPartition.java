@@ -10,21 +10,22 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 
 /**
  * Created by ZengJichuan on 2014/8/25.
  */
 public class OpLogPartition {
-    private int updateSize;
+//    private int updateSize;
     private HashMap<Integer, RowOpLog> opLogMap;
     private Striped<Lock> locks;
     private Row sampleRow;
     private int tableId;
 
-    public OpLogPartition(int updateSize, Row sampleRow, int tableId) {
-        this.updateSize = updateSize;
+    public OpLogPartition(Row sampleRow, int tableId) {
+//        this.updateSize = updateSize;
         this.opLogMap = new HashMap<Integer, RowOpLog>();
-        this.locks = Striped.lazyWeakLock(GlobalContext.getLockPoolSize());
+        this.locks = Striped.lock(GlobalContext.getLockPoolSize());
         this.sampleRow = sampleRow;
         this.tableId = tableId;
     }

@@ -13,6 +13,7 @@ import com.petuum.ps.common.util.IntBox;
 import com.petuum.ps.common.util.RecordBuff;
 import com.petuum.ps.common.util.VectorClock;
 import com.petuum.ps.common.util.VectorClockMT;
+import com.petuum.ps.oplog.TableOpLog;
 import com.petuum.ps.server.CallBackSubs;
 import com.sun.deploy.util.SessionState;
 import com.sun.org.apache.xpath.internal.operations.Bool;
@@ -79,9 +80,7 @@ public class BgWorkers {
     private static Method myCreateClientRow;
     private static Method getRowOpLog;
     /* Functions for SSPValue */
-    private static void handleClockMsg(boolean clockAdvanced){
 
-    }
     //function pointer GetRowOpLogFunc
 
     private static Vector<Runnable> threads;
@@ -276,7 +275,43 @@ public class BgWorkers {
    // private static boolean SSPGetRowOpLog(TableOpLog tableOpLog, int rowId, RowOpLog rowOpLog){
    //     return tableOpLog.getEraseOpLog(rowId, rowOpLog);
    // }
-    private BgOpLog getOpLogAndIndex(){
+    private static void handleClockMsg(boolean clockAdvanced){
+        BgOpLog bgOpLog = getOpLogAndIndex();
+        createOpLogMsgs(bgOpLog);
+        Map<Integer, ClientSendOpLogMsg> serverOpLogMsgMap = bgContext.get().serverOpLogMsgMap;
+        for (Map.Entry<Integer, ClientSendOpLogMsg> entry : serverOpLogMsgMap){
+            entry.getValue().setIsClock(clockAdvanced);
+            entry.getValue().setClientId(GlobalContext.getClientId());
+            entry.getValue().setVersion(bgContext.get().version);
+            int serverId = entry.getKey();
+
+            MemTransfer.transferMem(commBus, serverId, entry.getValue());
+            // delete message after send
+
+            bgContext.get().rowRequestOpLogMgr.
+                   addOpLog(bgContext.get().version, bgOpLog);
+            bgContext.get().rowRequestOpLogMgr.informVersionInc();
+
+            // delete bgOpLog
+
+        }
+
+    }
+
+    /**
+     *
+     * @param bgOpLog
+     */
+    private static void createOpLogMsgs(BgOpLog bgOpLog) {
+
+
+    }
+
+    /**
+     * what is the function of index?
+     * @return
+     */
+    private static BgOpLog getOpLogAndIndex(){
         Vector<Integer> serverIds = GlobalContext.getServerIds();
         int localBgIndex = ThreadContext.getId() - idStart;
         // get thread-specific data structure to assist oplog message creation
@@ -287,15 +322,15 @@ public class BgWorkers {
         BgOpLog bgOplog = new BgOpLog();
         for(Map.Entry<Integer, ClientTable> entry : tables.entrySet()){
             int tableId = entry.getKey();
-       //     TableOpLog tableOpLog = entry.getValue().getOpLog();
+            TableOpLog tableOpLog = entry.getValue().getOpLog();
 
             //Get OpLog index
             /**
              * ...
              */
          //   int tableUpdataSize = entry.getValue().getSampleRow().getUpdateSize();
-         //   BgOpLogPartition bgTableOpLog = new BgOpLogPartition(tableId, tableUpdataSize);
-
+            BgOpLogPartition bgTableOpLog = new BgOpLogPartition(tableId);
+            for ()
             for (int i = 0; i < GlobalContext.getNumServers(); i++) {
            //     tableNumBytesByServer.put(serverIds.get(i), Integer.SIZE);
             }
