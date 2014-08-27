@@ -13,6 +13,7 @@ import com.petuum.ps.common.util.IntBox;
 import com.petuum.ps.common.util.RecordBuff;
 import com.petuum.ps.common.util.VectorClock;
 import com.petuum.ps.common.util.VectorClockMT;
+import com.petuum.ps.oplog.OpLogSerializer;
 import com.petuum.ps.oplog.TableOpLog;
 import com.petuum.ps.server.CallBackSubs;
 import com.sun.deploy.util.SessionState;
@@ -299,12 +300,28 @@ public class BgWorkers {
     }
 
     /**
-     *
+     * construct serverOpLogMsgMap
      * @param bgOpLog
      */
     private static void createOpLogMsgs(BgOpLog bgOpLog) {
+        Map<Integer, ClientSendOpLogMsg> serverOpLogMsgMap = bgContext.get().serverOpLogMsgMap;
+        Map<Integer, Map<Integer, Integer>> serverTableOpLogSizeMap = bgContext.
+                get().serverTableOpLogSizeMap;
+        Map<Integer, Integer> serverOpLogMsgSizeMap = bgContext.get().serverOpLogMsgSizeMap;
 
-
+        //initialize ?
+        for (Map.Entry<Integer, Integer> entry : serverTableOpLogSizeMap.entrySet()){
+            serverOpLogMsgMap.put(serverId, new ClientSendOpLogMsg());
+            OpLogSerializer opLogSerializer = new OpLogSerializer();
+            opLogSerializer.init()
+        }
+        for (Map.Entry<Integer, ClientTable> entry : tables.entrySet()){
+            int tableId = entry.getKey();
+            BgOpLogPartition opLogPartition = bgOpLog.get(tableId);
+            opLogPartition.serializedByServer(serverOpLogMsgMap);
+        }
+        ByteBuffer bb;
+        bb.
     }
 
     /**

@@ -14,10 +14,10 @@ public class MemTransfer {
         if (commBus.isLocalEntity(recvId)){
             MemTransferMsg memTransferMsg = new MemTransferMsg();
             InitMemTransferMsg(memTransferMsg, msg);
-            int sentSize = commBus.sendInproc(serverId, memTransferMsg.getMem());
+            int sentSize = commBus.sendInproc(recvId, memTransferMsg.getMem());
             return true;
         }else{
-            int sentSize = commBus.sendInterproc(serverId, msg.getMem());
+            int sentSize = commBus.sendInterproc(recvId, msg.getMem());
             return false;
         }
     }

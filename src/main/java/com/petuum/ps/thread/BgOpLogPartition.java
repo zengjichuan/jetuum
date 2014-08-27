@@ -3,6 +3,7 @@ package com.petuum.ps.thread;
 import com.petuum.ps.common.oplog.RowOpLog;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -24,4 +25,14 @@ public class BgOpLogPartition {
         opLogMap.put(rowId, rowOpLog);
     }
 
+    public void serializedByServer(Map<Integer, ClientSendOpLogMsg> serverOpLogMsgMap) {
+        Byte
+        for (HashMap.Entry<Integer, RowOpLog> entry : opLogMap.entrySet()){
+            int rowId = entry.getKey();
+            int serverId = GlobalContext.getRowPartitionServerId(tableId, rowId);
+            RowOpLog rowOpLog = entry.getValue();
+            serverOpLogMsgMap.get(serverId).getTableOffset.append(rowOpLog);           //need implementation in Msg
+
+        }
+    }
 }
