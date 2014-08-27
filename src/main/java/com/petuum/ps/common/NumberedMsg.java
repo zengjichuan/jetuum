@@ -41,8 +41,10 @@ public class NumberedMsg {
     protected static int getSize() {
         return ACK_NUM_OFFSET + INT_LENGTH;
     }
+
     public NumberedMsg(Msg msg) {
-        sequence = ByteBuffer.wrap(msg.data());
+        if(msg != null)
+            sequence = ByteBuffer.wrap(msg.data());
     }
 
     public int getMsgType() {

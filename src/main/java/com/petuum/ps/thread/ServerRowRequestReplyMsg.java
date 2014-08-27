@@ -18,6 +18,8 @@ public class ServerRowRequestReplyMsg extends ArbitrarySizedMsg {
 
     public ServerRowRequestReplyMsg(Msg msg) {
         super(msg);
+        if(msg == null)
+            sequence = ByteBuffer.allocate(ArbitrarySizedMsg.getSize());
         sequence.putInt(MSG_TYPE_OFFSET, K_SERVER_ROW_REQUEST_REPLY);
     }
 
@@ -47,7 +49,6 @@ public class ServerRowRequestReplyMsg extends ArbitrarySizedMsg {
 
     public ByteBuffer getRowData() {
         byte[] byteList = sequence.array();
-        return ByteBuffer.wrap(byteList, ArbitrarySizedMsg.getHeaderSize(),
-                byteList.length - ArbitrarySizedMsg.getHeaderSize());
+        return ByteBuffer.wrap(byteList, getHeaderSize(), byteList.length - getHeaderSize());
     }
 }

@@ -1,0 +1,34 @@
+package com.petuum.ps.thread;
+
+import zmq.Msg;
+
+import java.nio.ByteBuffer;
+
+/**
+ * Created by suyuxin on 14-8-27.
+ */
+public class ServerPushRowMsg extends ArbitrarySizedMsg {
+
+    protected static final int CLOCK_OFFSET = ArbitrarySizedMsg.getHeaderSize();
+    protected static final int VERSION_OFFSET = CLOCK_OFFSET + INT_LENGTH;
+    protected static final int IS_CLOCK_OFFSET = CLOCK_OFFSET + 2 * INT_LENGTH;
+    public ServerPushRowMsg(Msg msg) {
+        super(msg);
+        sequence.putInt(MSG_TYPE_OFFSET, K_SERVER_PUSH_ROW);
+    }
+
+    public ServerPushRowMsg(int avaiSize) {
+        super(null);
+        sequence = ByteBuffer.allocate(getHeaderSize() + avaiSize);
+        sequence.putInt(MSG_TYPE_OFFSET, K_SERVER_PUSH_ROW);
+    }
+
+    public static int getHeaderSize() {
+        return IS_CLOCK_OFFSET + 1;//IS_CLOCK_OFFSET is boolean type
+    }
+
+    public ByteBuffer getData() {
+        byte[] byteList = sequence.array();
+        return ByteBuffer.wrap(byteList, getHeaderSize(), byteList.length - getHeaderSize());
+    }
+}
