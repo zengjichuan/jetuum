@@ -21,6 +21,7 @@ public class ServerPushRowMsg extends ArbitrarySizedMsg {
         super(null);
         sequence = ByteBuffer.allocate(getHeaderSize() + avaiSize);
         sequence.putInt(MSG_TYPE_OFFSET, K_SERVER_PUSH_ROW);
+        sequence.putInt(AVAI_SIZE_OFFSET, avaiSize);
     }
 
     public static int getHeaderSize() {
