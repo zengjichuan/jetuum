@@ -20,7 +20,7 @@ public class NumberedMsg {
     public static final int K_ROW_REQUEST = 7;
     public static final int K_ROW_REQUEST_REPLY = 8;
     public static final int K_SERVER_ROW_REQUEST_REPLY = 9;
-    public static final int K_BG_BLOCK = 10;
+    public static final int K_BG_CLOCK = 10;
     public static final int K_BG_SEND_OP_LOG = 11;
     public static final int K_CLIENT_SEND_OP_LOG = 12;
     public static final int K_CONNECT_SERVER = 13;
@@ -31,29 +31,32 @@ public class NumberedMsg {
     public static final int K_SERVER_PUSH_ROW = 18;
     public static final int K_MEM_TRANSFER = 50;
 
+    protected static final int INT_LENGTH = 4;
+
     protected static final int MSG_TYPE_OFFSET = 0;
-    protected static final int SEQ_NUM_OFFSET = 1;
-    protected static final int ACK_NUM_OFFSET = 2;
+    protected static final int SEQ_NUM_OFFSET = 1 * INT_LENGTH;
+    protected static final int ACK_NUM_OFFSET = 2 * INT_LENGTH;
+
 
     protected static int getSize() {
-        return ACK_NUM_OFFSET + 1;
+        return ACK_NUM_OFFSET + INT_LENGTH;
     }
     public NumberedMsg(Msg msg) {
-        sequence = ByteBuffer.wrap(msg.data()).asIntBuffer().array();
+        sequence = ByteBuffer.wrap(msg.data());
     }
 
     public int getMsgType() {
-        return sequence[MSG_TYPE_OFFSET];
+        return sequence.getInt(MSG_TYPE_OFFSET);
     }
 
     public int getSeqNum() {
-        return sequence[SEQ_NUM_OFFSET];
+        return sequence.getInt(SEQ_NUM_OFFSET);
     }
 
     public int getAckNum() {
-        return sequence[ACK_NUM_OFFSET];
+        return sequence.getInt(ACK_NUM_OFFSET);
     }
 
-    protected int[] sequence;
+    protected ByteBuffer sequence;
 }
 

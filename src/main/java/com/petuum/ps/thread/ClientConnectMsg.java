@@ -11,14 +11,14 @@ public class ClientConnectMsg extends NumberedMsg {
     protected static final int CLIENT_ID_OFFSET = NumberedMsg.getSize();
     public ClientConnectMsg(Msg msg) {
         super(msg);
-        sequence[MSG_TYPE_OFFSET] = K_CLIENT_CONNECT;
+        sequence.putInt(MSG_TYPE_OFFSET, K_CLIENT_CONNECT);
     }
 
     public int getClientID() {
-        return sequence[CLIENT_ID_OFFSET];
+        return sequence.getInt(CLIENT_ID_OFFSET);
     }
 
     protected static int getSize() {
-        return CLIENT_ID_OFFSET + 1;
+        return CLIENT_ID_OFFSET + INT_LENGTH;
     }
 }

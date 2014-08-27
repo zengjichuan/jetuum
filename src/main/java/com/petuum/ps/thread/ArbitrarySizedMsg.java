@@ -3,6 +3,8 @@ package com.petuum.ps.thread;
 import com.petuum.ps.common.NumberedMsg;
 import zmq.Msg;
 
+import java.nio.ByteBuffer;
+
 /**
  * Created by suyuxin on 14-8-25.
  */
@@ -13,10 +15,10 @@ public class ArbitrarySizedMsg extends NumberedMsg {
     }
 
     public int getAvaiSize() {
-        return sequence[super.getSize()];
+        return sequence.getInt(super.getSize());
     }
-    public int getHeaderSize() {
-        return super.getSize() + 1;
+    public static int getHeaderSize() {
+        return NumberedMsg.getSize() + INT_LENGTH;
     }
 
 }

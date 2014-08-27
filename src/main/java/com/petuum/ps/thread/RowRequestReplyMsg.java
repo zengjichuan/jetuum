@@ -10,6 +10,6 @@ public class RowRequestReplyMsg extends NumberedMsg {
 
     public RowRequestReplyMsg(Msg msg) {
         super(msg);
-        sequence[MSG_TYPE_OFFSET] = K_ROW_REQUEST_REPLY;
+        sequence.putInt(MSG_TYPE_OFFSET, K_ROW_REQUEST_REPLY);
     }
 }

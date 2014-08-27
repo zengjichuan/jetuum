@@ -10,6 +10,6 @@ public class ServerConnectMsg extends NumberedMsg {
 
     public ServerConnectMsg(Msg msg) {
         super(msg);
-        sequence[MSG_TYPE_OFFSET] = NumberedMsg.K_SERVER_CONNECT;
+        sequence.putInt(MSG_TYPE_OFFSET, K_SERVER_CONNECT);
     }
 }

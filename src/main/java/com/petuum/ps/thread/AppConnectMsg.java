@@ -10,6 +10,6 @@ public class AppConnectMsg extends NumberedMsg {
 
     public AppConnectMsg(Msg msg) {
         super(msg);
-        sequence[MSG_TYPE_OFFSET] = K_APP_CONNECT;
+        sequence.putInt(MSG_TYPE_OFFSET, K_APP_CONNECT);
     }
 }
