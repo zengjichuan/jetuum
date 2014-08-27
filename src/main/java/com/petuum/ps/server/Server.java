@@ -30,7 +30,7 @@ public class Server {
 
     public Server() {
     }
-    public void Init(int serverId){
+    public void init(int serverId){
         for (Map.Entry<Integer, Vector<Integer>> entry : clientBgMap.entrySet()){
             VectorClock vectorClock = new VectorClock(entry.getValue());
             clientVectorClockMap.put(entry.getKey(), vectorClock);
