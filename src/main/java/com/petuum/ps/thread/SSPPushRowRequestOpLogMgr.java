@@ -48,7 +48,7 @@ public class SSPPushRowRequestOpLogMgr implements RowRequestOpLogMgr {
         return null;
     }
 
-    public BgOpLog opLogiterNext(IntBox version) {
+    public BgOpLog opLogIterNext(IntBox version) {
         return null;
     }
 }

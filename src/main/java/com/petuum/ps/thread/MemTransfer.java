@@ -3,12 +3,12 @@ package com.petuum.ps.thread;
 import com.petuum.ps.common.comm.CommBus;
 
 /**
- * Transfer memory of msg (of type MemBlock) ownership to thread recv_id, who is
- * responsible for destroying the received MemBlock via DestroyTransferredMem().
- * Return true if the memory is transferred without copying otherwise return false.
- * MemBlock is released from msg regardless wether or not the memory is copied.
- * Created by ZengJichuan on 2014/8/26.
- */
+* Transfer memory of msg (of type MemBlock) ownership to thread recv_id, who is
+* responsible for destroying the received MemBlock via DestroyTransferredMem().
+* Return true if the memory is transferred without copying otherwise return false.
+* MemBlock is released from msg regardless wether or not the memory is copied.
+* Created by ZengJichuan on 2014/8/26.
+*/
 public class MemTransfer {
     public static boolean transferMem(CommBus commBus, int recvId, ArbitrarySizedMsg msg){
         if (commBus.isLocalEntity(recvId)){

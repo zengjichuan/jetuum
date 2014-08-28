@@ -8,8 +8,8 @@ import com.petuum.ps.common.consistency.ConsistencyModel;
 import java.io.IOException;
 
 /**
- * Created by suyuxin on 14-8-23.
- */
+* Created by suyuxin on 14-8-23.
+*/
 public class MatrixFact {
     private static String hostFile = "localserver";
     private static String dataFile = "3x3_9blocks";

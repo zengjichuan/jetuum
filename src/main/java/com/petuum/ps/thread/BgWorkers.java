@@ -17,6 +17,7 @@ import com.petuum.ps.oplog.TableOpLog;
 import com.petuum.ps.server.CallBackSubs;
 import com.sun.deploy.util.SessionState;
 import com.sun.org.apache.xpath.internal.operations.Bool;
+import org.apache.commons.lang.SerializationUtils;
 import zmq.Msg;
 
 import java.lang.reflect.InvocationTargetException;
@@ -31,8 +32,8 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Created by zjc on 2014/8/14.
- */
+* Created by zjc on 2014/8/14.
+*/
 public class BgWorkers {
     private static class BgContext {
 
@@ -587,15 +588,15 @@ public class BgWorkers {
 
             int currentTableId = -1;
             int rowType = 0;
-            ClientTable clientTable;
+            ClientTable clientTable = null;
             while(data != null){
                 if(currentTableId != tableId.intValue) {
                     Preconditions.checkNotNull(clientTable = tables.get(tableId));
                     rowType = clientTable.getRowType();
                     currentTableId = tableId.intValue;
                 }
-                Row rowData = ClassRegistry<Row>.getRegistry().createObject(rowType);
-                rowData.deserialize(data);
+//                Row rowData = ClassRegistry<Row>.getRegistry().createObject(rowType);
+                Row rowData = (Row) SerializationUtils.deserialize(data.array());
                 applyOpLogsAndInsertRow(tableId.intValue, clientTable, rowId.intValue, version,
                         rowData, 0);
                 data = rowReader.next(tableId, rowId);
@@ -610,8 +611,8 @@ public class BgWorkers {
 
             ClientTable clientTable = tables.get(tableId);
             int rowType = clientTable.getRowType();
-            Row rowData = ClassRegister<Row>.getRegistry().createObject(rowType);
-            rowData.deserialize(serverRowRequestReplyMsg.getRowdata());
+//            Row rowData = ClassRegister<Row>.getRegistry().createObject(rowType);
+            Row rowData = (Row) SerializationUtils.deserialize(serverRowRequestReplyMsg.getRowData().array());
             bgContext.get().rowRequestOpLogMgr.serverAcknowledgeVersion(serverId.intValue, version);
             applyOpLogsAndInsertRow(tableId, clientTable, rowId, version, rowData, clock);
 
@@ -658,16 +659,20 @@ public class BgWorkers {
             if(rowVersion + 1 < bgContext.get().version){
                 BgOpLog bgOpLog = bgContext.get().rowRequestOpLogMgr.
                         opLogIterInit(rowVersion + 1, bgContext.get().version - 1);
-                int opLogVersion = rowVersion + 1;
+                IntBox opLogVersion = new IntBox(rowVersion + 1);
                 while (bgOpLog != null){
                     BgOpLogPartition bgOpLogPartition = bgOpLog.get(tableId);
                     // OpLogs that are after (exclusively) version should be applied
                     RowOpLog rowOpLog = bgOpLogPartition.findOpLog(rowId);
                     if(rowOpLog != null){
-                         columnId;
-                        rowOpLog
-                        while()
+                        IntBox columnId = new IntBox();
+                        Object update = rowOpLog.beginIterate(columnId);
+                        while(update != null){
+                            rowData.applyInc(columnId.intValue, update);
+                            update = rowOpLog.next(columnId);
+                        }
                     }
+                    bgOpLog = bgContext.get().rowRequestOpLogMgr.opLogIterNext(opLogVersion);
                 }
             }
         }

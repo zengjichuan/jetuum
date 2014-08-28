@@ -13,10 +13,10 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * @author Yuxin Su
- * @version 1.0
- * @created 19-??-2014 15:26:05
- */
+* @author Yuxin Su
+* @version 1.0
+* @created 19-??-2014 15:26:05
+*/
 public class TableGroup {
 
 	/**
@@ -29,7 +29,7 @@ public class TableGroup {
     private Method clockInternal;
 
 	/**
-	 * 
+	 *
 	 * @param tableGroupConfig
 	 * @param tableAccess
 	 */
@@ -86,7 +86,7 @@ public class TableGroup {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param table_id
 	 * @param table_config
 	 */
@@ -103,7 +103,7 @@ public class TableGroup {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param table_id
 	 */
 	public ClientTable getTableOrDie(int table_id){
