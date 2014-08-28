@@ -1,7 +1,12 @@
 package com.petuum.ps.thread;
 
 import com.petuum.ps.common.oplog.RowOpLog;
+import com.petuum.ps.common.util.IntBox;
+import com.sun.org.apache.xml.internal.serializer.SerializationHandler;
+import org.apache.commons.lang.SerializationUtils;
 
+import java.io.Serializable;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,11 +17,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class BgOpLogPartition {
     private HashMap<Integer, RowOpLog> opLogMap;
     private int tableId;
-//    private int updateSize;
+    private int updateSize;
 
-    public BgOpLogPartition(int tableId) {
+    public BgOpLogPartition(int tableId, int updateSize) {
         this.tableId = tableId;
-//        this.updateSize = updateSize;
+        this.updateSize = updateSize;
     }
     public RowOpLog findOpLog(int rowId){
         return opLogMap.get(rowId);
@@ -25,14 +30,40 @@ public class BgOpLogPartition {
         opLogMap.put(rowId, rowOpLog);
     }
 
-    public void serializedByServer(Map<Integer, ClientSendOpLogMsg> serverOpLogMsgMap) {
-        Byte
+    public void serializedByServer(Map<Integer, ByteBuffer> bufferByServer) {
+        Map<Integer, Integer> offsetByServer = new HashMap<Integer, Integer>();
+        // init number of rows to 0
+        for (int serverId : GlobalContext.getServerIds()){
+            offsetByServer.put(serverId, Integer.SIZE);
+            bufferByServer.get(serverId).putInt(0);
+        }
         for (HashMap.Entry<Integer, RowOpLog> entry : opLogMap.entrySet()){
             int rowId = entry.getKey();
             int serverId = GlobalContext.getRowPartitionServerId(tableId, rowId);
             RowOpLog rowOpLog = entry.getValue();
-            serverOpLogMsgMap.get(serverId).getTableOffset.append(rowOpLog);           //need implementation in Msg
 
+            ByteBuffer mem = bufferByServer.get(serverId);
+            mem.position(offsetByServer.get(serverId));
+
+            mem.putInt(rowId);                          //rowId
+            int numUpdates = rowOpLog.getSize();
+            mem.putInt(numUpdates);             //mem update number
+            int memColIdOffset = mem.position();
+            int memUpdatesOffset = mem.position() + numUpdates * Integer.SIZE;
+
+            IntBox columnId = new IntBox();
+            Object update = rowOpLog.beginIterate(columnId);
+            while(update != null){
+                mem.putInt(memColIdOffset, columnId.intValue);
+                memColIdOffset += Integer.SIZE;
+
+                mem.put(SerializationUtils.serialize((Serializable) update), memUpdatesOffset, updateSize);
+                update = rowOpLog.next(columnId);
+                memUpdatesOffset += updateSize;
+            }
+            offsetByServer.put(serverId, offsetByServer.get(serverId) + Integer.SIZE + Integer.SIZE +
+                    (Integer.SIZE + updateSize) * numUpdates);
+            mem.putInt(0, mem.getInt(0)+1);         //row num add 1
         }
     }
 }

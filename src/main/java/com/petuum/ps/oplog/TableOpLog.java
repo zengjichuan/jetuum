@@ -2,6 +2,7 @@ package com.petuum.ps.oplog;
 
 import com.petuum.ps.common.Row;
 import com.petuum.ps.common.oplog.RowOpLog;
+import com.petuum.ps.common.util.BoolBox;
 import com.petuum.ps.thread.GlobalContext;
 
 import java.util.Map;

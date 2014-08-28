@@ -3,16 +3,15 @@ package com.petuum.ps.thread;
 import com.google.common.base.Preconditions;
 import com.petuum.ps.common.ClientTableConfig;
 import com.petuum.ps.common.HostInfo;
+import com.petuum.ps.common.NumberedMsg;
 import com.petuum.ps.common.Row;
 import com.petuum.ps.common.client.ClientRow;
 import com.petuum.ps.common.client.ClientTable;
+import com.petuum.ps.common.client.SerializedRowReader;
 import com.petuum.ps.common.comm.CommBus;
 import com.petuum.ps.common.comm.Config;
 import com.petuum.ps.common.oplog.RowOpLog;
-import com.petuum.ps.common.util.IntBox;
-import com.petuum.ps.common.util.RecordBuff;
-import com.petuum.ps.common.util.VectorClock;
-import com.petuum.ps.common.util.VectorClockMT;
+import com.petuum.ps.common.util.*;
 import com.petuum.ps.oplog.OpLogSerializer;
 import com.petuum.ps.oplog.TableOpLog;
 import com.petuum.ps.server.CallBackSubs;
@@ -273,9 +272,9 @@ public class BgWorkers {
         commBus.commBusRecvAny(senderId, msg);
     }
 
-   // private static boolean SSPGetRowOpLog(TableOpLog tableOpLog, int rowId, RowOpLog rowOpLog){
-   //     return tableOpLog.getEraseOpLog(rowId, rowOpLog);
-   // }
+   private static RowOpLog SSPGetRowOpLog(TableOpLog tableOpLog, int rowId){
+        return tableOpLog.getEraseOpLog(rowId);
+   }
     private static void handleClockMsg(boolean clockAdvanced){
         BgOpLog bgOpLog = getOpLogAndIndex();
         createOpLogMsgs(bgOpLog);
@@ -309,19 +308,42 @@ public class BgWorkers {
                 get().serverTableOpLogSizeMap;
         Map<Integer, Integer> serverOpLogMsgSizeMap = bgContext.get().serverOpLogMsgSizeMap;
 
+        Map<Integer, Map<Integer, ByteBuffer>> tableServerMemMap =
+                new HashMap<Integer, Map<Integer, ByteBuffer>>();
         //initialize ?
-        for (Map.Entry<Integer, Integer> entry : serverTableOpLogSizeMap.entrySet()){
-            serverOpLogMsgMap.put(serverId, new ClientSendOpLogMsg());
+        for (Map.Entry<Integer, ClientTable> entry : tables.entrySet()){
+            tableServerMemMap.put(entry.getKey(), new HashMap<Integer, ByteBuffer>());
+        }
+
+        for (Map.Entry<Integer, Map<Integer, Integer>> entryServer : serverTableOpLogSizeMap.entrySet()){
+            int serverId = entryServer.getKey();
             OpLogSerializer opLogSerializer = new OpLogSerializer();
-            opLogSerializer.init()
+            serverOpLogMsgSizeMap.put(serverId, opLogSerializer.init(entryServer.getValue()));
+            serverOpLogMsgMap.put(serverId, new ClientSendOpLogMsg(serverOpLogMsgSizeMap(serverId)));
+
+            opLogSerializer.assignMem(serverOpLogMsgMap.get(serverId).getData());
+            //get the basic start buffer
+            ByteBuffer mem = serverOpLogMsgMap.get(serverId).getData();
+
+            for (Map.Entry<Integer, ClientTable> entryTable : tables.entrySet()){
+                int tableId = entryTable.getKey();
+                int tablePos = opLogSerializer.getTablePos(tableId);
+                //table id
+                mem.putInt(tablePos, tableId);
+                //table update size
+                mem.putInt(tablePos + Integer.SIZE, entryTable.getValue().getUpdateSize());
+                //offset for table rows
+                mem.position(tablePos + Integer.SIZE + Integer.SIZE);
+                //slice from the position to the limit(default the end)
+                tableServerMemMap.get(tableId).put(serverId, mem.slice());
+
+            }
         }
         for (Map.Entry<Integer, ClientTable> entry : tables.entrySet()){
             int tableId = entry.getKey();
             BgOpLogPartition opLogPartition = bgOpLog.get(tableId);
-            opLogPartition.serializedByServer(serverOpLogMsgMap);
+            opLogPartition.serializedByServer(tableServerMemMap.get(tableId));
         }
-        ByteBuffer bb;
-        bb.
     }
 
     /**
@@ -333,30 +355,61 @@ public class BgWorkers {
         int localBgIndex = ThreadContext.getId() - idStart;
         // get thread-specific data structure to assist oplog message creation
         // those maps may contain legacy data from previous runs
-        Map<Integer, Map<Integer, Integer>> serverTableOpLogSizeMap = bgContext.get().serverTableOpLogSizeMap;
+        Map<Integer, Map<Integer, Integer>> serverTableOpLogSizeMap =
+                bgContext.get().serverTableOpLogSizeMap;
         Map<Integer, Integer> tableNumBytesByServer = bgContext.get().tableServerOpLogSizeMap;
 
         BgOpLog bgOplog = new BgOpLog();
-        for(Map.Entry<Integer, ClientTable> entry : tables.entrySet()){
-            int tableId = entry.getKey();
-            TableOpLog tableOpLog = entry.getValue().getOpLog();
+        for(Map.Entry<Integer, ClientTable> entryTable : tables.entrySet()){
+            int tableId = entryTable.getKey();
+            TableOpLog tableOpLog = entryTable.getValue().getOpLog();
 
             //Get OpLog index
-            /**
-             * ...
-             */
-         //   int tableUpdataSize = entry.getValue().getSampleRow().getUpdateSize();
-            BgOpLogPartition bgTableOpLog = new BgOpLogPartition(tableId);
-            for ()
-            for (int i = 0; i < GlobalContext.getNumServers(); i++) {
-           //     tableNumBytesByServer.put(serverIds.get(i), Integer.SIZE);
+            Map<Integer, Boolean> newTableOpLogIndex =
+                    entryTable.getValue().getAndResetOpLogIndex(localBgIndex);
+            int tableUpdateSize = entryTable.getValue().getSampleRow().get_update_size();
+            BgOpLogPartition bgTableOplog = new BgOpLogPartition(tableId, tableUpdateSize);
+            for (int serverId : serverIds){
+                tableNumBytesByServer.put(serverId, Integer.SIZE);
             }
-            /**
-             * ...
-             */
-            //for ( Map.Entry<Integer, Integer> serverEntry : tableNumBytesByServer.entrySet()){
-            //    serverTableOpLogSizeMap.get(serverEntry.getKey()).put(tableId, serverEntry.getValue());
-            //}
+
+            for (Map.Entry<Integer, Boolean> entryIndex : newTableOpLogIndex.entrySet()){
+                int rowId = entryIndex.getKey();
+                RowOpLog rowOpLog = null;
+                try {
+                    rowOpLog = (RowOpLog) getRowOpLog.invoke(BgWorkers.class,
+                            new Object[]{tableOpLog, rowId});
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+                if (rowOpLog == null){
+                    continue;
+                }
+                //null in java hashmap means not found, but also means the value may be null too. it is hard
+                //to distinguish, it may be solved by using guava special null
+//                if (found && (row_oplog == 0)) {
+//                    table_oplog_index_[table_id][row_id] = true;
+//                    VLOG(0) << "found && row_oplog == 0";
+//                    continue;
+//                }
+                // update oplog message size
+                int serverId = GlobalContext.getRowPartitionServerId(tableId, rowId);
+                int numUpdate = rowOpLog.getSize();
+                // 1) row id
+                // 2) number of updates in that row
+                // 3) total size for column ids
+                // 4) total size for update array
+                tableNumBytesByServer.put(serverId, tableNumBytesByServer.get(serverId)
+                        + Integer.SIZE + Integer.SIZE + Integer.SIZE * numUpdate
+                        + tableUpdateSize * numUpdate);
+                bgTableOplog.insertOpLog(rowId, rowOpLog);
+            }
+            bgOplog.add(tableId, bgTableOplog);
+            for (Map.Entry<Integer, Integer> entry : tableNumBytesByServer.entrySet()){
+                serverTableOpLogSizeMap.get(entry.getKey()).put(tableId, entry.getValue());
+            }
         }
         return bgOplog;
     }
@@ -401,7 +454,7 @@ public class BgWorkers {
             }
             Msg zmqMsg = new Msg();
             IntBox senderId = new IntBox();
-            MsgType msgType;
+            int msgType;
             ByteBuffer msgMem;
             boolean destroyMem = false;
             while(true){
@@ -425,14 +478,14 @@ public class BgWorkers {
                 }
 
                 switch (msgType){
-                    case kAppConnect:
+                    case NumberedMsg.K_APP_CONNECT:
                     {
                         numConnectedAppThreads.intValue++;
                         Preconditions.checkArgument(
                                 numConnectedAppThreads.intValue<=GlobalContext.getNumAppThreads());
                     }
                     break;
-                    case kAppThreadDereg:
+                    case NumberedMsg.K_APP_THREAD_DEREG:
                     {
                         numDeregisteredAppThreads.intValue++;
                         if (numDeregisteredAppThreads.intValue == GlobalContext.getNumAppThreads()){
@@ -455,7 +508,7 @@ public class BgWorkers {
                         }
                     }
                     break;
-                    case kServerShutDownAck:
+                    case NumberedMsg.K_SERVER_SHUT_DOWN_ACK:
                     {
                         numShutdownAckedServers.intValue++;
                         if(numShutdownAckedServers.intValue == GlobalContext.getNumServers() + 1){
@@ -465,31 +518,31 @@ public class BgWorkers {
                         }
                     }
                     break;
-                    case kRowRequest:
+                    case NumberedMsg.K_ROW_REQUEST:
                     {
                         RowRequestMsg rowRequestMsg = new RowRequestMsg(msgMem);
                         checkForwardRowRequestToServer(senderId, rowRequestMsg);
                     }
                     break;
-                    case kServerRowRequestReply:
+                    case NumberedMsg.K_SERVER_ROW_REQUEST_REPLY:
                     {
                         ServerRowRequestReplyMsg serverRowRequestReplyMsg =
                                 new ServerRowRequestReplyMsg(msgMem);
                         handleServerRowRequestReply(senderId, serverRowRequestReplyMsg);
                     }
                     break;
-                    case kBgClock:
+                    case NumberedMsg.K_BG_CLOCK:
                     {
                         handleClockMsg(true);
                         //STATS_BG_CLOCK();
                     }
                     break;
-                    case kBgSendOpLog:
+                    case NumberedMsg.K_BG_SEND_OP_LOG:
                     {
                         handleClockMsg(false);
                     }
                     break;
-                    case kServerPushRow:
+                    case NumberedMsg.K_SERVER_PUSH_ROW:
                     {
                         ServerPushRowMsg serverPushRowMsg = new ServerPushRowMsg(msgMem);
                         int version = serverPushRowMsg.getVersion();
@@ -566,7 +619,7 @@ public class BgWorkers {
             int clockToRequest = bgContext.get().rowRequestOpLogMgr.informReply(tableId, rowId, clock,
                     bgContext.get().version, appThreadIds);
             if (clockToRequest >= 0){
-                RowRequestMsg rowRequestMsg = new RowReqeustMsg();
+                RowRequestMsg rowRequestMsg = new RowRequestMsg(null);
                 rowRequestMsg.setTableId(tableId);
                 rowRequestMsg.setRowId(rowId);
                 rowRequestMsg.setClock(clockToRequest);
@@ -574,7 +627,7 @@ public class BgWorkers {
                 int sentSize = commBusSendAny.invoke(commBus,
                         new Object[]{serverIdNew, rowRequestMsg.getMem()});
             }
-            RowRequestReplyMsg rowRequestReplyMsg = new RowRequestReplyMsg();
+            RowRequestReplyMsg rowRequestReplyMsg = new RowRequestReplyMsg(null);
             for (int appThreadId : appThreadIds){
                 int sentSize = commBus.sendInproc(appThreadId, rowRequestReplyMsg.getMem());
             }
@@ -664,9 +717,9 @@ public class BgWorkers {
                 {
                     Msg zmqMsg = new Msg();
                     commBus.recvInproc(senderId, zmqMsg);
-                    MsgType msgType = MsgBase.getMsgType(zmqMsg.buf());
-                    Preconditions.checkArgument(msgType == MsgType.kBgCreateTable);
-                    BgCreateTableMsg bgCreateTableMsg = new BgCreateTableMsg(zmqMsg.buf());
+                    int msgType = new NumberedMsg(zmqMsg).getMsgType();
+                    Preconditions.checkArgument(msgType == NumberedMsg.K_BG_CREATE_TABLE);
+                    BgCreateTableMsg bgCreateTableMsg = new BgCreateTableMsg(zmqMsg);
                     //set up client table config
                     clientTableConfig.tableInfo.tableStaleness = bgCreateTableMsg.getStaleness();
                     clientTableConfig.tableInfo.rowType = bgCreateTableMsg.getRowType();
@@ -706,9 +759,9 @@ public class BgWorkers {
                     } catch (InvocationTargetException e) {
                         e.printStackTrace();
                     }
-                    MsgType msgType = MsgBase.getMsgType(zmqMsg.buf());
-                    Preconditions.checkArgument(msgType == MsgType.kCreateTableReply);
-                    CreateTableReplyMsg createTableReplyMsg = new CreateTableReplyMsg(zmqMsg.buf());
+                    int msgType = new NumberedMsg(zmqMsg).getMsgType();
+                    Preconditions.checkArgument(msgType == NumberedMsg.K_CREATE_TABLE_REPLY);
+                    CreateTableReplyMsg createTableReplyMsg = new CreateTableReplyMsg(zmqMsg);
                     Preconditions.checkArgument(createTableReplyMsg.getTableId() == tableId);
                     //Create ClientTable
                     ClientTable clientTable = new ClientTable(tableId, clientTableConfig);
@@ -726,8 +779,8 @@ public class BgWorkers {
                 } catch (InvocationTargetException e) {
                     e.printStackTrace();
                 }
-                MsgType msgType = MsgBase.getMsgType(zmqMsg.buf());
-                Preconditions.checkArgument(msgType == MsgType.kCreatedAllTables);
+                int msgType = new NumberedMsg(zmqMsg).getMsgType();
+                Preconditions.checkArgument(msgType == NumberedMsg.K_CREATED_ALL_TABLES);
             }
         }
 
@@ -735,8 +788,8 @@ public class BgWorkers {
             Msg zmqMsg = new Msg();
             IntBox senderId = new IntBox();
             commBus.recvInproc(senderId, zmqMsg);
-            MsgType msgType = MsgBase.getMsgType(zmqMsg.buf());
-            Preconditions.checkArgument(msgType == MsgType.kAppConnect);
+            int msgType = new NumberedMsg(zmqMsg).getMsgType();
+            Preconditions.checkArgument(msgType == NumberedMsg.K_APP_CONNECT);
             numConnectedAppThreads.intValue++;
             Preconditions.checkArgument(
                     numConnectedAppThreads.intValue <= GlobalContext.getNumAppThreads());
@@ -757,9 +810,9 @@ public class BgWorkers {
             }else{
                 commBus.recvInterproc(senderId, zmqMsg);
             }
-            MsgType msgType = MsgBase.getMsgType(zmqMsg.buf());
+            int msgType = new NumberedMsg(zmqMsg).getMsgType();
             Preconditions.checkArgument(senderId.intValue == nameNodeId);
-            Preconditions.checkArgument(msgType == MsgType.kConnectServer);
+            Preconditions.checkArgument(msgType == NumberedMsg.K_CONNECT_SERVER);
 
             //connect to servers
             int numServers = GlobalContext.getNumServers();
@@ -780,8 +833,8 @@ public class BgWorkers {
                 } catch (InvocationTargetException e) {
                     e.printStackTrace();
                 }
-                MsgType msgType_ = MsgBase.getMsgType(zmqMsg_.buf());
-                Preconditions.checkArgument(msgType_ == MsgType.kClientStart);
+                int msgType_ = new NumberedMsg(zmqMsg_).getMsgType();
+                Preconditions.checkArgument(msgType_ == NumberedMsg.K_CLIENT_START);
             }
         }
 

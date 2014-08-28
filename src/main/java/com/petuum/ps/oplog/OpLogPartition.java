@@ -3,6 +3,7 @@ package com.petuum.ps.oplog;
 import com.google.common.util.concurrent.Striped;
 import com.petuum.ps.common.Row;
 import com.petuum.ps.common.oplog.RowOpLog;
+import com.petuum.ps.common.util.BoolBox;
 import com.petuum.ps.thread.GlobalContext;
 
 import java.util.HashMap;
@@ -10,24 +11,23 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
 
 /**
  * Created by ZengJichuan on 2014/8/25.
  */
 public class OpLogPartition {
-//    private int updateSize;
+    private int updateSize;
     private HashMap<Integer, RowOpLog> opLogMap;
     private Striped<Lock> locks;
     private Row sampleRow;
     private int tableId;
 
     public OpLogPartition(Row sampleRow, int tableId) {
-//        this.updateSize = updateSize;
         this.opLogMap = new HashMap<Integer, RowOpLog>();
         this.locks = Striped.lock(GlobalContext.getLockPoolSize());
         this.sampleRow = sampleRow;
         this.tableId = tableId;
+        this.updateSize = sampleRow.get_update_size();
     }
 
     public void inc(int rowId, int columnId, Object delta){
