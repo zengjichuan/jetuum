@@ -22,7 +22,7 @@ public class ClientConnectMsg extends NumberedMsg {
         return sequence.getInt(CLIENT_ID_OFFSET);
     }
 
-    protected static int getSize() {
+    public static int getSize() {
         return CLIENT_ID_OFFSET + INT_LENGTH;
     }
 }
