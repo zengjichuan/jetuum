@@ -51,12 +51,6 @@ class NameNodeContext {
     public int numShutdownBgs;
 }
 
-class ConnectionResult {
-    public int senderID;
-    public boolean isClient;
-    public int clientID;
-}
-
 public class NameNodeThread {
     private static CountDownLatch latch;
     private static ThreadLocal<NameNodeContext> nameNodeContext = new ThreadLocal<NameNodeContext>();
@@ -88,6 +82,12 @@ public class NameNodeThread {
             }
         }
     });
+
+    private static class ConnectionResult {
+        public int senderID;
+        public boolean isClient;
+        public int clientID;
+    }
 
     public static void init() throws NoSuchMethodException, InterruptedException {
         latch = new CountDownLatch(1);
