@@ -5,6 +5,8 @@ import com.petuum.ps.common.NumberedMsg;
 import com.petuum.ps.common.comm.CommBus;
 import com.petuum.ps.common.comm.Config;
 import com.petuum.ps.common.util.IntBox;
+import com.petuum.ps.thread.ClientConnectMsg;
+import com.petuum.ps.thread.ConnectServerMsg;
 import com.petuum.ps.thread.GlobalContext;
 import com.petuum.ps.thread.ThreadContext;
 import org.apache.logging.log4j.LogManager;
@@ -78,7 +80,13 @@ public class NameNodeThread {
 
             latch.countDown();
 
-            initNameNode();
+            try {
+                initNameNode();
+            } catch (InvocationTargetException e) {
+                log.error(e.getMessage());
+            } catch (IllegalAccessException e) {
+                log.error(e.getMessage());
+            }
         }
     });
 
@@ -99,9 +107,9 @@ public class NameNodeThread {
         }
 
         if(GlobalContext.getNumClients() == 1) {
-            commBusSendAny = CommBus.class.getMethod("sendInproc", int.class, Msg.class);
+            commBusSendAny = CommBus.class.getMethod("sendInproc", int.class, ByteBuffer.class);
         } else {
-            commBusSendAny = CommBus.class.getMethod("send", int.class, Msg.class);
+            commBusSendAny = CommBus.class.getMethod("send", int.class, ByteBuffer.class);
         }
         thread.start();
         latch.await();
@@ -133,30 +141,58 @@ public class NameNodeThread {
         log.info("NameNode is ready to accept connections!");
     }
 
-    private static void initNameNode() {
+    private static void initNameNode() throws InvocationTargetException, IllegalAccessException {
         int numBgs = 0;
         int numServers = 0;
         int numExpectedConns = GlobalContext.getNumTotalBgThreads() + GlobalContext.getNumServers();
         log.info("Number totalBgThreads() = " + String.valueOf(GlobalContext.getNumTotalBgThreads()));
         log.info("Number totalServerThreads() = " + String.valueOf(GlobalContext.getNumServers()));
         for(int numConnections = 0; numConnections < numExpectedConns; numConnections++) {
-
+            ConnectionResult cResult = getConnection();
+            if(cResult.isClient) {
+                nameNodeContext.get().bgThreadIDs.set(numBgs, cResult.senderID);
+                numBgs++;
+                nameNodeContext.get().serverObj.addClientBgPair(cResult.clientID, cResult.senderID);
+                log.info("Name node get client " + String.valueOf(cResult.senderID));
+            } else {
+                numServers++;
+                log.info("Name node gets server " + String.valueOf(cResult.senderID));
+            }
         }
 
+        assert numBgs == GlobalContext.getNumTotalBgThreads();
+        nameNodeContext.get().serverObj.init(0);
+        log.info("Has received connections from all clients and servers, sending out connectServerMsg");
+
+        sendToAllBgThreads(new ConnectServerMsg(null));
+        log.info("Send ConnectServerMsg done");
+        sendToAllBgThreads(new ClientConnectMsg(null));
+        log.info("initNameNode done");
     }
 
     private static ConnectionResult getConnection() throws InvocationTargetException, IllegalAccessException {
         IntBox senderID = new IntBox();
-        Msg msg = new Msg();
-        commBusRecvAny.invoke(commbus, senderID, msg);
-        int msgType = ByteBuffer.wrap(msg.data()).getInt();
+        Msg zmqMsg = new Msg();
+        commBusRecvAny.invoke(commbus, senderID, zmqMsg);
+        NumberedMsg msg = new NumberedMsg(zmqMsg);
         ConnectionResult result = new ConnectionResult();
-        if(msgType == NumberedMsg.K_CLIENT_CONNECT) {
-
+        if(msg.getMsgType() == NumberedMsg.K_CLIENT_CONNECT) {
+            ClientConnectMsg cMsg = new ClientConnectMsg(zmqMsg);
+            result.isClient = true;
+            result.clientID = cMsg.getClientID();
         } else {
-            assert msgType == NumberedMsg.K_SERVER_CONNECT;
+            assert msg.getMsgType() == NumberedMsg.K_SERVER_CONNECT;
             result.isClient = false;
         }
+        result.senderID = senderID.intValue;
         return result;
+    }
+
+    private static void sendToAllBgThreads(NumberedMsg msg) throws InvocationTargetException, IllegalAccessException {
+        for(int i = 0; i < GlobalContext.getNumTotalBgThreads(); i++) {
+            int bdID = nameNodeContext.get().bgThreadIDs.get(i);
+            int sentSize = (Integer)commBusSendAny.invoke(commbus, bdID, msg.getByteBuffer());
+            assert sentSize == NumberedMsg.getSize();
+        }
     }
 }

@@ -1,7 +1,10 @@
 package com.petuum.ps.thread;
 
 import com.petuum.ps.common.NumberedMsg;
+import org.omg.CORBA.INITIALIZE;
 import zmq.Msg;
+
+import java.nio.ByteBuffer;
 
 /**
  * Created by suyuxin on 14-8-25.
@@ -18,11 +21,13 @@ public class BgCreateTableMsg extends NumberedMsg {
 
     public BgCreateTableMsg(Msg msg) {
         super(msg);
+        if(msg == null)
+            sequence = ByteBuffer.allocate(getSize());
         sequence.putInt(MSG_TYPE_OFFSET, K_BG_CREATE_TABLE);
     }
 
     public static int getSize() {
-        return OPLOG_CAPACITY_OFFSET + 1;
+        return OPLOG_CAPACITY_OFFSET + INT_LENGTH;
     }
 
     public int getTableID() {

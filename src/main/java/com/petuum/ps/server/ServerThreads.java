@@ -1,41 +1,67 @@
-/*
 package com.petuum.ps.server;
 
 import com.petuum.ps.common.comm.CommBus;
+import com.petuum.ps.thread.*;
 
+import java.lang.reflect.Method;
 import java.util.Vector;
 import java.util.concurrent.CyclicBarrier;
 
-*/
 /**
  * Created by admin on 2014/8/13.
- *//*
+ */
+
+class ServerContext{
+    Vector<Integer> bgThreadIds;
+    Server serverObj;
+    int numShutdownBgs;
+}
 
 public class ServerThreads {
-    class ServerContext{
-        Vector<Integer> bgThreadIds;
-        Server serverObj;
-        int numShutdownBgs;
-    }
-//    private static ServerPushRowFunc serverPushRow;
-//    private static RowSubscribeFunc rowSubscribe;
+
     private static CyclicBarrier initBarrier;
-    //static std::vector<pthread_t> threads_;
-    private static Vector<Integer> threadIds;
+    private static Vector<Integer> threadIDs;
+    private static Vector<ServerThread> threads;
     private static ThreadLocal<ServerContext> serverContext;
-//    static CommBus::RecvFunc CommBusRecvAny;
-//    static CommBus::RecvTimeOutFunc CommBusRecvTimeOutAny;
-//    static CommBus::SendFunc CommBusSendAny;
-//    static CommBus::RecvAsyncFunc CommBusRecvAsyncAny;
-//    static CommBus::RecvWrapperFunc CommBusRecvAnyWrapper;
+    private static Method commBusRecvAny;
+    private static Method commBusRecvTimeOutAny;
+    private static Method commBusSendAny;
+    private static Method commBusRecvAsyncAny;
+    private static Method commBusRecvAnyWrapper;
+    private static Method commBusRecvAnyBusy;
+    private static Method commBusRecvAnySleep;
 
-//    static void CommBusRecvAnyBusy(int32_t *sender_id, zmq::message_t *zmq_msg);
-//    static void CommBusRecvAnySleep(int32_t *sender_id, zmq::message_t *zmq_msg);
-//
-    static CommBus comm_bus;
-    private static void ServerThreadMain(Object serverThreadInfo){
+    private static Method serverPushRow;
+    private static Method rowSubscribe;
+
+    private static CommBus comm_bus;
+
+    private static Thread serverThreadMain = new Thread(new Runnable() {
+        public void run() {
+
+        }
+    });
+
+    private static class ServerThread implements Runnable {
+
+        public void run() {
+
+        }
+    }
+
+    public static void init(int idST) {
+
+        initBarrier = new CyclicBarrier(GlobalContext.getNumLocalServerThreads() + 1);
+        threads = new Vector<ServerThread>(GlobalContext.getNumLocalServerThreads());
+        threadIDs = new Vector<Integer>(GlobalContext.getNumLocalServerThreads());
+        comm_bus = GlobalContext.commBus;
+
+        if(GlobalContext.getNumClients() == 1) {
+            commBusRecvAny =
+        }
 
     }
+
     private static void SSPPushServerPushRow(){
 
     }
@@ -47,13 +73,14 @@ public class ServerThreads {
     private static void connectToNameNode(){
 
     }
+
     private static int getConnection(boolean isClient, int clientId){
 
     }
-    */
+
 /**
      * Functions that operate on the particular thread's specific ServerContext.
-     *//*
+     */
 
     private static void setupServerContext(){
 
@@ -88,4 +115,3 @@ public class ServerThreads {
     }
 
 }
-*/

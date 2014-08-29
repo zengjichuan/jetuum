@@ -38,11 +38,13 @@ public class NumberedMsg {
     protected static final int ACK_NUM_OFFSET = 2 * INT_LENGTH;
 
 
-    protected static int getSize() {
+    public static int getSize() {
         return ACK_NUM_OFFSET + INT_LENGTH;
     }
+
     public NumberedMsg(Msg msg) {
-        sequence = ByteBuffer.wrap(msg.data());
+        if(msg != null)
+            sequence = ByteBuffer.wrap(msg.data());
     }
 
     public int getMsgType() {
@@ -55,6 +57,10 @@ public class NumberedMsg {
 
     public int getAckNum() {
         return sequence.getInt(ACK_NUM_OFFSET);
+    }
+
+    public ByteBuffer getByteBuffer() {
+        return sequence;
     }
 
     protected ByteBuffer sequence;

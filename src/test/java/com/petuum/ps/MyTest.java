@@ -5,6 +5,9 @@ import com.petuum.ps.common.NumberedMsg;
 import com.petuum.ps.common.util.IntBox;
 
 import java.util.HashMap;
+
+import java.nio.*;
+
 import java.util.Objects;
 
 /**
@@ -16,13 +19,14 @@ public class MyTest {
         one.intValue++;
     }
     public static void main(String args[]){
-        IntBox tint = new IntBox();
-        System.out.println(tint.intValue);
+        ByteBuffer one = ByteBuffer.allocate(4);
+        one.putInt(10);
+        System.out.println(one.getInt(0));
 
-        sum(tint);
-
-
-        System.out.println(tint.intValue);
+//        sum(tint);
+//
+//
+//        System.out.println(tint.intValue);
 
 //        NumberedMsg mt = NumberedMsg.valueOf(Objects.toString(NumberedMsg.K_APP_CONNECT));
 //        if(mt.equals(NumberedMsg.K_APP_CONNECT)){

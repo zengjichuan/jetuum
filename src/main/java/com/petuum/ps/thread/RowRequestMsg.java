@@ -3,6 +3,8 @@ package com.petuum.ps.thread;
 import com.petuum.ps.common.NumberedMsg;
 import zmq.Msg;
 
+import java.nio.ByteBuffer;
+
 /**
  * Created by suyuxin on 14-8-25.
  */
@@ -13,6 +15,8 @@ public class RowRequestMsg extends NumberedMsg {
     protected static final int CLOCK_OFFSET = ROW_ID_OFFSET + 2 * INT_LENGTH;
     public RowRequestMsg(Msg msg) {
         super(msg);
+        if(msg == null)
+            sequence = ByteBuffer.allocate(getSize());
         sequence.putInt(MSG_TYPE_OFFSET, K_ROW_REQUEST);
     }
 
@@ -26,6 +30,10 @@ public class RowRequestMsg extends NumberedMsg {
 
     public int getClock() {
         return sequence.getInt(CLOCK_OFFSET);
+    }
+
+    public static int getSize() {
+        return CLOCK_OFFSET + INT_LENGTH;
     }
 
 }
