@@ -1,12 +1,14 @@
 package com.petuum.ps.server;
 
 
-import com.google.common.primitives.Ints;
 import com.petuum.ps.common.Row;
+import com.petuum.ps.common.util.IntBox;
 import com.petuum.ps.common.util.RecordBuff;
+import org.apache.commons.lang3.SerializationUtils;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
-import java.util.Objects;
+import java.util.Map;
 
 /**
 * Disallow copy to avoid shared ownership of row_data.
@@ -28,7 +30,7 @@ public class ServerRow {
         this.numClientsSubscribed=0;
         this.dirty=false;
     }
-    public void applyBatchInc(Integer columnIds, Object updateBatch, int numUpdate){
+    public void applyBatchInc(Map<Integer, Object> updates){
         //rowData.applyBatchIncUnsafe(columnIds, updateBatch, numUpdate);
         dirty = true;
     }
@@ -50,9 +52,9 @@ public class ServerRow {
             --numClientsSubscribed;
     }
     public boolean appendRowToBuffs(int clientIdSt,
-                             HashMap<Integer, RecordBuff> buffs,
-                             Objects rowData, int rowSize, int rowId,
-                             Integer failedBgId, Integer failedClientId){
+                             Map<Integer, RecordBuff> buffs,
+                             ByteBuffer rowData, int rowSize, int rowId,
+                             IntBox failedBgId, IntBox failedClientId){
         return callBackSubs.appendRowToBuffs(clientIdSt, buffs, rowData, rowSize, rowId,
                 failedBgId, failedClientId);
     }
@@ -61,5 +63,9 @@ public class ServerRow {
     }
     public void resetDirty(){
         dirty = false;
+    }
+
+    public ByteBuffer serialize() {
+        return ByteBuffer.wrap(SerializationUtils.serialize(rowData));
     }
 }

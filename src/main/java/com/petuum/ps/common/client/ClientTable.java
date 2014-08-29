@@ -145,5 +145,6 @@ public class ClientTable {
 	}
 
     public void insert(int rowId, ClientRow clientRow) {
+
     }
 }

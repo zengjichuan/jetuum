@@ -239,7 +239,7 @@ public class BgWorkers {
     }
 
     public static boolean requestRow(int tableId, int rowId, int clock){
-        RowRequestMsg requestRowMsg = new RowRequestMsg();
+        RowRequestMsg requestRowMsg = new RowRequestMsg(null);
         requestRowMsg.setTableId(tableId);
         requestRowMsg.setRowId(rowId);
         requestRowMsg.setClock(clock);
@@ -249,8 +249,8 @@ public class BgWorkers {
         Msg zmqMsg = new Msg();
         IntBox sendId = new IntBox();
         commBus.recvInproc(sendId, zmqMsg);
-        MsgType msgType = MsgBase.getMsgType(zmqMsg.buf());
-        Preconditions.checkArgument(msgType == MsgType.kRowRequestReply);
+        int msgType = new NumberedMsg(zmqMsg).getMsgType();
+        Preconditions.checkArgument(msgType == NumberedMsg.K_ROW_REQUEST_REPLY);
         return  true;
     }
 
@@ -736,7 +736,7 @@ public class BgWorkers {
                             bgCreateTableMsg.getThreadCacheCapacity();
                     clientTableConfig.opLogCapacity = bgCreateTableMsg.getOpLogCapacity();
 
-                    CreateTableMsg createTableMsg = new CreateTableMsg();
+                    CreateTableMsg createTableMsg = new CreateTableMsg(null);
                     createTableMsg.setTableId(bgCreateTableMsg.getTableId());
                     createTableMsg.setStaleness(bgCreateTableMsg.getStaleness());
                     createTableMsg.setRowType(bgCreateTableMsg.getRowType());
