@@ -32,6 +32,9 @@ public class SSPRowRequestOpLogMgr implements RowRequestOpLogMgr {
 
 
     // used for OpLogIter
+    private int opLogIterVersionNext;
+    private int opLogIterVersionStart;
+    private int opLogIterVersionEnd;
 
     private AtomicLongMap<Integer> versionRequestCntMap;
 
@@ -162,11 +165,18 @@ public class SSPRowRequestOpLogMgr implements RowRequestOpLogMgr {
     }
 
     public BgOpLog opLogIterInit(int startVersion, int endVersion) {
-        return null;
+        opLogIterVersionStart = startVersion;
+        opLogIterVersionEnd = endVersion;
+        opLogIterVersionNext = opLogIterVersionStart + 1;
+        return getOpLog(startVersion);
     }
 
     public BgOpLog opLogIterNext(IntBox version) {
-        return null;
+        if(opLogIterVersionNext > opLogIterVersionEnd)
+            return null;
+        version.intValue = opLogIterVersionNext;
+        ++opLogIterVersionNext;
+        return getOpLog(version.intValue);
     }
 }
 

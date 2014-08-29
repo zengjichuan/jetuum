@@ -17,7 +17,7 @@ import com.petuum.ps.oplog.TableOpLog;
 import com.petuum.ps.server.CallBackSubs;
 import com.sun.deploy.util.SessionState;
 import com.sun.org.apache.xpath.internal.operations.Bool;
-import org.apache.commons.lang.SerializationUtils;
+import org.apache.commons.lang3.SerializationUtils;
 import zmq.Msg;
 
 import java.lang.reflect.InvocationTargetException;
@@ -332,7 +332,7 @@ public class BgWorkers {
                 //table id
                 mem.putInt(tablePos, tableId);
                 //table update size
-                mem.putInt(tablePos + Integer.SIZE, entryTable.getValue().getUpdateSize());
+                mem.putInt(tablePos + Integer.SIZE, entryTable.getValue().getSampleRow().getUpdateSize());
                 //offset for table rows
                 mem.position(tablePos + Integer.SIZE + Integer.SIZE);
                 //slice from the position to the limit(default the end)
@@ -368,7 +368,7 @@ public class BgWorkers {
             //Get OpLog index
             Map<Integer, Boolean> newTableOpLogIndex =
                     entryTable.getValue().getAndResetOpLogIndex(localBgIndex);
-            int tableUpdateSize = entryTable.getValue().getSampleRow().get_update_size();
+            int tableUpdateSize = entryTable.getValue().getSampleRow().getUpdateSize();
             BgOpLogPartition bgTableOplog = new BgOpLogPartition(tableId, tableUpdateSize);
             for (int serverId : serverIds){
                 tableNumBytesByServer.put(serverId, Integer.SIZE);
@@ -467,12 +467,11 @@ public class BgWorkers {
                 } catch (InvocationTargetException e) {
                     e.printStackTrace();
                 }
-                msgType = MsgBase.getMsgType(zmqMsg.buf());
+                msgType = new NumberedMsg(zmqMsg).getMsgType();
                 destroyMem = false;
-                if (msgType == MsgType.kMemTransfer) {
+                if (msgType == NumberedMsg.K_MEM_TRANSFER) {
                     MemTransferMsg memTransferMsg = new MemTransferMsg(zmqMsg.buf());
-                    msgMem = memTransferMsg.getMem();
-                    msgType = MsgBase.getMsgType(msgMem);
+                    msgType = memTransferMsg.getMsgType();
                     destroyMem = true;
                 }else{
                     msgMem = zmqMsg.buf();
@@ -637,21 +636,25 @@ public class BgWorkers {
         private static void applyOpLogsAndInsertRow(int tableId, ClientTable clientTable,
                                                     int rowId, int rowVersion, Row rowData, int clock) {
             applyOldOpLogsToRowData(tableId, clientTable, rowId, rowVersion, rowData);
+            ClientRow clientRow = null;
             try {
-                ClientRow clientRow = (ClientRow) myCreateClientRow.invoke(BgWorkers.class, new Object[]{clock, rowData});
+                clientRow = (ClientRow) myCreateClientRow.invoke(BgWorkers.class, new Object[]{clock, rowData});
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             } catch (InvocationTargetException e) {
                 e.printStackTrace();
             }
             TableOpLog tableOpLog = clientTable.getOpLog();
-
-            if (tableOpLog.get(rowId)){
-                while{
-                    rowData.applyIncUnsafe(columnId, update);
+            RowOpLog rowOpLog = null;
+            if (tableOpLog.findOpLog(rowId) != null){
+                IntBox columnId = new IntBox();
+                Object update = rowOpLog.beginIterate(columnId);
+                while (update != null){
+                    rowData.applyIncUnsafe(columnId.intValue, update);
+                    update = rowOpLog.next(columnId);
                 }
             }
-            clientTable.//Insert
+            clientTable.insert(rowId, clientRow);
         }
 
         private static void applyOldOpLogsToRowData(int tableId, ClientTable clientTable, int rowId,
@@ -684,12 +687,11 @@ public class BgWorkers {
 
             // Check if the row exists in process cache
             ClientTable table = tables.get(tableId);
-            ProcessStorage tableStorage = table.getProcessStorage();
-            RowAccessor rowAccessor ;       //How to read?
-            if(found) {
-                if (rowAccessor.getClientRow().getClock()>=clock) {
-                    RowRequestReplyMsg rowRequestReplyMsg = new RowRequestReplyMsg();
-                    int sentSize = commBus.sendInproc(appThreadId.intValue, rowRequestReplyMsg.getMem());
+            ClientRow clientRow = table.find(rowId);
+            if (clientRow != null){
+                if(clientRow.getClock() >= clock){
+                    RowRequestReplyMsg rowRequestReplyMsg = new RowRequestReplyMsg(null);
+                    commBus.sendInproc(appThreadId, rowRequestReplyMsg.getMem());
                     return;
                 }
             }

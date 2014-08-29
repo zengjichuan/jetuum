@@ -55,7 +55,7 @@ public abstract interface Row extends Serializable {
 	 */
 	public abstract void applyIncUnsafe(int column_id, final Object update);
 
-	public abstract int get_update_size();
+	public abstract int getUpdateSize();
 
 	/**
 	 * 

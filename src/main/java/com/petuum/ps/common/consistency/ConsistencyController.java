@@ -22,7 +22,7 @@ public abstract class ConsistencyController {
 	 * common class members for all controller modules. Process cache, highly
 	 * concurrent.
 	 */
-	protected LoadingCache<Integer, ClientRow> process_storage_;
+	protected LoadingCache<Integer, ClientRow> processStorage;
 	/**
 	 * We use sample_row_.AddUpdates(), SubstractUpdates() as static method.
 	 */

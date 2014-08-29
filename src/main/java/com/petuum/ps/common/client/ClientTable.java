@@ -13,7 +13,7 @@ import java.util.Map;
  */
 public class ClientTable {
 
-	private ConsistencyController consistency_controller_;
+	private ConsistencyController consistencyController;
 	private int rowType;
 	private Row sampleTow;
 	private int tableId;
@@ -144,4 +144,6 @@ public class ClientTable {
 
 	}
 
+    public void insert(int rowId, ClientRow clientRow) {
+    }
 }

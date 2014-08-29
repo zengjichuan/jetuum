@@ -19,7 +19,7 @@ public abstract class ClientRow {
 
 	}
 
-    public void SetRowData(Row row) {
+    public void setRowData(Row row) {
         row_data = row;
     }
 
@@ -36,19 +36,19 @@ public abstract class ClientRow {
 
 	}
 
-	public void DecRef(){
+	public void decRef(){
 
 	}
 
-	public int GetClock(){
+	public int getClock(){
 		return 0;
 	}
 
-	public Row GetRowData(){
+	public Row getRowData(){
 		return null;
 	}
 
-	public void IncRef(){
+	public void incRef(){
 
 	}
 
@@ -56,7 +56,7 @@ public abstract class ClientRow {
 	 * 
 	 * @param clock
 	 */
-	public void SetClock(int clock){
+	public void setClock(int clock){
 
 	}
 
