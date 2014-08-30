@@ -37,7 +37,7 @@ public class BgOpLogPartition {
             offsetByServer.put(serverId, Integer.SIZE);
             bufferByServer.get(serverId).putInt(0);
         }
-        for (HashMap.Entry<Integer, RowOpLog> entry : opLogMap.entrySet()){
+        for (Map.Entry<Integer, RowOpLog> entry : opLogMap.entrySet()){
             int rowId = entry.getKey();
             int serverId = GlobalContext.getRowPartitionServerId(tableId, rowId);
             RowOpLog rowOpLog = entry.getValue();

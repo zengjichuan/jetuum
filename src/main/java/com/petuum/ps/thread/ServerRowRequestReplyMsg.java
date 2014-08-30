@@ -27,20 +27,40 @@ public class ServerRowRequestReplyMsg extends ArbitrarySizedMsg {
         return sequence.getInt(TABLE_ID_OFFSET);
     }
 
+    public void setTableId(int id) {
+        sequence.putInt(TABLE_ID_OFFSET, id);
+    }
+
     public int getRowId() {
         return sequence.getInt(ROW_ID_OFFSET);
+    }
+
+    public void setRowId(int id) {
+        sequence.putInt(ROW_ID_OFFSET, id);
     }
 
     public int getClock() {
         return sequence.getInt(CLOCK_OFFSET);
     }
 
+    public void setClock(int clock) {
+        sequence.putInt(CLOCK_OFFSET, clock);
+    }
+
     public int getVersion() {
         return sequence.getInt(VERSION_OFFSET);
     }
 
+    public void setVersion(int version) {
+        sequence.putInt(VERSION_OFFSET, version);
+    }
+
     public int getRowSize() {
         return sequence.getInt(ROW_SIZE_OFFSET);
+    }
+
+    public void setrowSize(int rowSize) {
+        sequence.putInt(ROW_SIZE_OFFSET, rowSize);
     }
 
     public static int getHeaderSize() {

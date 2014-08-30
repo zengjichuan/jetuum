@@ -12,5 +12,10 @@ public class CaseTest {
             case 20:
                 System.out.println("its equal to 20");
         }
+
+        Byte one;
+        one = 1;
+        System.out.println(one);
+        System.out.println(one.toString());
     }
 }

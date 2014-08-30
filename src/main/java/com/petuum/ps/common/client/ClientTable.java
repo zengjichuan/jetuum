@@ -63,7 +63,7 @@ public class ClientTable {
 	 * 
 	 * @param rowId
 	 */
-	public Row get(int rowId){
+	public ClientRow get(int rowId){
 		return null;
 	}
 

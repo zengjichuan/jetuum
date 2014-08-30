@@ -21,16 +21,39 @@ public class ClientSendOpLogMsg extends ArbitrarySizedMsg {
         sequence.putInt(MSG_TYPE_OFFSET, K_CLIENT_SEND_OP_LOG);
     }
 
+    public ClientSendOpLogMsg(int avaiSize) {
+        super(null);
+        sequence = ByteBuffer.allocate(getHeaderSize() + avaiSize);
+        sequence.putInt(MSG_TYPE_OFFSET, K_SERVER_PUSH_ROW);
+        sequence.putInt(AVAI_SIZE_OFFSET, avaiSize);
+    }
+
     public boolean getIsClock() {
         return sequence.get(IS_CLOCK_OFFSET) == 1;
+    }
+
+    public void setIsClock(boolean isClock) {
+        Byte temp = 0;
+        if(isClock) {
+            temp = 1;
+        }
+        sequence.put(IS_CLOCK_OFFSET, temp);
     }
 
     public int getClientId() {
         return sequence.getInt(CLIENT_ID_OFFSET);
     }
 
+    public void setClientId(int id) {
+        sequence.putInt(CLIENT_ID_OFFSET, id);
+    }
+
     public int getVersion() {
         return sequence.getInt(VERSION_OFFSET);
+    }
+
+    public void setVersion(int version) {
+        sequence.putInt(VERSION_OFFSET, version);
     }
 
     public static int getHeaderSize() {

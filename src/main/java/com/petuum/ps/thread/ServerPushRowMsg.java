@@ -24,6 +24,23 @@ public class ServerPushRowMsg extends ArbitrarySizedMsg {
         sequence.putInt(AVAI_SIZE_OFFSET, avaiSize);
     }
 
+    public int getVersion() {
+        return sequence.getInt(VERSION_OFFSET);
+    }
+
+    public void setVersion(int version) {
+        sequence.putInt(VERSION_OFFSET, version);
+    }
+
+    public boolean getIsClock() {
+        return sequence.get(IS_CLOCK_OFFSET) == 1;
+    }
+
+    public void setIsClock(boolean clock) {
+        Byte temp = 1;
+        sequence.put(IS_CLOCK_OFFSET, temp);
+    }
+
     public static int getHeaderSize() {
         return IS_CLOCK_OFFSET + 1;//IS_CLOCK_OFFSET is boolean type
     }

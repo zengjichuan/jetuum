@@ -22,6 +22,10 @@ public class ClientConnectMsg extends NumberedMsg {
         return sequence.getInt(CLIENT_ID_OFFSET);
     }
 
+    public void setClientId(int id) {
+        sequence.putInt(CLIENT_ID_OFFSET, id);
+    }
+
     public static int getSize() {
         return CLIENT_ID_OFFSET + INT_LENGTH;
     }

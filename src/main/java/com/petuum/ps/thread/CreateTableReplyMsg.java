@@ -22,6 +22,10 @@ public class CreateTableReplyMsg extends NumberedMsg {
         return sequence.getInt(TABLE_ID_OFFSET);
     }
 
+    public void setTableId(int id) {
+        sequence.putInt(TABLE_ID_OFFSET, id);
+    }
+
     public static int getSize() {
         return TABLE_ID_OFFSET + INT_LENGTH;
     }
