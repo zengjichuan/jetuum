@@ -1,10 +1,13 @@
 package com.petuum.ps.server;
 
+import com.petuum.ps.common.util.IntBox;
 import com.petuum.ps.common.util.RecordBuff;
 import com.petuum.ps.thread.GlobalContext;
 
+import java.nio.ByteBuffer;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -34,9 +37,9 @@ public class CallBackSubs {
         return bitChange;
     }
 
-    public boolean appendRowToBuffs(int clientIdSt, HashMap<Integer, RecordBuff> buffs,
-                                    Objects rowData, int rowSize, int rowId,
-                                   Integer failedBgId, Integer failedClientId) {
+    public boolean appendRowToBuffs(int clientIdSt, Map<Integer, RecordBuff> buffs,
+                                    ByteBuffer rowData, int rowSize, int rowId,
+                                   IntBox failedBgId, IntBox failedClientId) {
         int headBgId;
         int bgId;
         int clientId;
@@ -46,8 +49,8 @@ public class CallBackSubs {
                 bgId = headBgId + GlobalContext.getBgPartitionNum(rowId);
                 boolean suc = buffs.get(bgId).append(rowId, rowData, rowSize);
                 if (!suc){
-                    failedBgId = bgId;
-                    failedClientId = clientId;
+                    failedBgId.intValue = bgId;
+                    failedClientId.intValue = clientId;
                     return false;
                 }
             }

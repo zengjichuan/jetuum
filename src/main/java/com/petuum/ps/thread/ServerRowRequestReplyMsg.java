@@ -27,7 +27,7 @@ public class ServerRowRequestReplyMsg extends ArbitrarySizedMsg {
         return sequence.getInt(TABLE_ID_OFFSET);
     }
 
-    public int getRowID() {
+    public int getRowId() {
         return sequence.getInt(ROW_ID_OFFSET);
     }
 

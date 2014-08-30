@@ -19,63 +19,6 @@ public class CommBus {
     public static final int K_IN_PROC=1;
     public static final int K_INTER_PROC=2;
 
-    public static class Config{
-        /**
-         *  My thread id.
-         */
-        public int entityId;
-        /**
-         * What should I listen to?
-         */
-        public int lType;
-
-        /**
-         *  In the format of "ip:port", such as "192.168.1.1:9999". It must be set
-         *  if ((ltype_ & kInterProc) == true)
-         */
-        public String networkAddr;
-
-        public int numBytesInprocSendBuff;
-        public int numBytesInprocRecvBuff;
-        public int numBytesInterprocSendBuff;
-        public int numBytesInterprocRecvBuff;
-
-        public Config() {
-            this.entityId = 0;
-            this.lType = K_NONE;
-            this.numBytesInprocSendBuff = 0;
-            this.numBytesInprocRecvBuff = 0;
-            this.numBytesInterprocSendBuff = 0;
-            this.numBytesInterprocRecvBuff = 0;
-        }
-
-        public Config(int entityId, int lType, String networkAddr) {
-            this.entityId = entityId;
-            this.lType = lType;
-            this.networkAddr = networkAddr;
-            this.numBytesInprocSendBuff = 0;
-            this.numBytesInprocRecvBuff = 0;
-            this.numBytesInterprocSendBuff = 0;
-            this.numBytesInterprocRecvBuff = 0;
-        }
-    }
-    public class ThreadCommInfo{
-        public int entityId;
-        ZMQ.Socket inprocSock;
-        ZMQ.Socket interprocSock;
-        ZMQ.PollItem inprocPollItem;
-        ZMQ.PollItem interprocPollItem;
-        ZMQ.Poller pollItems;
-
-        public int lType;
-        public int pollSize;
-
-        public int numBytesInprocSendBuff;
-        public int numBytesInprocRecvBuff;
-        public int numBytesInterprocSendBuff;
-        public int numBytesInterprocRecvBuff;
-
-    }
     private static String kInProcPrefix ="inproc://comm_bus";
     private static String kInterProcPrefix="tcp://";
 
@@ -400,3 +343,4 @@ public class CommBus {
     }
 
 }
+

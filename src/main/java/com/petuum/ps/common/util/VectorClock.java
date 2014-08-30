@@ -25,6 +25,7 @@ public class VectorClock {
 
     public VectorClock() {
         minClock = -1;
+        vecClock = AtomicLongMap.create();
     }
     /**
      * Initialize client_ids.size() client clocks with all of them at time 0.

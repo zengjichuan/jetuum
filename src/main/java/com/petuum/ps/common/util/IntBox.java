@@ -5,4 +5,8 @@ package com.petuum.ps.common.util;
  */
 public class IntBox {
     public int intValue;
+    public IntBox(){}
+    public IntBox(int i){
+        intValue = i;
+    }
 }

@@ -4,7 +4,7 @@ import com.google.common.cache.CacheLoader;
 import com.petuum.ps.common.Row;
 import com.petuum.ps.common.client.ClientRow;
 import com.petuum.ps.common.client.ThreadTable;
-import com.petuum.ps.thread.BgWorkers;
+//import com.petuum.ps.thread.BgWorkers;
 import com.petuum.ps.thread.ThreadContext;
 
 import java.util.Map;

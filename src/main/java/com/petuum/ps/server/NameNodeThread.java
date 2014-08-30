@@ -3,6 +3,7 @@ package com.petuum.ps.server;
 import com.petuum.ps.common.HostInfo;
 import com.petuum.ps.common.NumberedMsg;
 import com.petuum.ps.common.comm.CommBus;
+import com.petuum.ps.common.comm.Config;
 import com.petuum.ps.common.util.IntBox;
 import com.petuum.ps.thread.ClientConnectMsg;
 import com.petuum.ps.thread.ConnectServerMsg;
@@ -126,7 +127,7 @@ public class NameNodeThread {
 
     private static void setupCommBus() {
         int myID = ThreadContext.getId();
-        CommBus.Config config = new CommBus.Config();
+        Config config = new Config();
         config.entityId = myID;
 
         if(GlobalContext.getNumClients() > 1) {

@@ -14,16 +14,16 @@ public class ClientTableConfig {
 	 * Estimated upper bound # of pending oplogs in terms of # of rows. For SSP this
 	 * is the # of rows all threads collectively touches in a Clock().
 	 */
-	public int oplog_capacity;
+	public int opLogCapacity;
 	/**
 	 * In # of rows.
 	 */
-	public int process_cache_capacity;
-	public TableInfo table_info;
+	public int processCacheCapacity;
+	public TableInfo tableInfo;
 	/**
 	 * In # of rows.
 	 */
-	public int thread_cache_capacity;
+	public int threadCacheCapacity;
 
 	public ClientTableConfig(){
 

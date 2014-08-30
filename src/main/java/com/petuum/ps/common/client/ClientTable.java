@@ -2,6 +2,7 @@ package com.petuum.ps.common.client;
 import com.petuum.ps.common.ClientTableConfig;
 import com.petuum.ps.common.Row;
 import com.petuum.ps.common.consistency.ConsistencyController;
+import com.petuum.ps.oplog.TableOpLog;
 
 import java.util.Map;
 
@@ -12,11 +13,12 @@ import java.util.Map;
  */
 public class ClientTable {
 
-	private ConsistencyController consistency_controller_;
-	private int row_type_;
-	private Row sample_row_;
-	private int table_id_;
-	private ThreadTable thread_cache_;
+	private ConsistencyController consistencyController;
+	private int rowType;
+	private Row sampleTow;
+	private int tableId;
+	private ThreadLocal<ThreadTable> threadCache;
+    private TableOpLog opLog;
 
 	public ClientTable(){
 
@@ -45,47 +47,55 @@ public class ClientTable {
 	 * @param row_id
 	 * @param updates
 	 */
-	public void BatchInc(int row_id, Map<Integer, Object> updates){
+	public void batchInc(int row_id, Map<Integer, Object> updates){
 
 	}
 
-	public void Clock(){
+	public void clock(){
 
 	}
 
-	public void FlushThreadCache(){
+	public void flushThreadCache(){
 
 	}
 
 	/**
 	 * 
-	 * @param row_id
+	 * @param rowId
 	 */
-	public Row Get(int row_id){
+	public Row get(int rowId){
 		return null;
 	}
 
-	public int get_row_type(){
+	public int getRowType(){
 		return 0;
 	}
 
-	public final Row get_sample_row(){
+    /**
+     *
+     * @return opLog
+     */
+    public TableOpLog getOpLog(){
+        return opLog;
+    }
+
+	public final Row getSampleRow(){
 		return null;
 	}
 
 	/**
 	 * 
-	 * @param client_table    client_table
+	 * @param clientTable    client_table
 	 */
-	public Map<Integer, Boolean> GetAndResetOpLogIndex(int client_table){
+	public Map<Integer, Boolean> getAndResetOpLogIndex(int clientTable){
 		return null;
 	}
 
 	/**
 	 * 
-	 * @param row_id    row_id
+	 * @param rowId    row_id
 	 */
-	public void GetAsync(int row_id){
+	public void getAsync(int rowId){
 
 	}
 
@@ -95,31 +105,28 @@ public class ClientTable {
 	 * @param column_id
 	 * @param update    update
 	 */
-	public void Inc(int row_id, int column_id, Object update){
+	public void inc(int row_id, int column_id, Object update){
 
 	}
 
-	public void RegisterThread(){
+	public void registerThread(){
 
 	}
 
 	/**
-	 * @param column_ids
-	 * @param num_updates
 	 * 
-	 * @param row_id
+	 * @param rowId
 	 * @param updates
 	 */
-	public void ThreadBatchInc(int row_id, Map<Integer, Object> updates){
+	public void threadBatchInc(int rowId, Map<Integer, Object> updates){
 
 	}
 
 	/**
-	 * @param row_accessor
 	 * 
-	 * @param row_id
+	 * @param rowId
 	 */
-	public Row ThreadGet(int row_id){
+	public Row threadGet(int rowId){
 		return null;
 	}
 
@@ -129,12 +136,15 @@ public class ClientTable {
 	 * @param column_id
 	 * @param update    update
 	 */
-	public void ThreadInc(int row_id, int column_id, Object update){
+	public void threadInc(int row_id, int column_id, Object update){
 
 	}
 
-	public void WaitPendingAsyncGet(){
+	public void waitPendingAsyncGet(){
 
 	}
 
+    public void insert(int rowId, ClientRow clientRow) {
+
+    }
 }

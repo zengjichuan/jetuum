@@ -7,6 +7,13 @@ import java.util.Map;
 import java.util.Vector;
 
 /**
+ * Managing row requests and OpLogs for SSPPush mode.
+ * Use the same logic as SSPRowRequestOpLogMgr to avoid repeated row requests
+ * to server.
+ * Row requests management is completely separated from oplog management.
+ * A BgOpLog is always saved.
+ * When the bg worker receives a set of server-pushed rows, it removes
+ * OpLogs based on the version number in that msg.
  * Created by ZengJichuan on 2014/8/21.
  */
 public class SSPPushRowRequestOpLogMgr implements RowRequestOpLogMgr {
@@ -16,7 +23,15 @@ public class SSPPushRowRequestOpLogMgr implements RowRequestOpLogMgr {
      */
     private Map<TableRowIndex, List<RowRequestInfo>> pendingRowRequest;
 
+    /**
+     * The version number of a request means that all oplogs up to and including
+     * this version have been applied to this row.
+     */
     private Map<Integer, BgOpLog> versionOpLogMap; //std::list<std::pair<uint32_t, BgOpLog*> > version_oplog_list_;
+
+    private int opLogIterVersionStart;
+    private int opLogIterVersionEnd;
+    private int opLogIterVersionNext;
 
     private ServerVersionMgr serverVersionMgr;
 
@@ -48,7 +63,7 @@ public class SSPPushRowRequestOpLogMgr implements RowRequestOpLogMgr {
         return null;
     }
 
-    public BgOpLog opLogiterNext(IntBox version) {
+    public BgOpLog opLogIterNext(IntBox version) {
         return null;
     }
 }

@@ -13,16 +13,16 @@ public class TableInfo {
 	 * vector-backed dense row it is the max number of columns. This parameter is
 	 * ignored for sparse row.
 	 */
-	public int row_capacity;
+	public int rowCapacity;
 	/**
 	 * A table can only have one type of row. The row_type is defined when calling
 	 * TableGroup::RegisterRow().
 	 */
-	public int row_type;
+	public int rowType;
 	/**
 	 * table_staleness is used for SSP and ClockVAP.
 	 */
-	public int table_staleness;
+	public int tableStaleness;
 
 	public TableInfo(){
 

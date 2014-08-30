@@ -42,7 +42,7 @@ public interface RowRequestOpLogMgr {
     public boolean addOpLog(int version, BgOpLog opLog);
 
     public BgOpLog opLogIterInit(int startVersion, int endVersion);
-    public BgOpLog opLogiterNext(IntBox version);
+    public BgOpLog opLogIterNext(IntBox version);
 }
 
 class RowRequestInfo{
