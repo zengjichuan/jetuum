@@ -22,24 +22,21 @@ public class ServerRow {
     private boolean dirty;
 
     public ServerRow(boolean dirty) {
+        this.callBackSubs = new CallBackSubs();
         this.dirty = dirty;
     }
 
     public ServerRow(Row rowData) {
+        this.callBackSubs = new CallBackSubs();
         this.rowData = rowData;
         this.numClientsSubscribed=0;
         this.dirty=false;
     }
     public void applyBatchInc(Map<Integer, Object> updates){
-        //rowData.applyBatchIncUnsafe(columnIds, updateBatch, numUpdate);
+        rowData.applyBatchIncUnsafe(updates);
         dirty = true;
     }
-   // public int serializedSize(){   //const
-   //     return rowData.getSerializedSize();
-   // }
-   // public int serialize(Byte[] bytes){      //const
-   //     return rowData.serialize(bytes);
-   // }
+
     public void subscribe(int clientId){
         if(callBackSubs.subscribe(clientId))
             ++numClientsSubscribed;

@@ -208,7 +208,7 @@ public class BgWorkers {
 
     public void clockAllTables(){
         BgClockMsg bgClockMsg = new BgClockMsg();
-        sendToAllLocalBgThreads(bgClockMsg.getMem());
+        sendToAllLocalBgThreads(bgClockMsg.getByteBuffer());
     }
 
     private void sendToAllLocalBgThreads(ByteBuffer msg){
