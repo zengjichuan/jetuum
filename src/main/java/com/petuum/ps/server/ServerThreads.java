@@ -64,20 +64,56 @@ public class ServerThreads {
             setupCommBus();
             try {
                 initBarrier.await();
+                initServer(threadID);
+
+                IntBox senderID = new IntBox();
+                Msg zmqMsg = new Msg();
+                boolean destroy_mem = false;
+
+                while(true) {
+                    commBusRecvAnyWrapper.invoke(comm_bus, senderID, zmqMsg);
+                    int msgType = new NumberedMsg(zmqMsg).getMsgType();
+                    destroy_mem = false;
+
+                    if(msgType == NumberedMsg.K_MEM_TRANSFER) {
+                        //
+                    }
+
+                    switch (msgType) {
+                        case NumberedMsg.K_CLIENT_SHUT_DOWN:
+                            log.info("get ClientShutDown from bg " + String.valueOf(senderID.intValue));
+                            if(handleShutDownMsg()) {
+                                log.info("Server shutdown");
+                                comm_bus.threadDeregister();
+                                return;
+                            }
+                        case NumberedMsg.K_CREATE_TABLE:
+                            handleCreateTable(senderID.intValue, new CreateTableMsg(zmqMsg));
+                            break;
+                        case NumberedMsg.K_ROW_REQUEST:
+                            handleRowRequest(senderID.intValue, new RowRequestMsg(zmqMsg));
+                            break;
+                        case NumberedMsg.K_CLIENT_SEND_OP_LOG:
+                            handleOpLogMsg(senderID.intValue, new ClientSendOpLogMsg(zmqMsg));
+                            break;
+                        default:
+                            log.error("Unrecognized message type " + String.valueOf(msgType));
+                    }
+
+                    if(destroy_mem) {
+                        //need MemTransfer.destroyTransferredMem(msg_mem)
+                    }
+                }
+
             } catch (InterruptedException e) {
                 log.error(e.getMessage());
             } catch (BrokenBarrierException e) {
                 log.error(e.getMessage());
-            }
-
-            try {
-                initServer(threadID);
-            } catch (InvocationTargetException e) {
-                log.error(e.getMessage());
             } catch (IllegalAccessException e) {
                 log.error(e.getMessage());
+            } catch (InvocationTargetException e) {
+                log.error(e.getMessage());
             }
-
 
         }
 

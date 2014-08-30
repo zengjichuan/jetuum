@@ -11,6 +11,7 @@ import com.petuum.ps.thread.ThreadContext;
 
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -34,7 +35,7 @@ public class TableGroup {
 	 * @param tableGroupConfig
 	 * @param tableAccess
 	 */
-	public TableGroup(final TableGroupConfig tableGroupConfig, boolean tableAccess, Integer initThreadID) throws NoSuchMethodException, InterruptedException {
+	public TableGroup(final TableGroupConfig tableGroupConfig, boolean tableAccess, Integer initThreadID) throws NoSuchMethodException, InterruptedException, BrokenBarrierException {
         GlobalContext.init(tableGroupConfig.numTotalServerThreads,
                 tableGroupConfig.numLocalServerThreads,
                 tableGroupConfig.numLocalAppThreads,
