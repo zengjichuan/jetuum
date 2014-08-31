@@ -36,8 +36,18 @@ public class ServerPushRowMsg extends ArbitrarySizedMsg {
         return sequence.get(IS_CLOCK_OFFSET) == 1;
     }
 
-    public void setIsClock(boolean clock) {
-        Byte temp = 1;
+    public int getClock() {
+        return sequence.getInt(CLOCK_OFFSET);
+    }
+
+    public void setClock(int clock) {
+        sequence.putInt(CLOCK_OFFSET, clock);
+    }
+    public void setIsClock(boolean isClock) {
+        Byte temp = 0;
+        if(isClock) {
+            temp = 1;
+        }
         sequence.put(IS_CLOCK_OFFSET, temp);
     }
 

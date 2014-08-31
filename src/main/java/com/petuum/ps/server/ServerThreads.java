@@ -73,11 +73,6 @@ public class ServerThreads {
                 while(true) {
                     commBusRecvAnyWrapper.invoke(comm_bus, senderID, zmqMsg);
                     int msgType = new NumberedMsg(zmqMsg).getMsgType();
-                    destroy_mem = false;
-
-                    if(msgType == NumberedMsg.K_MEM_TRANSFER) {
-                        //
-                    }
 
                     switch (msgType) {
                         case NumberedMsg.K_CLIENT_SHUT_DOWN:
@@ -100,9 +95,6 @@ public class ServerThreads {
                             log.error("Unrecognized message type " + String.valueOf(msgType));
                     }
 
-                    if(destroy_mem) {
-                        //need MemTransfer.destroyTransferredMem(msg_mem)
-                    }
                 }
 
             } catch (InterruptedException e) {
@@ -262,6 +254,7 @@ public class ServerThreads {
 
     }
     private static void sendToAllBgThreads(NumberedMsg msg){
+
 
     }
     private static boolean handleShutDownMsg(){

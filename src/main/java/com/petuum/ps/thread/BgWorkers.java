@@ -15,7 +15,7 @@ import com.petuum.ps.common.util.*;
 import com.petuum.ps.oplog.OpLogSerializer;
 import com.petuum.ps.oplog.TableOpLog;
 import com.petuum.ps.server.CallBackSubs;
-import com.sun.deploy.util.SessionState;
+//import com.sun.deploy.util.SessionState;
 import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.commons.lang3.SerializationUtils;
 import zmq.Msg;
@@ -528,16 +528,16 @@ public class BgWorkers {
                     {
                         ServerPushRowMsg serverPushRowMsg = new ServerPushRowMsg(zmqMsg);
                         int version = serverPushRowMsg.getVersion();
-                        bgContext.rowRequestOpLogMgr.serverAcknowledgeVersion(senderId, version);
+                        bgContext.get().rowRequestOpLogMgr.serverAcknowledgeVersion(senderId.intValue, version);
                         applyServerPushedRow(version, serverPushRowMsg.getData());
 //                        STATS_BG_ADD_PER_CLOCK_SERVER_PUSH_ROW_SIZE(
 //                                server_push_row_msg.get_size());
                         boolean isClock = serverPushRowMsg.getIsClock();
                         if (isClock){
-                            int serverClock = serverPushRowMsg.getIsClock();
+                            int serverClock = serverPushRowMsg.getClock();
                             Preconditions.checkArgument(
-                                    bgContext.serverVectorClock.getClock(senderId)+1 == serverClock);
-                            int newClock = bgContext.serverVectorClock.tick(senderId);
+                                    bgContext.get().serverVectorClock.getClock(senderId.intValue)+1 == serverClock);
+                            int newClock = bgContext.get().serverVectorClock.tick(senderId.intValue);
                             if (newClock != 0){
                                 int newSystemClock = bgServerClock.tick(myId);
                                 if (newSystemClock != 0){
@@ -612,7 +612,7 @@ public class BgWorkers {
             }
             RowRequestReplyMsg rowRequestReplyMsg = new RowRequestReplyMsg(null);
             for (int appThreadId : appThreadIds){
-                int sentSize = commBus.sendInproc(appThreadId, rowRequestReplyMsg.getByteBuffer());
+                int sentSize = commBus.sendInproc(appThreadId, rowRequestReplyMsg);
             }
         }
 
