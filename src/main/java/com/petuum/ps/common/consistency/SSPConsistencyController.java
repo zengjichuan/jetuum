@@ -1,6 +1,7 @@
 package com.petuum.ps.common.consistency;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.petuum.ps.common.Row;
 import com.petuum.ps.common.client.ClientRow;
 import com.petuum.ps.common.client.ThreadTable;
@@ -22,6 +23,7 @@ public class SSPConsistencyController extends ConsistencyController {
 	 */
 	protected int staleness_;
 	protected ThreadTable thread_cache_;
+    protected LoadingCache<Integer, ClientRow> process_storage_;
 
 	public SSPConsistencyController(){
         process_storage_ = CacheBuilder.newBuilder()

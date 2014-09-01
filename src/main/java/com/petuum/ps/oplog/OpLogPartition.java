@@ -27,7 +27,7 @@ public class OpLogPartition {
         this.locks = Striped.lock(GlobalContext.getLockPoolSize());
         this.sampleRow = sampleRow;
         this.tableId = tableId;
-        this.updateSize = sampleRow.get_update_size();
+        this.updateSize = sampleRow.getUpdateSize();
     }
 
     public void inc(int rowId, int columnId, Object delta){

@@ -79,7 +79,7 @@ public class Server {
 
         if (GlobalContext.getResumeClock() > 0){
             tables.get(tableId).readSnapShot(GlobalContext.getResumeDir(),
-                    serverId, tableId, GlobalContext.getReusmeClock());
+                    serverId, tableId, GlobalContext.getResumeClock());
         }
     }
     public ServerRow findCreateRow(int tableId, int rowId){
@@ -141,7 +141,7 @@ public class Server {
     public void applyOpLog(ByteBuffer oplog, int bgThreadId, int version){
         Preconditions.checkArgument(bgVersionMap.get(bgThreadId) + 1 == version);
         bgVersionMap.put(bgThreadId, version);
-
+/*
         SerializedOpLogReader opLogReader = new SerializedOpLogReader(oplog);
         if(opLogReader.restart() == false)  return;
 
@@ -170,6 +170,7 @@ public class Server {
             }
         }
         log.info("Read and Apply Update Done");
+*/
     }
 
     public int getMinClock(){
@@ -222,7 +223,7 @@ public class Server {
                 }
             }
             //ServerTable packs the data.
-            serverTable.initAppendTableToBuff();
+            //serverTable.initAppendTableToBuff();
             IntBox failedBgId = new IntBox();
             IntBox failedClientId = new IntBox();
             boolean packSuc = serverTable.appendTableToBuffs(0, buffs, failedBgId, failedClientId, false);
@@ -248,7 +249,7 @@ public class Server {
 
                 int tableIdPos = recordBuff.getMemPos();
                 recordBuff.putTableId(tableIdPos, tableId);
-                packSuc = serverTable.appendTableToBuffs(failedClientId, buffs, failedBgId, failedClientId, true);
+                packSuc = serverTable.appendTableToBuffs(failedClientId.intValue, buffs, failedBgId, failedClientId, true);
             }
             numTableLeft --;
             if(numTableLeft > 0){

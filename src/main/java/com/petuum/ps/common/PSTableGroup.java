@@ -24,7 +24,7 @@ public class PSTableGroup {
         return tableGroup.createTable(tabldID, config);
     }
 
-    public static void createTableDone() {
+    public static void createTableDone() throws BrokenBarrierException, InterruptedException {
         tableGroup.createTableDone();
     }
 
