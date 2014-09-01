@@ -3,13 +3,15 @@ package com.petuum.ps.common;
 import com.petuum.ps.common.client.ClientTable;
 import com.petuum.ps.common.client.TableGroup;
 
+import java.util.concurrent.BrokenBarrierException;
+
 /**
  * Created by suyuxin on 14-8-23.
  */
 public class PSTableGroup {
     private static TableGroup tableGroup;
 
-    public static void init(TableGroupConfig config, boolean tableAccess) throws NoSuchMethodException, InterruptedException {
+    public static void init(TableGroupConfig config, boolean tableAccess) throws NoSuchMethodException, InterruptedException, BrokenBarrierException {
         Integer initThreadID = new Integer(0);
         tableGroup = new TableGroup(config, tableAccess, initThreadID);
     }
@@ -26,7 +28,7 @@ public class PSTableGroup {
         tableGroup.createTableDone();
     }
 
-    public static void waitThreadRegister() {
+    public static void waitThreadRegister() throws BrokenBarrierException, InterruptedException {
         tableGroup.waitThreadRegister();
     }
 
@@ -34,7 +36,7 @@ public class PSTableGroup {
         return tableGroup.getTableOrDie(tableID);
     }
 
-    public static int registerThread() {
+    public static int registerThread() throws BrokenBarrierException, InterruptedException {
         return tableGroup.registerThread();
     }
 

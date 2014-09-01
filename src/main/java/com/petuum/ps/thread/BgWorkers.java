@@ -1,10 +1,7 @@
 package com.petuum.ps.thread;
 
 import com.google.common.base.Preconditions;
-import com.petuum.ps.common.ClientTableConfig;
-import com.petuum.ps.common.HostInfo;
-import com.petuum.ps.common.NumberedMsg;
-import com.petuum.ps.common.Row;
+import com.petuum.ps.common.*;
 import com.petuum.ps.common.client.ClientRow;
 import com.petuum.ps.common.client.ClientTable;
 import com.petuum.ps.common.client.SerializedRowReader;
@@ -18,6 +15,7 @@ import com.petuum.ps.server.CallBackSubs;
 //import com.sun.deploy.util.SessionState;
 import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.commons.lang3.SerializationUtils;
+import org.zeromq.ZMQ;
 import zmq.Msg;
 
 import java.lang.reflect.InvocationTargetException;
@@ -116,6 +114,25 @@ public class BgWorkers {
         }
     }
 
+    public static boolean createTable(int tableId, ClientTableConfig tableConfig) {
+        TableInfo tableInfo = tableConfig.tableInfo;
+        BgCreateTableMsg bgCreateTableMsg = new BgCreateTableMsg(null);
+        bgCreateTableMsg.setTableId(tableId);
+        bgCreateTableMsg.setStaleness(tableInfo.tableStaleness);
+        bgCreateTableMsg.setRowType(tableInfo.rowType);
+        bgCreateTableMsg.setRowCapacity(tableInfo.rowCapacity);
+        bgCreateTableMsg.setProcessCacheCapacity(tableConfig.processCacheCapacity);
+        bgCreateTableMsg.setThreadCacheCapacity(tableConfig.threadCacheCapacity);
+        bgCreateTableMsg.setOplogCapacity(tableConfig.opLogCapacity);
+        commBus.sendInproc(idStart, bgCreateTableMsg);
+        //wait
+        Msg zmqMsg = new Msg();
+        IntBox senderId = new IntBox();
+        commBus.recvInproc(senderId, zmqMsg);
+        assert new NumberedMsg(zmqMsg).getMsgType() == NumberedMsg.K_CREATE_TABLE_REPLY;
+        return true;
+    }
+
     public static void init(Map<Integer, ClientTable> rTables){
         threads.setSize(GlobalContext.getNumBgThreads());
         threadIds.setSize(GlobalContext.getNumBgThreads());
@@ -204,6 +221,10 @@ public class BgWorkers {
         for (int bgId : threadIds){
             connectToBg(bgId);
         }
+    }
+
+    public static void waitCreateTable() throws BrokenBarrierException, InterruptedException {
+        createTableBarrier.await();
     }
 
     public void clockAllTables(){
