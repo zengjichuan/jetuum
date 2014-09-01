@@ -24,12 +24,23 @@ public class RowRequestMsg extends NumberedMsg {
         return sequence.getInt(TABLE_ID_OFFSET);
     }
 
+    public void setTableId(int id) {
+        sequence.putInt(TABLE_ID_OFFSET, id);
+    }
+
     public int getRowId() {
         return sequence.getInt(ROW_ID_OFFSET);
     }
 
+    public void setRowId(int id) {
+        sequence.putInt(ROW_ID_OFFSET, id);
+    }
     public int getClock() {
         return sequence.getInt(CLOCK_OFFSET);
+    }
+
+    public void setClock(int clock) {
+        sequence.putInt(CLOCK_OFFSET, clock);
     }
 
     public static int getSize() {

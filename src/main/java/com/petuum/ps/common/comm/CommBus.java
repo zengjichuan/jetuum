@@ -1,6 +1,7 @@
 package com.petuum.ps.common.comm;
 
 import com.google.common.base.Preconditions;
+import com.petuum.ps.common.NumberedMsg;
 import com.petuum.ps.common.util.IntBox;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -27,6 +28,46 @@ public class CommBus {
     private int eEnd;
     private ThreadLocal<ThreadCommInfo> threadInfo = new ThreadLocal<ThreadCommInfo>();
 
+    public static class Config{
+        /**
+         *  My thread id.
+         */
+        public int entityId;
+        /**
+         * What should I listen to?
+         */
+        public int lType;
+
+        /**
+         *  In the format of "ip:port", such as "192.168.1.1:9999". It must be set
+         *  if ((ltype_ & kInterProc) == true)
+         */
+        public String networkAddr;
+
+        public int numBytesInprocSendBuff;
+        public int numBytesInprocRecvBuff;
+        public int numBytesInterprocSendBuff;
+        public int numBytesInterprocRecvBuff;
+
+        public Config() {
+            this.entityId = 0;
+            this.lType = CommBus.K_NONE;
+            this.numBytesInprocSendBuff = 0;
+            this.numBytesInprocRecvBuff = 0;
+            this.numBytesInterprocSendBuff = 0;
+            this.numBytesInterprocRecvBuff = 0;
+        }
+
+        public Config(int entityId, int lType, String networkAddr) {
+            this.entityId = entityId;
+            this.lType = lType;
+            this.networkAddr = networkAddr;
+            this.numBytesInprocSendBuff = 0;
+            this.numBytesInprocRecvBuff = 0;
+            this.numBytesInterprocSendBuff = 0;
+            this.numBytesInterprocRecvBuff = 0;
+        }
+    }
 
     private static void makeInprocAddr(int entityId, StringBuffer result){
         result.setLength(0);
@@ -182,10 +223,10 @@ public class CommBus {
         int recvId = ZmqUtil.entityID2ZmqID(entityId);
          return ZmqUtil.zmqSend(sock, recvId, msg, 0);         //is necessary to return size?
     }
-    public int sendInproc(int entityId, ByteBuffer data){
+    public int sendInproc(int entityId, NumberedMsg data){
         ZMQ.Socket sock = threadInfo.get().inprocSock;
         int recvId = ZmqUtil.entityID2ZmqID(entityId);
-        return ZmqUtil.zmqSend(sock, recvId, data, 0);
+        return ZmqUtil.zmqSend(sock, recvId, data.getByteBuffer(), 0);
     }
 
     public int sendInproc(int entityId, Msg msg){

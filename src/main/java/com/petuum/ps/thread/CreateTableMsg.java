@@ -30,15 +30,30 @@ public class CreateTableMsg extends NumberedMsg {
         return sequence.getInt(TABLE_ID_OFFSET);
     }
 
+    public void setTableId(int id) {
+        sequence.putInt(TABLE_ID_OFFSET, id);
+    }
+
     public int getStaleness() {
         return sequence.getInt(STALENESS_OFFSET);
+    }
+
+    public void setStaleness(int staleness) {
+        sequence.putInt(STALENESS_OFFSET, staleness);
     }
 
     public int getRowType() {
         return sequence.getInt(ROW_TYPE_OFFSET);
     }
 
+    public void setRowType(int rowType) {
+        sequence.putInt(ROW_TYPE_OFFSET, rowType);
+    }
     public int getRowCapacity() {
         return sequence.getInt(ROW_CAPACITY_OFFSET);
+    }
+
+    public void setRowCapacity(int rowCapacity) {
+        sequence.putInt(ROW_CAPACITY_OFFSET, rowCapacity);
     }
 }

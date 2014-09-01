@@ -3,7 +3,6 @@ package com.petuum.ps.server;
 import com.petuum.ps.common.HostInfo;
 import com.petuum.ps.common.NumberedMsg;
 import com.petuum.ps.common.comm.CommBus;
-import com.petuum.ps.common.comm.Config;
 import com.petuum.ps.common.util.IntBox;
 import com.petuum.ps.thread.ClientConnectMsg;
 import com.petuum.ps.thread.ConnectServerMsg;
@@ -52,12 +51,6 @@ class NameNodeContext {
     public int numShutdownBgs;
 }
 
-class ConnectionResult {
-    public int senderID;
-    public boolean isClient;
-    public int clientID;
-}
-
 public class NameNodeThread {
     private static CountDownLatch latch;
     private static ThreadLocal<NameNodeContext> nameNodeContext = new ThreadLocal<NameNodeContext>();
@@ -89,6 +82,12 @@ public class NameNodeThread {
             }
         }
     });
+
+    private static class ConnectionResult {
+        public int senderID;
+        public boolean isClient;
+        public int clientID;
+    }
 
     public static void init() throws NoSuchMethodException, InterruptedException {
         latch = new CountDownLatch(1);
@@ -127,7 +126,7 @@ public class NameNodeThread {
 
     private static void setupCommBus() {
         int myID = ThreadContext.getId();
-        Config config = new Config();
+        CommBus.Config config = new CommBus.Config();
         config.entityId = myID;
 
         if(GlobalContext.getNumClients() > 1) {
