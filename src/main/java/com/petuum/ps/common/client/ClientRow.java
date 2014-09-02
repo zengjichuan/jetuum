@@ -12,15 +12,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public abstract class ClientRow {
 
-	private AtomicInteger num_refs;
-	private Row row_data;
-
-	public ClientRow(){
-
-	}
+//	private AtomicInteger numRefs;
+	private Row rowData;
 
     public void setRowData(Row row) {
-        row_data = row;
+        rowData = row;
     }
 
 	public void finalize() throws Throwable {
@@ -30,10 +26,10 @@ public abstract class ClientRow {
 	/**
 	 * 
 	 * @param clock
-	 * @param row_data
+	 * @param rowData
 	 */
-	public ClientRow(int clock, Row row_data){
-
+	public ClientRow(int clock, Row rowData){
+        this.rowData = rowData;
 	}
 
 	public void decRef(){
@@ -41,7 +37,7 @@ public abstract class ClientRow {
 	}
 
 	public int getClock(){
-		return 0;
+		return -1;
 	}
 
 	public Row getRowData(){

@@ -2,9 +2,16 @@ package com.petuum.ps.common.client;
 import com.petuum.ps.common.ClientTableConfig;
 import com.petuum.ps.common.Row;
 import com.petuum.ps.common.consistency.ConsistencyController;
+import com.petuum.ps.common.consistency.SSPConsistencyController;
+import com.petuum.ps.common.util.ClassRegistry;
 import com.petuum.ps.oplog.TableOpLog;
+import com.petuum.ps.oplog.TableOpLogIndex;
+import com.petuum.ps.thread.GlobalContext;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Yuxin Su
@@ -15,23 +22,39 @@ public class ClientTable {
 
 	private ConsistencyController consistencyController;
 	private int rowType;
-	private Row sampleTow;
+	private Row sampleRow;
 	private int tableId;
 	private ThreadLocal<ThreadTable> threadCache;
-    private TableOpLog opLog;
+    private static Logger log = LogManager.getLogger(ClientTable.class);
 
-	public ClientTable(){
+    /**
+     *
+     * @param tableId
+     * @param config
+     */
+    public ClientTable(int tableId, ClientTableConfig config) {
+        this.rowType = config.tableInfo.rowType;
+        ClassRegistry<Row> classRegistry = ClassRegistry.getRegistry();
+        this.sampleRow = classRegistry.createObject(rowType);
+        this.tableId = tableId;
+        this.threadCache = new ThreadLocal<ThreadTable>();
 
-	}
-
-	/**
-	 * 
-	 * @param table_id
-	 * @param config    config
-	 */
-	public ClientTable(int table_id, ClientTableConfig config){
-
-	}
+        switch (GlobalContext.getConsistencyModel()){
+            case SSP:
+            {
+                consistencyController = new SSPConsistencyController(tableId, sampleRow,threadCache.get(),
+                        config.processCacheCapacity);
+                break;
+            }
+            case SSPPush:
+            {
+//                consistencyController = new SSPPushConsistencyController();
+                break;
+            }
+            default:
+                log.fatal("Not yet support consistency model " + GlobalContext.getConsistencyModel());
+        }
+    }
 
 	/**
 	 * 
@@ -48,15 +71,15 @@ public class ClientTable {
 	 * @param updates
 	 */
 	public void batchInc(int row_id, Map<Integer, Object> updates){
-
+        consistencyController.batchInc(row_id, updates);
 	}
 
 	public void clock(){
-
+        consistencyController.clock();
 	}
 
 	public void flushThreadCache(){
-
+        consistencyController.flushThreadCache();
 	}
 
 	/**
@@ -64,31 +87,26 @@ public class ClientTable {
 	 * @param rowId
 	 */
 	public ClientRow get(int rowId){
-		return null;
-	}
-
-	public int getRowType(){
-		return 0;
-	}
-
-    /**
-     *
-     * @return opLog
-     */
-    public TableOpLog getOpLog(){
-        return opLog;
+        return consistencyController.get(rowId);
     }
 
-	public final Row getSampleRow(){
-		return null;
+	public int getRowType(){
+		return rowType;
 	}
 
+	public final Row getSampleRow(){
+		return sampleRow;
+	}
+
+    public TableOpLog getOpLog(){
+        return consistencyController.getOpLog();
+    }
 	/**
 	 * 
-	 * @param clientTable    client_table
+	 * @param partitionNum    partition_num
 	 */
-	public Map<Integer, Boolean> getAndResetOpLogIndex(int clientTable){
-		return null;
+	public Map<Integer, Boolean> getAndResetOpLogIndex(int partitionNum){
+		return consistencyController.getAndResetOpLogIndex(partitionNum);
 	}
 
 	/**
@@ -96,21 +114,23 @@ public class ClientTable {
 	 * @param rowId    row_id
 	 */
 	public void getAsync(int rowId){
-
+        consistencyController.getAsync(rowId);
 	}
 
 	/**
 	 * 
-	 * @param row_id
-	 * @param column_id
+	 * @param rowId
+	 * @param columnId
 	 * @param update    update
 	 */
-	public void inc(int row_id, int column_id, Object update){
-
+	public void inc(int rowId, int columnId, Object update){
+        consistencyController.inc(rowId, columnId, update);
 	}
 
 	public void registerThread(){
-
+        if(threadCache.get() == null){
+            threadCache.set(new ThreadTable(sampleRow));
+        }
 	}
 
 	/**
@@ -119,7 +139,7 @@ public class ClientTable {
 	 * @param updates
 	 */
 	public void threadBatchInc(int rowId, Map<Integer, Object> updates){
-
+        consistencyController.threadBatchInc(rowId, updates);
 	}
 
 	/**
@@ -127,7 +147,7 @@ public class ClientTable {
 	 * @param rowId
 	 */
 	public Row threadGet(int rowId){
-		return null;
+		return consistencyController.threadGet(rowId);
 	}
 
 	/**
@@ -137,14 +157,19 @@ public class ClientTable {
 	 * @param update    update
 	 */
 	public void threadInc(int row_id, int column_id, Object update){
-
+        consistencyController.threadInc(row_id, column_id, update);
 	}
 
 	public void waitPendingAsyncGet(){
-
+        consistencyController.waitPendingAsnycGet();
 	}
 
+    /**
+     *
+     * @param rowId
+     * @param clientRow
+     */
     public void insert(int rowId, ClientRow clientRow) {
-
+        consistencyController.insert(rowId, clientRow);
     }
 }

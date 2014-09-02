@@ -1,5 +1,12 @@
 package com.petuum.ps.common.client;
+import com.google.common.cache.Cache;
 import com.petuum.ps.common.Row;
+import com.petuum.ps.common.oplog.RowOpLog;
+import com.petuum.ps.common.util.IntBox;
+import com.petuum.ps.oplog.TableOpLog;
+import com.petuum.ps.oplog.TableOpLogIndex;
+import com.petuum.ps.thread.GlobalContext;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,12 +18,13 @@ import java.util.Set;
  */
 public class ThreadTable {
 
-	private List<Set<Integer>> oplog_index_;
-	private Map<Integer, Row> row_storage_;
-	private Row sample_row_;
+	private List<Set<Integer>> opLogIndex;
+    private Map<Integer, RowOpLog> opLogMap;
+	private Map<Integer, Row> rowStorage;
+	private Row sampleRow;
 
-	public ThreadTable(){
-
+	public ThreadTable(Row sampleRow){
+        this.sampleRow = sampleRow;
 	}
 
 	public void finalize() throws Throwable {
@@ -25,27 +33,19 @@ public class ThreadTable {
 
 	/**
 	 * 
-	 * @param sample_row
-	 */
-	public ThreadTable(final Row sample_row){
-
-	}
-
-	/**
-	 * 
 	 * @param row_id
 	 * @param deltas
 	 */
-	public void BatchInc(int row_id, final Map<Integer, Object> deltas){
+	public void batchInc(int row_id, final Map<Integer, Object> deltas){
 
 	}
 
 	/**
 	 * 
-	 * @param row_id
+	 * @param rowId
 	 */
-	public Row GetRow(int row_id){
-		return null;
+	public Row getRow(int rowId){
+		return rowStorage.get(rowId);
 	}
 
 	/**
@@ -54,25 +54,46 @@ public class ThreadTable {
 	 * @param column_id
 	 * @param delta
 	 */
-	public void Inc(int row_id, int column_id, final Object delta){
+	public void inc(int row_id, int column_id, final Object delta){
 
 	}
 
 	/**
 	 * 
-	 * @param row_id
+	 * @param rowId
 	 */
-	public void IndexUpdate(int row_id){
-
+	public void indexUpdate(int rowId){
+        int partitionNum = GlobalContext.getBgPartitionNum(rowId);
+        opLogIndex.get(partitionNum).add(rowId);
 	}
 
 	/**
 	 * 
-	 * @param row_id
-	 * @param to_insert
+	 * @param rowId
+	 * @param toInsert
 	 */
-	public void InsertRow(int row_id, final Row to_insert){
+	public void insertRow(int rowId, final Row toInsert){
+        //clone
+        rowStorage.put(rowId, toInsert);
+        RowOpLog rowOpLog = opLogMap.get(rowId);
+        if(rowOpLog != null) {
+            IntBox columnId = new IntBox();
+            Object delta = rowOpLog.beginIterate(columnId);
+            while (delta != null){
+                toInsert.applyInc(columnId.intValue, delta);
+                delta = rowOpLog.next(columnId);
+            }
+        }
 
 	}
 
+    public void flushCache(Cache<Integer, ClientRow> processStorage, TableOpLog opLog, Row sampleRow) {
+    }
+
+    public void flushOpLogIndex(TableOpLogIndex tableOpLogIndex) {
+        for (int i = 0; i < GlobalContext.getNumBgThreads(); i++) {
+            tableOpLogIndex.addIndex(i, opLogIndex.get(i));
+            opLogIndex.get(i).clear();
+        }
+    }
 }

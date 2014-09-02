@@ -9,6 +9,7 @@ import com.petuum.ps.common.util.BoolBox;
 import com.petuum.ps.common.util.IntBox;
 import com.petuum.ps.common.util.RecordBuff;
 import com.petuum.ps.common.util.VectorClock;
+import com.petuum.ps.oplog.SerializedOpLogReader;
 import com.petuum.ps.thread.GlobalContext;
 import com.petuum.ps.thread.ServerPushRowMsg;
 import org.apache.logging.log4j.LogManager;
@@ -141,7 +142,7 @@ public class Server {
     public void applyOpLog(ByteBuffer oplog, int bgThreadId, int version){
         Preconditions.checkArgument(bgVersionMap.get(bgThreadId) + 1 == version);
         bgVersionMap.put(bgThreadId, version);
-/*
+
         SerializedOpLogReader opLogReader = new SerializedOpLogReader(oplog);
         if(opLogReader.restart() == false)  return;
 
@@ -170,7 +171,6 @@ public class Server {
             }
         }
         log.info("Read and Apply Update Done");
-*/
     }
 
     public int getMinClock(){
@@ -223,7 +223,7 @@ public class Server {
                 }
             }
             //ServerTable packs the data.
-            //serverTable.initAppendTableToBuff();
+            serverTable.initAppendTableToBuffs();
             IntBox failedBgId = new IntBox();
             IntBox failedClientId = new IntBox();
             boolean packSuc = serverTable.appendTableToBuffs(0, buffs, failedBgId, failedClientId, false);
