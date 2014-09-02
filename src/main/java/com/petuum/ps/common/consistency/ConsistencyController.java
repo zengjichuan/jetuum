@@ -1,8 +1,10 @@
 package com.petuum.ps.common.consistency;
 
+import com.google.common.cache.Cache;
 import com.google.common.cache.LoadingCache;
 import com.petuum.ps.common.Row;
 import com.petuum.ps.common.client.ClientRow;
+import com.petuum.ps.oplog.TableOpLog;
 
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -22,12 +24,12 @@ public abstract class ConsistencyController {
 	 * common class members for all controller modules. Process cache, highly
 	 * concurrent.
 	 */
-	protected LoadingCache<Integer, ClientRow> processStorage;
+	protected Cache<Integer, ClientRow> processStorage;
 	/**
 	 * We use sample_row_.AddUpdates(), SubstractUpdates() as static method.
 	 */
-	protected Row sample_row_;
-	protected int table_id;
+	protected Row sampleRow;
+	protected int tableId;
 
 	public ConsistencyController(){
 
@@ -56,23 +58,23 @@ public abstract class ConsistencyController {
 	 * @param row_id
 	 * @param updates    updates
 	 */
-	public abstract void BatchInc(int row_id,  Map<Integer, Object> updates);
+	public abstract void batchInc(int row_id,  Map<Integer, Object> updates);
 
-	public abstract void Clock();
+	public abstract void clock();
 
-	public abstract void FlushThreadCache();
-
-	/**
-	 * 
-	 * @param row_id    row_id
-	 */
-	public abstract ClientRow Get(int row_id, int clock) throws ExecutionException;
+	public abstract void flushThreadCache();
 
 	/**
 	 * 
 	 * @param row_id    row_id
 	 */
-	public abstract void GetAsync(int row_id);
+	public abstract ClientRow get(int row_id);
+
+	/**
+	 * 
+	 * @param row_id    row_id
+	 */
+	public abstract void getAsync(int row_id);
 
 	/**
 	 * 
@@ -80,20 +82,20 @@ public abstract class ConsistencyController {
 	 * @param column_id
 	 * @param delta    delta
 	 */
-	public abstract void Inc(int row_id, int column_id, final Object delta);
+	public abstract void inc(int row_id, int column_id, final Object delta);
 
 	/**
 	 * 
 	 * @param row_id
 	 * @param updates    updates
 	 */
-	public abstract void ThreadBatchInc(int row_id, final Map<Integer, Object> updates);
+	public abstract void threadBatchInc(int row_id, final Map<Integer, Object> updates);
 
 	/**
 	 * 
 	 * @param row_id    row_id
 	 */
-	public abstract Row ThreadGet(int row_id);
+	public abstract Row threadGet(int row_id);
 
 	/**
 	 * 
@@ -101,8 +103,13 @@ public abstract class ConsistencyController {
 	 * @param column_id
 	 * @param delta    delta
 	 */
-	public abstract void ThreadInc(int row_id, int column_id, final Object delta);
+	public abstract void threadInc(int row_id, int column_id, final Object delta);
 
-	public abstract void WaitPendingAsnycGet();
+	public abstract void waitPendingAsnycGet();
 
+    public abstract Map<Integer,Boolean> getAndResetOpLogIndex(int clientTable);
+
+    public abstract TableOpLog getOpLog();
+
+    public abstract void insert(int rowId, ClientRow clientRow);
 }

@@ -42,7 +42,8 @@ public class ClientTable {
         switch (GlobalContext.getConsistencyModel()){
             case SSP:
             {
-                consistencyController = new SSPConsistencyController(tableId, sampleRow,threadCache.get());
+                consistencyController = new SSPConsistencyController(tableId, sampleRow,threadCache.get(),
+                        config.processCacheCapacity);
                 break;
             }
             case SSPPush:
@@ -86,7 +87,7 @@ public class ClientTable {
 	 * @param rowId
 	 */
 	public ClientRow get(int rowId){
-        return null;
+        return consistencyController.get(rowId);
     }
 
 	public int getRowType(){
@@ -97,12 +98,15 @@ public class ClientTable {
 		return sampleRow;
 	}
 
+    public TableOpLog getOpLog(){
+        return consistencyController.getOpLog();
+    }
 	/**
 	 * 
-	 * @param clientTable    client_table
+	 * @param partitionNum    partition_num
 	 */
-	public Map<Integer, Boolean> getAndResetOpLogIndex(int clientTable){
-		return consistencyController.getAndResetOpLogIndex(clientTable);
+	public Map<Integer, Boolean> getAndResetOpLogIndex(int partitionNum){
+		return consistencyController.getAndResetOpLogIndex(partitionNum);
 	}
 
 	/**
@@ -110,17 +114,17 @@ public class ClientTable {
 	 * @param rowId    row_id
 	 */
 	public void getAsync(int rowId){
-
+        consistencyController.getAsync(rowId);
 	}
 
 	/**
 	 * 
-	 * @param row_id
-	 * @param column_id
+	 * @param rowId
+	 * @param columnId
 	 * @param update    update
 	 */
-	public void inc(int row_id, int column_id, Object update){
-
+	public void inc(int rowId, int columnId, Object update){
+        consistencyController.inc(rowId, columnId, update);
 	}
 
 	public void registerThread(){
@@ -135,7 +139,7 @@ public class ClientTable {
 	 * @param updates
 	 */
 	public void threadBatchInc(int rowId, Map<Integer, Object> updates){
-
+        consistencyController.threadBatchInc(rowId, updates);
 	}
 
 	/**
@@ -143,7 +147,7 @@ public class ClientTable {
 	 * @param rowId
 	 */
 	public Row threadGet(int rowId){
-		return null;
+		return consistencyController.threadGet(rowId);
 	}
 
 	/**
@@ -157,7 +161,7 @@ public class ClientTable {
 	}
 
 	public void waitPendingAsyncGet(){
-
+        consistencyController.waitPendingAsnycGet();
 	}
 
     /**
@@ -166,6 +170,6 @@ public class ClientTable {
      * @param clientRow
      */
     public void insert(int rowId, ClientRow clientRow) {
-
+        consistencyController.insert(rowId, clientRow);
     }
 }

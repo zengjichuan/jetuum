@@ -1,6 +1,8 @@
 package com.petuum.ps.common.consistency;
+import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
+import com.petuum.ps.common.Constants;
 import com.petuum.ps.common.Row;
 import com.petuum.ps.common.client.ClientRow;
 import com.petuum.ps.common.client.ThreadTable;
@@ -11,6 +13,7 @@ import com.petuum.ps.thread.BgWorkers;
 import com.petuum.ps.thread.ThreadContext;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -32,7 +35,7 @@ public class SSPConsistencyController extends ConsistencyController {
     protected TableOpLog opLog;
     protected TableOpLogIndex opLogIndex;
 
-	public SSPConsistencyController(){
+	/*public SSPConsistencyController(){
         processStorage = CacheBuilder.newBuilder()
                 .build(
                     new CacheLoader<Integer, ClientRow>() {
@@ -48,7 +51,8 @@ public class SSPConsistencyController extends ConsistencyController {
                         }
                     }
                 );
-	}
+        processStorage = CacheBuilder.newBuilder().build();
+	}*/
 
 	public void finalize() throws Throwable {
 		super.finalize();
@@ -60,71 +64,93 @@ public class SSPConsistencyController extends ConsistencyController {
 	 * @param sampleRow
 	 * @param threadCache
 	 */
-	public SSPConsistencyController(int tableId, final Row sampleRow, ThreadTable threadCache){
+	public SSPConsistencyController(int tableId, final Row sampleRow, ThreadTable threadCache, int cacheSize){
         this.threadCache = threadCache;
         this.opLog = new TableOpLog(tableId, sampleRow);
         this.opLogIndex = new TableOpLogIndex();
+        this.processStorage = CacheBuilder.newBuilder().
+                maximumSize((long) Math.ceil(cacheSize / Constants.HASH_MAP_LOAD_FACTOR)).build();
 	}
 
 	/**
 	 * 
-	 * @param row_id
+	 * @param rowId
 	 * @param updates
 	 */
-	public void batchInc(int row_id, Map<Integer, Object> updates){
+	public void batchInc(int rowId, Map<Integer, Object> updates){
+        threadCache.indexUpdate(rowId);
+        RowOpLog rowOpLog = opLog.findInsertOpLog(rowId);
+        for (Map.Entry<Integer, Object> entry : updates.entrySet()){
+            Object opLogDelta = rowOpLog.findCreate(entry.getKey(), sampleRow);
+            sampleRow.addUpdates(entry.getKey(), opLogDelta, entry.getValue());
+        }
 
+        ClientRow clientRow = processStorage.getIfPresent(rowId);
+        if (clientRow != null){
+            clientRow.getRowData().applyBatchInc(updates);
+        }
     }
 
 	public void clock(){
-
+        // order is important
+        threadCache.flushCache(processStorage, opLog, sampleRow);
+        threadCache.flushOpLogIndex(opLogIndex);
     }
 
 	public void flushThreadCache(){
-
+        threadCache.flushCache(processStorage, opLog, sampleRow);
     }
 
 	/**
 	 * 
-	 * @param row_id
+	 * @param rowId
 	 */
-	public ClientRow get(int row_id, int clock) throws ExecutionException { //how to get the clock? use a list
-        int stalest_clock = ThreadContext.getClock() - staleness;
-        if(stalest_clock < 0){
-            stalest_clock = 0;
+	public ClientRow get(int rowId) { //how to get the clock? use a list
+        int stalestClock = ThreadContext.getClock() - staleness;
+        ClientRow clientRow = processStorage.getIfPresent(rowId);
+        if (clientRow != null){
+            //found it! Check staleness
+            int clock = clientRow.getClock();
+            if (clock >= stalestClock){
+                return clientRow;
+            }
         }
-        ClientRow row = processStorage.get(row_id);
-
-        if(clock >= stalest_clock) {
-            return row;
-        }else {
-            processStorage.invalidate(row_id);
-            return processStorage.get(row_id);
-        }
+        // Didn't find row_id that's fresh enough in process_storage_.
+        // Fetch from server.
+        do {
+            BgWorkers.requestRow(tableId, rowId, stalestClock);
+            clientRow = processStorage.getIfPresent(rowId);
+        }while(clientRow == null);
+        Preconditions.checkArgument(clientRow.getClock() >= stalestClock);
+        return clientRow;
     }
+
 
 	/**
 	 * 
-	 * @param row_id
+	 * @param rowId
 	 */
-	public void getAsync(int row_id) {
+	public void getAsync(int rowId) {
 
     }
 
 	/**
 	 * 
-	 * @param row_id
-	 * @param column_id
+	 * @param rowId
+	 * @param columnId
 	 * @param delta
 	 */
-	public void inc(int row_id, int column_id, Object delta) {
-        threadCache.indexUpdate(row_id);
-        RowOpLog rowOpLog = opLog.findInsertOpLog(row_id);
-        Object opLogDelta = rowOpLog.findCreate(column_id, sampleRow);
-        sampleRow.addUpdates(column_id, opLogDelta, delta);
+	public void inc(int rowId, int columnId, Object delta) {
+        threadCache.indexUpdate(rowId);
+        RowOpLog rowOpLog = opLog.findInsertOpLog(rowId);
+        Object opLogDelta = rowOpLog.findCreate(columnId, sampleRow);
+        sampleRow.addUpdates(columnId, opLogDelta, delta);
 
         //update to process_storage
-        ClientRow clientRow = processStorage.get(row_id);
-
+        ClientRow clientRow = processStorage.getIfPresent(rowId);
+        if (clientRow != null){
+            clientRow.getRowData().applyInc(columnId, delta);
+        }
     }
 
 	/**
@@ -146,7 +172,24 @@ public class SSPConsistencyController extends ConsistencyController {
             return rowData;
         }
 
-        return null;
+        ClientRow clientRow = processStorage.getIfPresent(rowId);
+        int stalestClock = Math.max(0, ThreadContext.getClock() - staleness);
+        if(clientRow != null){
+            int clock = clientRow.getClock();
+            if (clock >= stalestClock){
+                threadCache.insertRow(rowId, clientRow.getRowData());
+                return Preconditions.checkNotNull(threadCache.getRow(rowId));
+            }
+        }
+        // Didn't find row_id that's fresh enough in process_storage_.
+        // Fetch from server.
+        do {
+            BgWorkers.requestRow(tableId, rowId, stalestClock);
+            clientRow = processStorage.getIfPresent(rowId);
+        }while(clientRow == null);
+        Preconditions.checkArgument(clientRow.getClock() >= stalestClock);
+        threadCache.insertRow(rowId, clientRow.getRowData());
+        return Preconditions.checkNotNull(threadCache.getRow(rowId));
     }
 
 	/**
@@ -165,5 +208,15 @@ public class SSPConsistencyController extends ConsistencyController {
 
     public Map<Integer, Boolean> getAndResetOpLogIndex(int clientTable){
         return opLogIndex.resetPartition(clientTable);
+    }
+
+    @Override
+    public TableOpLog getOpLog() {
+        return opLog;
+    }
+
+    @Override
+    public void insert(int rowId, ClientRow clientRow) {
+        processStorage.put(rowId, clientRow);
     }
 }
