@@ -40,7 +40,8 @@ public class OpLogPartition {
                 opLogMap.put(rowId, rowOpLog);
             }
             Object opLogDelta = rowOpLog.findCreate(columnId, sampleRow);
-            sampleRow.addUpdates(columnId, opLogDelta, delta);
+            opLogDelta = sampleRow.addUpdates(columnId, opLogDelta, delta);
+            rowOpLog.insert(columnId, opLogDelta);
         }finally {
             lock.unlock();
         }
@@ -68,7 +69,8 @@ public class OpLogPartition {
             }
             for (Map.Entry<Integer, Object> entry : deltaBatch.entrySet()) {
                 Object opLogDelta = rowOpLog.findCreate(entry.getKey(), sampleRow);
-                sampleRow.addUpdates(entry.getKey(), opLogDelta, entry.getValue());
+                opLogDelta = sampleRow.addUpdates(entry.getKey(), opLogDelta, entry.getValue());
+                rowOpLog.insert(entry.getKey(), opLogDelta);        //replace
             }
         }finally {
             lock.unlock();

@@ -82,7 +82,8 @@ public class SSPConsistencyController extends ConsistencyController {
         RowOpLog rowOpLog = opLog.findInsertOpLog(rowId);
         for (Map.Entry<Integer, Object> entry : updates.entrySet()){
             Object opLogDelta = rowOpLog.findCreate(entry.getKey(), sampleRow);
-            sampleRow.addUpdates(entry.getKey(), opLogDelta, entry.getValue());
+            opLogDelta = sampleRow.addUpdates(entry.getKey(), opLogDelta, entry.getValue());
+            rowOpLog.insert(entry.getKey(), opLogDelta);        //replace the old
         }
 
         ClientRow clientRow = processStorage.getIfPresent(rowId);
@@ -144,8 +145,8 @@ public class SSPConsistencyController extends ConsistencyController {
         threadCache.indexUpdate(rowId);
         RowOpLog rowOpLog = opLog.findInsertOpLog(rowId);
         Object opLogDelta = rowOpLog.findCreate(columnId, sampleRow);
-        sampleRow.addUpdates(columnId, opLogDelta, delta);
-
+        opLogDelta = sampleRow.addUpdates(columnId, opLogDelta, delta);
+        rowOpLog.insert(columnId, opLogDelta);          //replace
         //update to process_storage
         ClientRow clientRow = processStorage.getIfPresent(rowId);
         if (clientRow != null){

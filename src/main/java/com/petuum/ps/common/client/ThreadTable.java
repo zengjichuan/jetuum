@@ -6,6 +6,7 @@ import com.petuum.ps.common.util.IntBox;
 import com.petuum.ps.oplog.TableOpLog;
 import com.petuum.ps.oplog.TableOpLogIndex;
 import com.petuum.ps.thread.GlobalContext;
+import org.apache.commons.lang3.SerializationUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -74,13 +75,14 @@ public class ThreadTable {
 	 */
 	public void insertRow(int rowId, final Row toInsert){
         //clone
-        rowStorage.put(rowId, toInsert);
+        Row copyRow = SerializationUtils.clone(toInsert);
+        rowStorage.put(rowId, copyRow);
         RowOpLog rowOpLog = opLogMap.get(rowId);
         if(rowOpLog != null) {
             IntBox columnId = new IntBox();
             Object delta = rowOpLog.beginIterate(columnId);
             while (delta != null){
-                toInsert.applyInc(columnId.intValue, delta);
+                copyRow.applyInc(columnId.intValue, delta);
                 delta = rowOpLog.next(columnId);
             }
         }

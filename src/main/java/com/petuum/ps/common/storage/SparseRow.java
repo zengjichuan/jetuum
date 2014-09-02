@@ -1,0 +1,118 @@
+package com.petuum.ps.common.storage;
+
+import com.petuum.ps.common.Row;
+import org.apache.commons.lang3.SerializationUtils;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+/**
+ * Created by ZengJichuan on 2014/9/2.
+ */
+public class SparseRow<V extends Number> implements Row {
+
+    private ReadWriteLock lock;
+
+    private int updateSize;
+
+    Map<Integer, V> rowData;
+
+    public SparseRow(V sampleElem) {
+        this.lock = new ReentrantReadWriteLock();
+        this.updateSize = SerializationUtils.serialize(sampleElem).length;
+        this.rowData = new HashMap<Integer, V>();
+    }
+
+    public V get(int columnId){
+        try {
+            lock.readLock().lock();
+            return rowData.getOrDefault(columnId, (V)(Integer.valueOf(0)));
+        }finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    public int numEntries(){
+        try{
+            lock.readLock().lock();
+            return rowData.size();
+        }finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    public V addUpdates(int column_id, Object update1, Object update2) {
+        // Ignore column_id
+        double sum = ((V)update1).doubleValue()+((V)update2).doubleValue();
+        return (V)Double.valueOf(sum);
+    }
+
+    public void applyBatchInc(Map<Integer, Object> updateBatch) {
+        try{
+            lock.writeLock().lock();
+            applyBatchIncUnsafe(updateBatch);
+        }finally {
+            lock.writeLock().unlock();
+        }
+
+    }
+
+    public void applyBatchIncUnsafe(Map<Integer, Object> updateBatch) {
+        for (Map.Entry<Integer, Object> entry : updateBatch.entrySet()){
+            int columnId = entry.getKey();
+            rowData.put(columnId, (V)Double.valueOf(
+                    rowData.getOrDefault(columnId, (V) Double.valueOf(0)).doubleValue()
+                    + ((V)entry.getValue()).doubleValue()));
+            if (Math.abs(rowData.get(columnId).doubleValue()) < 1e9){
+                rowData.remove(columnId);
+            }
+        }
+    }
+
+    public void applyInc(int columnId, Object update) {
+        try {
+            lock.writeLock().lock();
+            applyIncUnsafe(columnId, update);
+        }finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    /**
+     * convert Object to V, then to double and plus
+     * @param column_id
+     * @param update
+     */
+    public void applyIncUnsafe(int column_id, Object update) {
+        rowData.put(column_id, (V)Double.valueOf(((V)update).doubleValue() +
+                rowData.getOrDefault(column_id, (V)(Double.valueOf(0))).doubleValue()));
+    }
+
+    /**
+     * the size of V is not what you can see, i.e. Integer:81, Short:77, Double:84, Float:79
+     * @return
+     */
+    public int getUpdateSize() {
+        return updateSize;
+    }
+
+    public void init(int capacity) {
+
+    }
+
+    public void initUpdate(int column_id, Object zero) {
+        zero = 0;
+    }
+
+    public V subtractUpdates(int column_id, Object update1, Object update2) {
+        // Ignore column_id
+        double sum = ((V)update1).doubleValue() - ((V)update2).doubleValue();
+        return (V)Double.valueOf(sum);
+    }
+
+// ======== const_iterator Implementation ========
+
+}

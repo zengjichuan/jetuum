@@ -5,6 +5,7 @@ import com.petuum.ps.common.util.IntBox;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
@@ -19,6 +20,7 @@ public class RowOpLog {
     private Iterator<Map.Entry<Integer, Object>> iter;
     public RowOpLog(Method initUpdate){
         this.initUpdate = initUpdate;
+        opLogs = new HashMap<Integer, Object>();
     }
 
     public Object beginIterate(IntBox columnId){
@@ -58,5 +60,9 @@ public class RowOpLog {
 
     public int getSize(){
         return opLogs.size();
+    }
+
+    public void insert(int columnId,Object update){
+        opLogs.put(columnId, update);
     }
 }

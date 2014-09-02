@@ -12,9 +12,9 @@ import java.util.Map;
  * @version 1.0
  * @created 19-??-2014 14:29:06
  */
-public abstract interface Row extends Serializable {
+public abstract interface Row extends Serializable{
 
-	public void finalize() throws Throwable;
+//	public void finalize() throws Throwable;
 
 	/**
 	 * Aggregate update1 and update2 by summation and substraction (update1 - update2),
@@ -27,7 +27,7 @@ public abstract interface Row extends Serializable {
 	 * @param update1
 	 * @param update2
 	 */
-	public abstract void addUpdates(int column_id, Object update1, final Object update2);
+	public abstract Object addUpdates(int column_id, Object update1, final Object update2);
 
 	/**
 	 * 
@@ -78,6 +78,6 @@ public abstract interface Row extends Serializable {
 	 * @param update1
 	 * @param update2
 	 */
-	public abstract void subtractUpdates(int column_id, Object update1, final Object update2);
+	public abstract Object subtractUpdates(int column_id, Object update1, final Object update2);
 
 }
