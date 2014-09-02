@@ -21,7 +21,7 @@ public class TableOpLogIndex {
     public void addIndex(int partitionNum, Set<Integer> opLogIndex){
         partitionOpLogIndexes.get(partitionNum).addIndex(opLogIndex);
     }
-    Map<Integer, Boolean> resetPartition(int partitionNum){
+    public Map<Integer, Boolean> resetPartition(int partitionNum){
         return partitionOpLogIndexes.get(partitionNum).reset();
     }
 }

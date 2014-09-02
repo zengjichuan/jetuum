@@ -12,6 +12,7 @@ import com.petuum.ps.thread.ThreadContext;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -24,11 +25,12 @@ public class TableGroup {
 	/**
 	 * Max staleness among all tables.
 	 */
-	private  int max_table_staleness_;
-	private  AtomicInteger num_app_threads_registered_;
-	private  Map<Integer, ClientTable> tables_;
-	private  VectorClockMT vector_clock_;
+	private  int maxTableStaleness;
+	private  AtomicInteger numAppThreadsRegistered;
+	private  Map<Integer, ClientTable> tables;
+	private  VectorClockMT vectorClock;
     private Method clockInternal;
+    private CyclicBarrier registerBarrier;
 
 	/**
 	 *
@@ -50,7 +52,7 @@ public class TableGroup {
                 tableGroupConfig.serverRingSize,
                 tableGroupConfig.consistencyModel,
                 tableGroupConfig.aggressiveClock);
-        num_app_threads_registered_.set(1);
+        numAppThreadsRegistered.set(1);
         int localIDMin = GlobalContext.getThreadIdMin(tableGroupConfig.clientId);
         initThreadID = localIDMin + GlobalContext.K_INIT_THREAD_ID_OFFSET;
         CommBus.Config config = new CommBus.Config(initThreadID, CommBus.K_NONE, "");
@@ -63,10 +65,10 @@ public class TableGroup {
             ServerThreads.init(localIDMin);
         }
 
-        //BgWorkers.init(tables_);
+        BgWorkers.init(tables);
         ThreadContext.registerThread(initThreadID);
         if(tableAccess) {
-            vector_clock_.addClock(initThreadID, 0);
+            vectorClock.addClock(initThreadID, 0);
         }
         if(tableGroupConfig.aggressiveClock) {
             clockInternal = TableGroup.class.getMethod("clockAggressive");
@@ -93,10 +95,21 @@ public class TableGroup {
 	 * @param table_config
 	 */
 	public boolean createTable(int table_id, final ClientTableConfig table_config){
-        return false;
+        if(table_config.tableInfo.tableStaleness > maxTableStaleness) {
+            maxTableStaleness = table_config.tableInfo.tableStaleness;
+        }
+
+        boolean suc = BgWorkers.createTable(table_id, table_config);
+        if(suc && (GlobalContext.getNumAppThreads() == GlobalContext.getNumTableThreads())) {
+            tables.get(table_id).registerThread();
+        }
+        return suc;
 	}
 
-	public void createTableDone(){
+	public void createTableDone() throws BrokenBarrierException, InterruptedException {
+
+        BgWorkers.waitCreateTable();
+        registerBarrier = new CyclicBarrier(GlobalContext.getNumTableThreads());
 
 	}
 
@@ -116,11 +129,32 @@ public class TableGroup {
 
 	}
 
-	public int registerThread(){
-        return 0;
+	public int registerThread() throws BrokenBarrierException, InterruptedException {
+        int appThreadIdOffset = numAppThreadsRegistered.getAndIncrement();
+
+        int threadId = GlobalContext.getLocalIdMin() + GlobalContext.K_INIT_THREAD_ID_OFFSET + appThreadIdOffset;
+
+        CommBus.Config config = new CommBus.Config(threadId, CommBus.K_NONE, "");
+        GlobalContext.commBus.threadRegister(config);
+
+        ThreadContext.registerThread(threadId);
+
+        BgWorkers.threadRegister();
+        vectorClock.addClock(threadId, 0);
+
+        for(Map.Entry<Integer, ClientTable> table : tables.entrySet()) {
+            table.getValue().registerThread();
+        }
+
+        registerBarrier.await();
+        return threadId;
 	}
 
-	public void waitThreadRegister(){
+	public void waitThreadRegister() throws BrokenBarrierException, InterruptedException {
+
+        if(GlobalContext.getNumTableThreads() == GlobalContext.getNumAppThreads()) {
+            registerBarrier.await();
+        }
 
 	}
 

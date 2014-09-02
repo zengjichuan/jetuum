@@ -12,15 +12,15 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public abstract class ClientRow {
 
-	private AtomicInteger num_refs;
-	private Row row_data;
+	private AtomicInteger numRefs;
+	private Row rowData;
 
 	public ClientRow(){
 
 	}
 
     public void setRowData(Row row) {
-        row_data = row;
+        rowData = row;
     }
 
 	public void finalize() throws Throwable {
@@ -30,9 +30,9 @@ public abstract class ClientRow {
 	/**
 	 * 
 	 * @param clock
-	 * @param row_data
+	 * @param rowData
 	 */
-	public ClientRow(int clock, Row row_data){
+	public ClientRow(int clock, Row rowData){
 
 	}
 

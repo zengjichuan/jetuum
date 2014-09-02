@@ -82,8 +82,8 @@ public class BgCreateTableMsg extends NumberedMsg {
         sequence.putInt(THREAD_CACHE_CAPACITY_OFFSET, threadCacheCapacity);
     }
 
-    public void setOplogCapacityOffset(int oplogCapacityOffset) {
-        sequence.putInt(OPLOG_CAPACITY_OFFSET, oplogCapacityOffset);
+    public void setOplogCapacity(int oplogCapacity) {
+        sequence.putInt(OPLOG_CAPACITY_OFFSET, oplogCapacity);
     }
 
 }

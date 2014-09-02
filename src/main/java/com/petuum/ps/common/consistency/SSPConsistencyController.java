@@ -4,7 +4,10 @@ import com.google.common.cache.CacheLoader;
 import com.petuum.ps.common.Row;
 import com.petuum.ps.common.client.ClientRow;
 import com.petuum.ps.common.client.ThreadTable;
-//import com.petuum.ps.thread.BgWorkers;
+import com.petuum.ps.common.oplog.RowOpLog;
+import com.petuum.ps.oplog.TableOpLog;
+import com.petuum.ps.oplog.TableOpLogIndex;
+import com.petuum.ps.thread.BgWorkers;
 import com.petuum.ps.thread.ThreadContext;
 
 import java.util.Map;
@@ -20,16 +23,22 @@ public class SSPConsistencyController extends ConsistencyController {
 	/**
 	 * SSP staleness parameter.
 	 */
-	protected int staleness_;
-	protected ThreadTable thread_cache_;
+	protected int staleness;
+	protected ThreadTable threadCache;
+    /**
+     * Controller will only write to oplog_ but never read from it, as
+     * all local updates are reflected in the row values.
+     */
+    protected TableOpLog opLog;
+    protected TableOpLogIndex opLogIndex;
 
 	public SSPConsistencyController(){
-        process_storage_ = CacheBuilder.newBuilder()
+        processStorage = CacheBuilder.newBuilder()
                 .build(
                     new CacheLoader<Integer, ClientRow>() {
                         @Override
                         public ClientRow load(Integer key) throws Exception {
-                            int stalest_clock = ThreadContext.getClock() - staleness_;
+                            int stalest_clock = ThreadContext.getClock() - staleness;
                             if(stalest_clock < 0){
                                 stalest_clock = 0;
                             }
@@ -47,12 +56,14 @@ public class SSPConsistencyController extends ConsistencyController {
 
 	/**
 	 * 
-	 * @param table_id
-	 * @param sample_row
-	 * @param thread_cache
+	 * @param tableId
+	 * @param sampleRow
+	 * @param threadCache
 	 */
-	public SSPConsistencyController(int table_id, final Row sample_row, ThreadTable thread_cache){
-
+	public SSPConsistencyController(int tableId, final Row sampleRow, ThreadTable threadCache){
+        this.threadCache = threadCache;
+        this.opLog = new TableOpLog(tableId, sampleRow);
+        this.opLogIndex = new TableOpLogIndex();
 	}
 
 	/**
@@ -60,15 +71,15 @@ public class SSPConsistencyController extends ConsistencyController {
 	 * @param row_id
 	 * @param updates
 	 */
-	public void BatchInc(int row_id, Map<Integer, Object> updates){
+	public void batchInc(int row_id, Map<Integer, Object> updates){
 
     }
 
-	public void Clock(){
+	public void clock(){
 
     }
 
-	public void FlushThreadCache(){
+	public void flushThreadCache(){
 
     }
 
@@ -76,18 +87,18 @@ public class SSPConsistencyController extends ConsistencyController {
 	 * 
 	 * @param row_id
 	 */
-	public ClientRow Get(int row_id, int clock) throws ExecutionException {
-        int stalest_clock = ThreadContext.getClock() - staleness_;
+	public ClientRow get(int row_id, int clock) throws ExecutionException { //how to get the clock? use a list
+        int stalest_clock = ThreadContext.getClock() - staleness;
         if(stalest_clock < 0){
             stalest_clock = 0;
         }
-        ClientRow row = process_storage_.get(row_id);
+        ClientRow row = processStorage.get(row_id);
 
         if(clock >= stalest_clock) {
             return row;
         }else {
-            process_storage_.invalidate(row_id);
-            return process_storage_.get(row_id);
+            processStorage.invalidate(row_id);
+            return processStorage.get(row_id);
         }
     }
 
@@ -95,7 +106,7 @@ public class SSPConsistencyController extends ConsistencyController {
 	 * 
 	 * @param row_id
 	 */
-	public void GetAsync(int row_id) {
+	public void getAsync(int row_id) {
 
     }
 
@@ -105,39 +116,54 @@ public class SSPConsistencyController extends ConsistencyController {
 	 * @param column_id
 	 * @param delta
 	 */
-	public void Inc(int row_id, int column_id, Object delta) {
+	public void inc(int row_id, int column_id, Object delta) {
+        threadCache.indexUpdate(row_id);
+        RowOpLog rowOpLog = opLog.findInsertOpLog(row_id);
+        Object opLogDelta = rowOpLog.findCreate(column_id, sampleRow);
+        sampleRow.addUpdates(column_id, opLogDelta, delta);
+
+        //update to process_storage
+        ClientRow clientRow = processStorage.get(row_id);
 
     }
 
 	/**
 	 * 
-	 * @param row_id
+	 * @param rowId
 	 * @param updates
 	 */
-	public void ThreadBatchInc(int row_id, Map<Integer, Object> updates){
-
+	public void threadBatchInc(int rowId, Map<Integer, Object> updates){
+        threadCache.batchInc(rowId, updates);
     }
 
 	/**
 	 * 
-	 * @param row_id
+	 * @param rowId
 	 */
-	public Row ThreadGet(int row_id){
+	public Row threadGet(int rowId){
+        Row rowData = threadCache.getRow(rowId);
+        if (rowData != null){
+            return rowData;
+        }
+
         return null;
     }
 
 	/**
 	 * 
-	 * @param row_id
-	 * @param column_id
+	 * @param rowId
+	 * @param columnId
 	 * @param delta
 	 */
-	public void ThreadInc(int row_id, int column_id, Object delta){
+	public void threadInc(int rowId, int columnId, Object delta){
+        threadCache.inc(rowId, columnId, delta);
+    }
+
+	public void waitPendingAsnycGet(){
 
     }
 
-	public void WaitPendingAsnycGet(){
-
+    public Map<Integer, Boolean> getAndResetOpLogIndex(int clientTable){
+        return opLogIndex.resetPartition(clientTable);
     }
-
 }

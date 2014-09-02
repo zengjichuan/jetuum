@@ -59,4 +59,8 @@ public class ServerPushRowMsg extends ArbitrarySizedMsg {
         byte[] byteList = sequence.array();
         return ByteBuffer.wrap(byteList, getHeaderSize(), byteList.length - getHeaderSize());
     }
+
+    public void setAvaiSize(int avaiSize) {
+        sequence.putInt(AVAI_SIZE_OFFSET, avaiSize);
+    }
 }

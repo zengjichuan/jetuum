@@ -36,7 +36,7 @@ public class ThreadTable {
 	 * @param row_id
 	 * @param deltas
 	 */
-	public void BatchInc(int row_id, final Map<Integer, Object> deltas){
+	public void batchInc(int row_id, final Map<Integer, Object> deltas){
 
 	}
 
@@ -44,7 +44,7 @@ public class ThreadTable {
 	 * 
 	 * @param row_id
 	 */
-	public Row GetRow(int row_id){
+	public Row getRow(int row_id){
 		return null;
 	}
 
@@ -54,7 +54,7 @@ public class ThreadTable {
 	 * @param column_id
 	 * @param delta
 	 */
-	public void Inc(int row_id, int column_id, final Object delta){
+	public void inc(int row_id, int column_id, final Object delta){
 
 	}
 
@@ -62,7 +62,7 @@ public class ThreadTable {
 	 * 
 	 * @param row_id
 	 */
-	public void IndexUpdate(int row_id){
+	public void indexUpdate(int row_id){
 
 	}
 
@@ -71,7 +71,7 @@ public class ThreadTable {
 	 * @param row_id
 	 * @param to_insert
 	 */
-	public void InsertRow(int row_id, final Row to_insert){
+	public void insertRow(int row_id, final Row to_insert){
 
 	}
 
