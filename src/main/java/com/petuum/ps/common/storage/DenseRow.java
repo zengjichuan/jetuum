@@ -47,4 +47,8 @@ public class DenseRow implements Row {
     public Double subtractUpdates(int column_id, Double update1, Double update2) {
         return null;
     }
+
+    public Double get(int columnId){
+        return null;
+    }
 }

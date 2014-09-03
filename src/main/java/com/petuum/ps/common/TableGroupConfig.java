@@ -8,6 +8,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 import java.util.function.Consumer;
@@ -56,7 +57,7 @@ public class TableGroupConfig {
     /**
      * IDs of all servers.
      */
-    public Vector<Integer> serverIds;
+    public ArrayList<Integer> serverIds;
     /**
      * mapping server ID to host info.
      */
@@ -92,11 +93,12 @@ public class TableGroupConfig {
 
     public String occPathPrefix;
 
-    public void getHostInfos(Path hostFile) throws IOException {
 
+    public void getHostInfos(Path hostFile) throws IOException {
+        this.hostMap = new HashMap<Integer, HostInfo>();
         Files.lines(hostFile).forEach(new Consumer<String>() {
             public void accept(String s) {
-                String[] temp = s.split("\t");
+                String[] temp = s.split(" ");
                 int id = Integer.valueOf(temp[0]);
                 hostMap.put(id, new HostInfo(id, temp[1], temp[2]));
             }
@@ -104,12 +106,12 @@ public class TableGroupConfig {
         getServerIDsFromHostMap();
     }
     private void getServerIDsFromHostMap() {
-        serverIds = new Vector<Integer>(hostMap.size() - 1);
+        serverIds = new ArrayList<Integer>(hostMap.size() - 1);
         int index = 0;
         for(Integer id : hostMap.keySet()) {
             if(id == 0)
                 continue;
-            serverIds.set(index, id);
+            serverIds.add(index, id);
             index++;
         }
     }

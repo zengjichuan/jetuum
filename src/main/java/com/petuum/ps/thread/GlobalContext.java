@@ -5,6 +5,7 @@ import com.petuum.ps.common.HostInfo;
 import com.petuum.ps.common.comm.CommBus;
 import com.petuum.ps.common.consistency.ConsistencyModel;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Vector;
 
@@ -31,7 +32,7 @@ public class GlobalContext {
 
     private static Map<Integer, HostInfo> hostMap;
     private static int clientId = 0;
-    private static Vector<Integer> serverIds;
+    private static ArrayList<Integer> serverIds;
     private static int serverRingSize;
 
     private static ConsistencyModel consistencyModel;
@@ -68,7 +69,7 @@ public class GlobalContext {
                             int numTotalBgThreads,
                             int numTables,
                             int numClients,
-                            Vector<Integer> serverIds,
+                            ArrayList<Integer> serverIds,
                             Map<Integer, HostInfo> hostMap,
                             int clientId,
                             int serverRingSize,
@@ -133,7 +134,7 @@ public class GlobalContext {
         return clientId;
     }
 
-    public static Vector<Integer> getServerIds() {
+    public static ArrayList<Integer> getServerIds() {
         return serverIds;
     }
 
