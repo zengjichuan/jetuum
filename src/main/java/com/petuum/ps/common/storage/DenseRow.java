@@ -7,12 +7,14 @@ import java.util.Map;
 /**
  * Created by ZengJichuan on 2014/9/2.
  */
-public class DenseRow implements Row {
+//TODO(yxsu): I will write DenseRow
+
+public class DenseRow<V extends Number> implements Row<V> {
     public Object addUpdates(int column_id, Object update1, Object update2) {
         return  null;
     }
 
-    public void applyBatchInc(Map<Integer, Object> update_batch) {
+    public void applyBatchInc(Map<Integer, V> update_batch) {
 
     }
 

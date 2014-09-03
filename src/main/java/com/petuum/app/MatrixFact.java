@@ -3,8 +3,10 @@ package com.petuum.app;
 import com.petuum.ps.common.ClientTableConfig;
 import com.petuum.ps.common.PSTableGroup;
 import com.petuum.ps.common.TableGroupConfig;
+import com.petuum.ps.common.client.ClientTable;
 import com.petuum.ps.common.client.TableGroup;
 import com.petuum.ps.common.consistency.ConsistencyModel;
+import com.petuum.ps.common.storage.DenseRow;
 
 import java.io.IOException;
 
@@ -27,6 +29,12 @@ public class MatrixFact {
     private static int numIterations = 100;
     private static int staleness = 0;
 //TODO(yxsu): write the working thread of MF App
+
+    private void sgdElement(int i , int j, double xij, double stepSize, int globalWorkerId,
+                            ClientTable tableL, ClientTable tableR, ClientTable tableLoss) {
+        //read L(i, :) and R(:, j) from Petuum PS
+        DenseRow li = tableL.threadGet(i);
+    }
 
     public static void main(String[] args) throws Exception {
         //configure Petuum PS
