@@ -11,6 +11,7 @@ import com.petuum.ps.common.storage.DenseRow;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 /**
 * Created by suyuxin on 14-8-23.
@@ -30,6 +31,7 @@ public class MatrixFact {
     private static int K = 100;
     private static int numIterations = 100;
     private static int staleness = 0;
+
 //TODO(yxsu): write the working thread of MF App
 
     private void sgdElement(int i , int j, float xij, float stepSize, int globalWorkerId,
@@ -63,6 +65,15 @@ public class MatrixFact {
         //commit updates to Petuum PS
         tableL.batchInc(i, liUpdate);
         tableR.batchInc(j, rjUpdate);
+    }
+    private int getTotalNumWorker() {
+        return numClient * numWorkerThreads;
+    }
+
+    private void initMF(ClientTable tableL, ClientTable tableR) {
+        Random rand = new Random(rngSeed);
+        // Add a random initialization in [-1,1)/num_workers to each element of L and R
+        int numWorkers = getTotalNumWorker();
     }
 
     public static void main(String[] args) throws Exception {
