@@ -4,15 +4,10 @@ import com.petuum.ps.common.ClientTableConfig;
 import com.petuum.ps.common.PSTableGroup;
 import com.petuum.ps.common.TableGroupConfig;
 import com.petuum.ps.common.client.ClientTable;
-import com.petuum.ps.common.client.TableGroup;
 import com.petuum.ps.common.consistency.ConsistencyModel;
 import com.petuum.ps.common.storage.DenseRow;
 import com.petuum.ps.common.util.MatrixLoader;
 import com.petuum.ps.common.util.StandardMatrixLoader;
-import com.sun.deploy.util.SessionState;
-
-import java.io.IOException;
-import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.HashMap;

@@ -32,7 +32,7 @@ public class GlobalContext {
 
     private static Map<Integer, HostInfo> hostMap;
     private static int clientId = 0;
-    private static ArrayList<Integer> serverIds;
+    private static int[] serverIds;
     private static int serverRingSize;
 
     private static ConsistencyModel consistencyModel;
@@ -69,7 +69,7 @@ public class GlobalContext {
                             int numTotalBgThreads,
                             int numTables,
                             int numClients,
-                            ArrayList<Integer> serverIds,
+                            int[] serverIds,
                             Map<Integer, HostInfo> hostMap,
                             int clientId,
                             int serverRingSize,
@@ -134,7 +134,7 @@ public class GlobalContext {
         return clientId;
     }
 
-    public static ArrayList<Integer> getServerIds() {
+    public static int[] getServerIds() {
         return serverIds;
     }
 
@@ -144,7 +144,7 @@ public class GlobalContext {
 
     public static int getRowPartitionServerId(int tableId, int rowId){
         int serverIdIdx = rowId % numServers;
-        return serverIds.get(serverIdIdx);
+        return serverIds[serverIdIdx];
     }
 
     public static int getServerRingSize(){

@@ -368,7 +368,7 @@ public class BgWorkers {
      * @return
      */
     private static BgOpLog getOpLogAndIndex(){
-        ArrayList<Integer> serverIds = GlobalContext.getServerIds();
+        int[] serverIds = GlobalContext.getServerIds();
         int localBgIndex = ThreadContext.getId() - idStart;
         // get thread-specific data structure to assist oplog message creation
         // those maps may contain legacy data from previous runs
@@ -499,10 +499,10 @@ public class BgWorkers {
                                 commBusSendAny.invoke(commBus,
                                         new Object[]{nameNodeId, msg.getByteBuffer()});
                                 int numServers = GlobalContext.getNumServers();
-                                ArrayList<Integer> serverIds = GlobalContext.getServerIds();
+                                int[] serverIds = GlobalContext.getServerIds();
                                 for(int i = 0 ; i < numServers; i++){
                                     commBusSendAny.invoke(commBus,
-                                            new Object[]{serverIds.get(i), msg.getByteBuffer()});
+                                            new Object[]{serverIds[i], msg.getByteBuffer()});
                                 }
                             } catch (IllegalAccessException e) {
                                 e.printStackTrace();
@@ -825,7 +825,7 @@ public class BgWorkers {
 
             //connect to servers
             int numServers = GlobalContext.getNumServers();
-            ArrayList<Integer> serverIds = GlobalContext.getServerIds();
+            int[] serverIds = GlobalContext.getServerIds();
             for (int serverId : serverIds){
                 connectToNameNodeOrServer(serverId);
             }
@@ -883,7 +883,7 @@ public class BgWorkers {
                     break;
                 default:
             }
-            ArrayList<Integer> serverIds = GlobalContext.getServerIds();
+            int[] serverIds = GlobalContext.getServerIds();
             for (int serverId : serverIds){
                 bgContext.get().serverTableOpLogSizeMap.put(serverId, new HashMap<Integer, Integer>());
                 bgContext.get().serverOpLogMsgMap.put(serverId, null);

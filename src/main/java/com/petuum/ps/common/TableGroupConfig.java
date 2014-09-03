@@ -57,7 +57,7 @@ public class TableGroupConfig {
     /**
      * IDs of all servers.
      */
-    public ArrayList<Integer> serverIds;
+    public int[] serverIds;
     /**
      * mapping server ID to host info.
      */
@@ -106,12 +106,12 @@ public class TableGroupConfig {
         getServerIDsFromHostMap();
     }
     private void getServerIDsFromHostMap() {
-        serverIds = new ArrayList<Integer>(hostMap.size() - 1);
+        serverIds = new int[hostMap.size() - 1];
         int index = 0;
         for(Integer id : hostMap.keySet()) {
             if(id == 0)
                 continue;
-            serverIds.set(index, id);
+            serverIds[index]= id;
             index++;
         }
     }
