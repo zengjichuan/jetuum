@@ -26,7 +26,7 @@ import static com.google.common.base.Preconditions.*;
  */
 public class HelloWorld {
     private static Logger log = LogManager.getLogger(HelloWorld.class);
-    private static Path hostFile = FileSystems.getDefault().getPath("localserver");
+    private static Path hostFile = FileSystems.getDefault().getPath("machines","localserver");
 
     private static int numTotalServerThread = 1;
     private static int numTotalClient = 1;
@@ -142,11 +142,11 @@ class workThreadMain implements Runnable {
             // Test 1: read and verify my cell is valid
             for (ClientTable table : tables){
                 ClientRow row0 = table.get(0);
-                double val = ((DenseRow)row0.getRowData()).get(threadId);
+                double val = row0.getRowData().get(threadId);
                 checkArgument(val == iteration + threadContext.resumeClock);
 
                 ClientRow row1 = table.get(threadId);
-                val = ((DenseRow)row1.getRowData()).get(threadId);
+                val = row1.getRowData().get(threadId);
                 checkArgument(val == iteration + threadContext.resumeClock);
             }
             // Update my cell

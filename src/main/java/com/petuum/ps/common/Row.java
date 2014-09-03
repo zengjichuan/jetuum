@@ -80,4 +80,6 @@ public abstract interface Row extends Serializable{
 	 */
 	public abstract Double subtractUpdates(int column_id, Double update1, final Double update2);
 
+    public abstract Double get(int columnId);
+
 }

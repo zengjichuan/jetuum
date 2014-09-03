@@ -18,7 +18,9 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Vector;
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 
 /**
  * Created by suyuxin on 14-8-23.
@@ -52,7 +54,7 @@ class NameNodeContext {
 }
 
 public class NameNodeThread {
-    private static CountDownLatch latch;
+    private static CyclicBarrier latch;
     private static ThreadLocal<NameNodeContext> nameNodeContext = new ThreadLocal<NameNodeContext>();
 
     private static Method commBusRecvAny;
@@ -71,13 +73,16 @@ public class NameNodeThread {
             setupNameNodeContext();
             setupCommBus();
 
-            latch.countDown();
-
             try {
+                latch.await();
                 initNameNode();
             } catch (InvocationTargetException e) {
                 log.error(e.getMessage());
             } catch (IllegalAccessException e) {
+                log.error(e.getMessage());
+            } catch (InterruptedException e) {
+                log.error(e.getMessage());
+            } catch (BrokenBarrierException e) {
                 log.error(e.getMessage());
             }
         }
@@ -89,12 +94,12 @@ public class NameNodeThread {
         public int clientID;
     }
 
-    public static void init() throws NoSuchMethodException, InterruptedException {
-        latch = new CountDownLatch(1);
+    public static void init() throws NoSuchMethodException, InterruptedException, BrokenBarrierException {
+        latch = new CyclicBarrier(2);
         commbus = GlobalContext.commBus;
 
         if(GlobalContext.getNumClients() == 1) {
-            commBusRecvAny = CommBus.class.getMethod("recvInProc", IntBox.class, Msg.class);
+            commBusRecvAny = CommBus.class.getMethod("recvInproc", IntBox.class, Msg.class);
         } else {
             commBusRecvAny = CommBus.class.getMethod("recv", IntBox.class, Msg.class);
         }
@@ -106,9 +111,9 @@ public class NameNodeThread {
         }
 
         if(GlobalContext.getNumClients() == 1) {
-            commBusSendAny = CommBus.class.getMethod("sendInproc", int.class, ByteBuffer.class);
+            commBusSendAny = CommBus.class.getMethod("sendInproc", int.class, NumberedMsg.class);
         } else {
-            commBusSendAny = CommBus.class.getMethod("send", int.class, ByteBuffer.class);
+            commBusSendAny = CommBus.class.getMethod("send", int.class, NumberedMsg.class);
         }
         thread.start();
         latch.await();

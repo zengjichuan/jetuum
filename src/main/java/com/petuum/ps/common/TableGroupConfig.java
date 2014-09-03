@@ -57,11 +57,11 @@ public class TableGroupConfig {
     /**
      * IDs of all servers.
      */
-    public ArrayList<Integer> serverIds;
+    public int[] serverIds;
     /**
      * mapping server ID to host info.
      */
-    public Map<Integer, HostInfo> hostMap;
+    public Map<Integer, HostInfo> hostMap = new HashMap<Integer, HostInfo>();
     /**
      * My client id.
      */
@@ -93,25 +93,25 @@ public class TableGroupConfig {
 
     public String occPathPrefix;
 
-
     public void getHostInfos(Path hostFile) throws IOException {
-        this.hostMap = new HashMap<Integer, HostInfo>();
-        Files.lines(hostFile).forEach(new Consumer<String>() {
+
+        Files.lines(hostFile).forEachOrdered(new Consumer<String>() {
             public void accept(String s) {
+                System.out.println(s);
                 String[] temp = s.split(" ");
                 int id = Integer.valueOf(temp[0]);
-                hostMap.put(id, new HostInfo(id, temp[1], temp[2]));
+                hostMap.putIfAbsent(id, new HostInfo(id, temp[1], temp[2]));
             }
         });
         getServerIDsFromHostMap();
     }
     private void getServerIDsFromHostMap() {
-        serverIds = new ArrayList<Integer>(hostMap.size() - 1);
+        serverIds = new int[hostMap.size() - 1];
         int index = 0;
         for(Integer id : hostMap.keySet()) {
             if(id == 0)
                 continue;
-            serverIds.add(index, id);
+            serverIds[index]= id;
             index++;
         }
     }

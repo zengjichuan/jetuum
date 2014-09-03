@@ -2,6 +2,7 @@ package com.petuum.ps.common;
 
 import com.petuum.ps.common.client.ClientTable;
 import com.petuum.ps.common.client.TableGroup;
+import com.petuum.ps.common.util.IntBox;
 import com.petuum.ps.common.storage.DenseRow;
 import com.petuum.ps.common.util.ClassRegistry;
 
@@ -13,9 +14,10 @@ import java.util.concurrent.BrokenBarrierException;
 public class PSTableGroup {
     private static TableGroup tableGroup;
 
-    public static void init(TableGroupConfig config, boolean tableAccess) throws NoSuchMethodException, InterruptedException, BrokenBarrierException {
-        Integer initThreadID = new Integer(0);
+    public static int init(TableGroupConfig config, boolean tableAccess) throws NoSuchMethodException, InterruptedException, BrokenBarrierException {
+        IntBox initThreadID = new IntBox(0);
         tableGroup = new TableGroup(config, tableAccess, initThreadID);
+        return initThreadID.intValue;
     }
 
     public static void shutDown() {
