@@ -26,6 +26,7 @@ public class MatrixFact {
     private static int K = 100;
     private static int numIterations = 100;
     private static int staleness = 0;
+//TODO(yxsu): write the working thread of MF App
 
     public static void main(String[] args) throws Exception {
         //configure Petuum PS
