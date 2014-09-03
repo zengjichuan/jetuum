@@ -11,10 +11,10 @@ import java.util.function.Consumer;
  * Created by suyuxin on 14-9-3.
  */
 public class StandardMatrixLoader implements MatrixLoader{
-    private long n_;
-    private long m_;
-    private Vector<Long> xRow;
-    private Vector<Long> xCol;
+    private int n_;
+    private int m_;
+    private Vector<Integer> xRow;
+    private Vector<Integer> xCol;
     private Vector<Float> xVal;
 
     private int numWorkers;
@@ -52,8 +52,8 @@ public class StandardMatrixLoader implements MatrixLoader{
         Files.lines(inputFile, StandardCharsets.US_ASCII).forEach(new Consumer<String>() {
             public void accept(String s) {
                 String[] temp = s.split("\t");
-                long row = Long.valueOf(temp[0]);
-                long col = Long.valueOf(temp[1]);
+                int row = Integer.valueOf(temp[0]);
+                int col = Integer.valueOf(temp[1]);
                 xRow.add(row);
                 xCol.add(col);
                 xVal.add(Float.valueOf(temp[2]));
@@ -80,15 +80,15 @@ public class StandardMatrixLoader implements MatrixLoader{
         return result;
     }
 
-    public long getN() {
+    public int getN() {
         return n_;
     }
 
-    public long getM() {
+    public int getM() {
         return m_;
     }
 
-    public long getNNZ() {
+    public int getNNZ() {
         return xRow.size();
     }
 }

@@ -7,6 +7,8 @@ import com.petuum.ps.common.client.ClientTable;
 import com.petuum.ps.common.client.TableGroup;
 import com.petuum.ps.common.consistency.ConsistencyModel;
 import com.petuum.ps.common.storage.DenseRow;
+import com.petuum.ps.common.util.MatrixLoader;
+import com.sun.deploy.util.SessionState;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -15,6 +17,8 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.Vector;
+import java.util.concurrent.BrokenBarrierException;
 
 /**
 * Created by suyuxin on 14-8-23.
@@ -34,10 +38,11 @@ public class MatrixFact {
     private static int K = 100;
     private static int numIterations = 100;
     private static int staleness = 0;
+    private static MatrixLoader dataMatrix;
 
 //TODO(yxsu): write the working thread of MF App
 
-    private void sgdElement(int i , int j, float xij, float stepSize, int globalWorkerId,
+    private static void sgdElement(int i , int j, float xij, double stepSize, int globalWorkerId,
                             ClientTable tableL, ClientTable tableR, ClientTable tableLoss) {
         //read L(i, :) and R(:, j) from Petuum PS
         DenseRow li = (DenseRow)tableL.threadGet(i);
@@ -69,14 +74,92 @@ public class MatrixFact {
         tableL.batchInc(i, liUpdate);
         tableR.batchInc(j, rjUpdate);
     }
-    private int getTotalNumWorker() {
+    private static int getTotalNumWorker() {
         return numClient * numWorkerThreads;
     }
 
-    private void initMF(ClientTable tableL, ClientTable tableR) {
+    private static int getGlobalWorkerId(int localThreadId) {
+        return clientID * numWorkerThreads + localThreadId;
+    }
+
+    private static void initMF(ClientTable tableL, ClientTable tableR) {
         Random rand = new Random(rngSeed);
         // Add a random initialization in [-1,1)/num_workers to each element of L and R
         int numWorkers = getTotalNumWorker();
+        for(int i = 0; i < dataMatrix.getN(); i++) {
+            Map<Integer, Double> updatesL = new HashMap<Integer, Double>();
+            for(int k = 0; k < K; k++) {
+                updatesL.put(k, (rand.nextDouble() - 0.5) * 2 / numWorkers);
+            }
+            tableL.batchInc(i, updatesL);
+        }
+
+        for(int j = 0; j < dataMatrix.getM(); j++) {
+            Map<Integer, Double> updatesR = new HashMap<Integer, Double>();
+            for(int k = 0; k < K; k++) {
+                updatesR.put(k, (rand.nextDouble() - 0.5) * 2 / numWorkers);
+            }
+            tableR.batchInc(j, updatesR);
+        }
+    }
+
+    public static class SolveMF implements Runnable {
+        public SolveMF(int localThreadId) {
+            this.localThreadId = localThreadId;
+        }
+        public void run() {
+            //register this thread with Petuum PS
+            try {
+                PSTableGroup.registerThread();
+                //get tables
+                ClientTable tableL = PSTableGroup.getTableOrDie(0);
+                ClientTable tableR = PSTableGroup.getTableOrDie(1);
+                ClientTable tableLoss = PSTableGroup.getTableOrDie(2);
+                // Initialize MF solver
+                int totalNumWorkers = getTotalNumWorker();
+                int globalWorkerId = getGlobalWorkerId(localThreadId);
+
+                initMF(tableL, tableR);
+                PSTableGroup.globalBarrier();
+                //run mf solver
+                for(int iter = 0; iter < numIterations; iter++) {
+                    if(globalWorkerId == 0) {
+                        System.out.println("Iteration " + String.valueOf(iter + 1) + "/" + String.valueOf(numIterations));
+                    }
+                    //clear loss function table
+                    DenseRow lossRow = (DenseRow)tableLoss.threadGet(0);
+                    tableLoss.inc(0, globalWorkerId, - lossRow.get(globalWorkerId));
+                    // Divide matrix elements across workers, and perform SGD
+                    double stepSize = initStepSize * Math.pow(stepSizeOffset + iter, - stepSizePow);
+
+                    MatrixLoader.Element ele = dataMatrix.getNextEl(globalWorkerId);
+                    while(ele.isLastEl == false) {
+                        sgdElement(ele.row, ele.col, ele.value, stepSize, globalWorkerId, tableL, tableR, tableLoss);
+                        ele = dataMatrix.getNextEl(globalWorkerId);
+                    }
+                    //output loss function
+                    if(globalWorkerId == 0) {
+                        lossRow = (DenseRow)tableLoss.threadGet(0);
+                        double loss = 0;
+                        for(int t = 0; t < totalNumWorkers; t++) {
+                            loss += lossRow.get(t);
+                        }
+                        System.out.println("loss function = " + String.valueOf(loss));
+                    }
+
+                }
+                // Let stale values finish propagating (performs staleness+1 clock()s)
+                PSTableGroup.globalBarrier();
+
+            } catch (BrokenBarrierException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                PSTableGroup.deregisterThread();
+            }
+        }
+        private int localThreadId;
     }
 
     public static void main(String[] args) throws Exception {
@@ -115,11 +198,18 @@ public class MatrixFact {
         PSTableGroup.createTableDone();
 
         //run threads
+        Vector<Thread> threads = new Vector<Thread>();
+
+        for(int i = 0; i < numWorkerThreads; i++) {
+            threads.add(new Thread(new SolveMF(i)));
+        }
 
         PSTableGroup.waitThreadRegister();
 
         //join
-
+        for(int i = 0; i < numWorkerThreads; i++) {
+            threads.get(i).join();
+        }
         //cleanup
         PSTableGroup.shutDown();
     }

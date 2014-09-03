@@ -6,18 +6,18 @@ package com.petuum.ps.common.util;
 
 public interface MatrixLoader {
     public class Element {
-        public long row;
-        public long col;
+        public int row;
+        public int col;
         public float value;
         public boolean isLastEl;
     }
 
     public Element getNextEl(int workerId);
 
-    public long getN();
+    public int getN();
 
-    public long getM();
+    public int getM();
 
-    public long getNNZ();
+    public int getNNZ();
 
 }
