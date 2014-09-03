@@ -9,24 +9,28 @@ import java.util.Map;
  */
 //TODO(yxsu): I will write DenseRow
 
-public class DenseRow<V extends Number> implements Row<V> {
-    public V addUpdates(int column_id, V update1, V update2) {
+public class DenseRow implements Row {
+    public double addUpdates(int column_id, double update1, double update2) {
         return  null;
     }
 
-    public void applyBatchInc(Map<Integer, V> update_batch) {
+    public void applyBatchInc(Map<Integer, Double> update_batch) {
 
     }
 
-    public void applyBatchIncUnsafe(Map<Integer, V> update_batch) {
+    public int getUpdateSize() {
+        return Double.SIZE;
+    }
+
+    public void applyBatchIncUnsafe(Map<Integer, Double> update_batch) {
 
     }
 
-    public void applyInc(int column_id, V update) {
+    public void applyInc(int column_id, double update) {
 
     }
 
-    public void applyIncUnsafe(int column_id, V update) {
+    public void applyIncUnsafe(int column_id, double update) {
 
     }
 
@@ -34,15 +38,15 @@ public class DenseRow<V extends Number> implements Row<V> {
 
     }
 
-    public void initUpdate(int column_id, V zero) {
+    public void initUpdate(int column_id, double zero) {
 
     }
 
-    public V get(int columnId) {
+    public double get(int columnId) {
 
     }
 
-    public V subtractUpdates(int column_id, V update1, V update2) {
-        return null;
+    public double subtractUpdates(int column_id, double update1, double update2) {
+        return ;
     }
 }

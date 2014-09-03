@@ -70,7 +70,7 @@ public class ClientTable {
 	 * @param row_id
 	 * @param updates
 	 */
-	public void batchInc(int row_id, Map<Integer, Object> updates){
+	public void batchInc(int row_id, Map<Integer, Double> updates){
         consistencyController.batchInc(row_id, updates);
 	}
 
