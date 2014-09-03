@@ -12,6 +12,7 @@ import com.petuum.ps.common.util.*;
 import com.petuum.ps.oplog.OpLogSerializer;
 import com.petuum.ps.oplog.TableOpLog;
 import org.apache.commons.lang3.SerializationUtils;
+import org.zeromq.ZMQ;
 import zmq.Msg;
 
 import java.lang.reflect.InvocationTargetException;
