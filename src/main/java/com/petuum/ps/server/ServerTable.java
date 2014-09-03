@@ -57,7 +57,7 @@ public class ServerTable {
         return storage.get(rowId);
     }
 
-    public boolean applyRowOpLog(int rowId, Map<Integer, Object> updates){
+    public boolean applyRowOpLog(int rowId, Map<Integer, Double> updates){
         ServerRow serverRow = storage.get(rowId);
         if (serverRow == null){
             return false;

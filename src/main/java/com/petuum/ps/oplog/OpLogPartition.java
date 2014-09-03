@@ -30,7 +30,7 @@ public class OpLogPartition {
         this.updateSize = sampleRow.getUpdateSize();
     }
 
-    public void inc(int rowId, int columnId, Object delta){
+    public void inc(int rowId, int columnId, Double delta){
         Lock lock = locks.get(rowId);
         try{
             lock.lock();
@@ -39,7 +39,7 @@ public class OpLogPartition {
                 rowOpLog = createRowOpLog();
                 opLogMap.put(rowId, rowOpLog);
             }
-            Object opLogDelta = rowOpLog.findCreate(columnId, sampleRow);
+            Double opLogDelta = rowOpLog.findCreate(columnId, sampleRow);
             opLogDelta = sampleRow.addUpdates(columnId, opLogDelta, delta);
             rowOpLog.insert(columnId, opLogDelta);
         }finally {
@@ -57,7 +57,7 @@ public class OpLogPartition {
         return rowOpLog;
     }
 
-    public void batchInc(int rowId, Map<Integer, Object> deltaBatch){
+    public void batchInc(int rowId, Map<Integer, Double> deltaBatch){
         Lock lock = locks.get(rowId);
         try {
             lock.lock();
@@ -67,8 +67,8 @@ public class OpLogPartition {
                 rowOpLog = createRowOpLog();
                 opLogMap.put(rowId, rowOpLog);
             }
-            for (Map.Entry<Integer, Object> entry : deltaBatch.entrySet()) {
-                Object opLogDelta = rowOpLog.findCreate(entry.getKey(), sampleRow);
+            for (Map.Entry<Integer, Double> entry : deltaBatch.entrySet()) {
+                Double opLogDelta = rowOpLog.findCreate(entry.getKey(), sampleRow);
                 opLogDelta = sampleRow.addUpdates(entry.getKey(), opLogDelta, entry.getValue());
                 rowOpLog.insert(entry.getKey(), opLogDelta);        //replace
             }

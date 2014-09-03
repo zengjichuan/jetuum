@@ -3,6 +3,7 @@ package com.petuum.ps.common.oplog;
 import com.petuum.ps.common.Row;
 import com.petuum.ps.common.util.IntBox;
 
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -13,32 +14,32 @@ import java.util.Objects;
 /**
  * Created by admin on 2014/8/18.
  */
-public class RowOpLog {
+public class RowOpLog implements Serializable {
 //    private int updateSize;
-    private Map<Integer, Object> opLogs;
+    private HashMap<Integer, Double> opLogs;
     private Method initUpdate;
-    private Iterator<Map.Entry<Integer, Object>> iter;
+    private Iterator<Map.Entry<Integer, Double>> iter;
     public RowOpLog(Method initUpdate){
         this.initUpdate = initUpdate;
-        opLogs = new HashMap<Integer, Object>();
+        opLogs = new HashMap<Integer, Double>();
     }
 
-    public Object beginIterate(IntBox columnId){
+    public Double beginIterate(IntBox columnId){
         iter = opLogs.entrySet().iterator();
         if(!iter.hasNext()) return null;
-        Map.Entry<Integer, Object> entry = iter.next();
+        Map.Entry<Integer, Double> entry = iter.next();
         columnId.intValue = entry.getKey();
         return entry.getValue();
     }
 
-    public Object find(int columnId){
+    public Double find(int columnId){
         return opLogs.get(columnId);
     }
 
-    public Object findCreate(int columnId, Row sampleRow){
-        Object rst = opLogs.get(columnId);
+    public Double findCreate(int columnId, Row sampleRow){
+        Double rst = opLogs.get(columnId);
         if(rst == null){
-            Object update = new Object();
+            Double update = new Double(0);
             try {
                 initUpdate.invoke(sampleRow, new Object[]{columnId, update});
             } catch (IllegalAccessException e) {
@@ -51,9 +52,9 @@ public class RowOpLog {
         }
         return rst;
     }
-    public Object next(IntBox columnId){
+    public Double next(IntBox columnId){
         if(!iter.hasNext()) return null;
-        Map.Entry<Integer, Object> entry = iter.next();
+        Map.Entry<Integer, Double> entry = iter.next();
         columnId.intValue = entry.getKey();
         return entry.getValue();
     }
@@ -62,7 +63,11 @@ public class RowOpLog {
         return opLogs.size();
     }
 
-    public void insert(int columnId,Object update){
+    public void insert(int columnId,Double update){
         opLogs.put(columnId, update);
+    }
+
+    public HashMap<Integer, Double> getMap() {
+        return opLogs;
     }
 }

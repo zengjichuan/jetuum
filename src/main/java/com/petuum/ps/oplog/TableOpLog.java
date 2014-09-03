@@ -23,12 +23,12 @@ public class TableOpLog {
         }
     }
 
-    public void inc(int rowId, int columnId, Object delta){
+    public void inc(int rowId, int columnId, Double delta){
         int partitionNum = GlobalContext.getBgPartitionNum(rowId);
         opLogPartitions.get(partitionNum).inc(rowId, columnId, delta);
     }
 
-    public void batchInc(int rowId, Map<Integer, Object> deltaBatch){
+    public void batchInc(int rowId, Map<Integer, Double> deltaBatch){
         int partitionNum = GlobalContext.getBgPartitionNum(rowId);
         opLogPartitions.get(partitionNum).batchInc(rowId, deltaBatch);
     }

@@ -27,7 +27,7 @@ public abstract interface Row extends Serializable{
 	 * @param update1
 	 * @param update2
 	 */
-	public abstract double addUpdates(int column_id, double update1, final double update2);
+	public abstract Double addUpdates(int column_id, Double update1, final Double update2);
 
 	/**
 	 * 
@@ -39,21 +39,21 @@ public abstract interface Row extends Serializable{
 	 * 
 	 * @param update_batch
 	 */
-	public abstract void applyBatchIncUnsafe(final Map<Integer, Integer> update_batch);
+	public abstract void applyBatchIncUnsafe(final Map<Integer, Double> update_batch);
 
 	/**
 	 * 
 	 * @param column_id
 	 * @param update
 	 */
-	public abstract void applyInc(int column_id, final double update);
+	public abstract void applyInc(int column_id, final Double update);
 
 	/**
 	 * 
 	 * @param column_id
 	 * @param update
 	 */
-	public abstract void applyIncUnsafe(int column_id, final double update);
+	public abstract void applyIncUnsafe(int column_id, final Double update);
 
 	public abstract int getUpdateSize();
 
@@ -70,7 +70,7 @@ public abstract interface Row extends Serializable{
 	 * @param column_id
 	 * @param zero
 	 */
-	public abstract void initUpdate(int column_id, double zero);
+	public abstract void initUpdate(int column_id, Double zero);
 
 	/**
 	 * 
@@ -78,6 +78,6 @@ public abstract interface Row extends Serializable{
 	 * @param update1
 	 * @param update2
 	 */
-	public abstract double subtractUpdates(int column_id, double update1, final double update2);
+	public abstract Double subtractUpdates(int column_id, Double update1, final Double update2);
 
 }

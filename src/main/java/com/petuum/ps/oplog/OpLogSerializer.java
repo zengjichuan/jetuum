@@ -1,6 +1,7 @@
 package com.petuum.ps.oplog;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -12,11 +13,15 @@ public class OpLogSerializer {
     private ByteBuffer mem;
     private int numTables;
 
+    public OpLogSerializer(){
+        offsetMap = new HashMap<Integer, Integer>();
+    }
+
     public int init(Map<Integer, Integer> tableSizeMap){
         numTables = tableSizeMap.size();
         // space for num of tables
         int totalSize = Integer.SIZE;
-        for (Map.Entry<Integer, Integer> entry : offsetMap.entrySet()){
+        for (Map.Entry<Integer, Integer> entry : tableSizeMap.entrySet()){
             int tableId = entry.getKey();
             int tableSize = entry.getValue();
             offsetMap.put(tableId, totalSize);

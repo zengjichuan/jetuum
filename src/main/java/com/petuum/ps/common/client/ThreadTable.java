@@ -37,7 +37,7 @@ public class ThreadTable {
 	 * @param row_id
 	 * @param deltas
 	 */
-	public void batchInc(int row_id, final Map<Integer, Object> deltas){
+	public void batchInc(int row_id, final Map<Integer, Double> deltas){
 
 	}
 
@@ -55,7 +55,7 @@ public class ThreadTable {
 	 * @param column_id
 	 * @param delta
 	 */
-	public void inc(int row_id, int column_id, final Object delta){
+	public void inc(int row_id, int column_id, final Double delta){
 
 	}
 
@@ -80,7 +80,7 @@ public class ThreadTable {
         RowOpLog rowOpLog = opLogMap.get(rowId);
         if(rowOpLog != null) {
             IntBox columnId = new IntBox();
-            Object delta = rowOpLog.beginIterate(columnId);
+            Double delta = rowOpLog.beginIterate(columnId);
             while (delta != null){
                 copyRow.applyInc(columnId.intValue, delta);
                 delta = rowOpLog.next(columnId);

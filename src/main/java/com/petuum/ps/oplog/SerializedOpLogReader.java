@@ -46,30 +46,25 @@ public class SerializedOpLogReader {
         return true;
     }
 
-    public Map<Integer, Object> next(IntBox tableId, IntBox rowId, BoolBox startedNewTable){
+    public HashMap<Integer, Double> next(IntBox tableId, IntBox rowId, BoolBox startedNewTable){
         // I have read all
         if(numTableLeft == 0)   return null;
         startedNewTable.boolValue = false;
-        int numUpdates = 0;
-        Map<Integer, Object> updates;
+        int updateSize = 0;
+        HashMap<Integer, Double> updates;
         while(true){
             // can read from current row
             if(numRowsLeftInCurrentTable > 0){
-                updates = new HashMap<Integer, Object>();
                 tableId.intValue = currentTableId;
                 rowId.intValue = serializedOpLogBuf.getInt(offset);
                 offset += Integer.SIZE;
-                numUpdates = serializedOpLogBuf.getInt(offset);
+                updateSize = serializedOpLogBuf.getInt(offset);
                 offset += Integer.SIZE;
-                for (int i = 0 ; i< numUpdates; i++){
-                    int columnId = serializedOpLogBuf.getInt(offset + i * Integer.SIZE);
-                    byte [] updateBytes = new byte[updateSize];
-                    serializedOpLogBuf.get(updateBytes,
-                            offset + numUpdates * Integer.SIZE + i * updateSize, updateSize);
-                    Object update = SerializationUtils.deserialize(updateBytes);
-                    updates.put(columnId, update);
-                }
-                offset += numUpdates * (Integer.SIZE + updateSize);
+                byte[] rowOpLogBytes = new byte[updateSize];
+                serializedOpLogBuf.get(rowOpLogBytes, offset, updateSize);
+                updates = (HashMap<Integer, Double>) SerializationUtils.deserialize(rowOpLogBytes);
+
+                offset += updateSize;
                 return updates;
             }else{
                 numTableLeft --;
