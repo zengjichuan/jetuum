@@ -3,6 +3,8 @@ package com.petuum.ps.common;
 import com.petuum.ps.common.client.ClientTable;
 import com.petuum.ps.common.client.TableGroup;
 import com.petuum.ps.common.util.IntBox;
+import com.petuum.ps.common.storage.DenseRow;
+import com.petuum.ps.common.util.ClassRegistry;
 
 import java.util.concurrent.BrokenBarrierException;
 
@@ -52,5 +54,11 @@ public class PSTableGroup {
 
     public static void globalBarrier() {
         tableGroup.globalBarrier();
+    }
+
+    public static void registerRow(int rowType, Class clazz) {
+        ClassRegistry<Row> classRegistry = ClassRegistry.getRegistry();
+        classRegistry.addCreator(rowType, clazz);
+
     }
 }
