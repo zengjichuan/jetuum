@@ -1,5 +1,6 @@
 package com.petuum.app;
 
+import com.petuum.ps.common.ClientTableConfig;
 import com.petuum.ps.common.PSTableGroup;
 import com.petuum.ps.common.TableGroupConfig;
 import com.petuum.ps.common.client.TableGroup;
@@ -45,5 +46,29 @@ public class MatrixFact {
 
         //next..
         PSTableGroup.init(tableGroupconfig, false);
+        //load data
+
+
+        //config ps table
+        ClientTableConfig tableConfig = new ClientTableConfig();
+        tableConfig.tableInfo.rowType = 0; //dense row
+        tableConfig.opLogCapacity = 100;
+        tableConfig.tableInfo.tableStaleness = staleness;
+        tableConfig.tableInfo.rowCapacity = K;
+        tableConfig.processCacheCapacity = 100;
+        PSTableGroup.createTable(0, tableConfig);
+        //..
+
+        //finished creating tables
+        PSTableGroup.createTableDone();
+
+        //run threads
+
+        PSTableGroup.waitThreadRegister();
+
+        //join
+
+        //cleanup
+        PSTableGroup.shutDown();
     }
 }
