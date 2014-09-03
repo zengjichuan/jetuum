@@ -204,14 +204,14 @@ public class CommBus {
         ZmqUtil.zmqConnectSend(sock, connectAddr.toString(), zmqId, connectMsg);
     }
 
-    public int send(int entityId, NumberedMsg data){
+    public int send(int entityId, ByteBuffer data){
         ZMQ.Socket sock;
         if(isLocalEntity(entityId))
             sock = threadInfo.get().inprocSock;
         else
             sock = threadInfo.get().interprocSock;
         int recvId = ZmqUtil.entityID2ZmqID(entityId);
-        return ZmqUtil.zmqSend(sock, recvId, data.getByteBuffer(), 0);         //is necessary to return size?
+        return ZmqUtil.zmqSend(sock, recvId, data, 0);         //is necessary to return size?
     }
 
     public int send(int entityId, Msg msg){
@@ -223,10 +223,10 @@ public class CommBus {
         int recvId = ZmqUtil.entityID2ZmqID(entityId);
          return ZmqUtil.zmqSend(sock, recvId, msg, 0);         //is necessary to return size?
     }
-    public int sendInproc(int entityId, NumberedMsg data){
+    public int sendInproc(int entityId, ByteBuffer data){
         ZMQ.Socket sock = threadInfo.get().inprocSock;
         int recvId = ZmqUtil.entityID2ZmqID(entityId);
-        return ZmqUtil.zmqSend(sock, recvId, data.getByteBuffer(), 0);
+        return ZmqUtil.zmqSend(sock, recvId, data, 0);
     }
 
     public int sendInproc(int entityId, Msg msg){
