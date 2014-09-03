@@ -49,6 +49,7 @@ public class MatrixFact {
         float liRj = 0;
         for(int k = 0; k < K; k++) {
             liRj += li.get(k) * rj.get(k);
+
         }
         // Update the loss function (does not include L2 regularizer term)
         tableLoss.inc(0, globalWorkerId, Math.pow(xij - liRj, 2));
