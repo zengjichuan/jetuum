@@ -4,7 +4,9 @@ import com.petuum.ps.common.Row;
 import org.apache.commons.lang3.SerializationUtils;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -12,7 +14,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * Created by ZengJichuan on 2014/9/2.
  */
-public class SparseRow<V extends Number> implements Row {
+public class SparseRow<V extends Number> implements Row<V>, Iterable<Map.Entry<Integer, V>> {
 
     private ReadWriteLock lock;
 
@@ -50,7 +52,7 @@ public class SparseRow<V extends Number> implements Row {
         return (V)Double.valueOf(sum);
     }
 
-    public void applyBatchInc(Map<Integer, Object> updateBatch) {
+    public void applyBatchInc(Map<Integer, V> updateBatch) {
         try{
             lock.writeLock().lock();
             applyBatchIncUnsafe(updateBatch);
@@ -86,9 +88,14 @@ public class SparseRow<V extends Number> implements Row {
      * @param column_id
      * @param update
      */
-    public void applyIncUnsafe(int column_id, Object update) {
-        rowData.put(column_id, (V)Double.valueOf(((V)update).doubleValue() +
+    public void applyIncUnsafe(int column_id, V update) {
+        rowData.put(column_id, (V)Double.valueOf(update.doubleValue() +
                 rowData.getOrDefault(column_id, (V)(Double.valueOf(0))).doubleValue()));
+    }
+    //TODO: fix
+    public V addUpdates(int column_id, V update1, V update2) {
+        double sum = ((V)update1).doubleValue()+((V)update2).doubleValue();
+        return (V)Double.valueOf(sum);
     }
 
     /**
@@ -99,20 +106,26 @@ public class SparseRow<V extends Number> implements Row {
         return updateSize;
     }
 
-    public void init(int capacity) {
 
-    }
 
-    public void initUpdate(int column_id, Object zero) {
-        zero = 0;
-    }
-
-    public V subtractUpdates(int column_id, Object update1, Object update2) {
+    public V subtractUpdates(int column_id, V update1, V update2) {
         // Ignore column_id
-        double sum = ((V)update1).doubleValue() - ((V)update2).doubleValue();
+        double sum = update1.doubleValue() - update2.doubleValue();
         return (V)Double.valueOf(sum);
     }
 
-// ======== const_iterator Implementation ========
+    // ======== const_iterator Implementation ========
+    public Iterator<Map.Entry<Integer, V>> iterator() {
+        final Iterator<Map.Entry<Integer, V>> iter = new Iterator<Map.Entry<Integer, V>>() {
+            private Iterator<Map.Entry<Integer, V>> mapIter = rowData.entrySet().iterator();
+            public boolean hasNext() {
+                return mapIter.hasNext();
+            }
 
+            public Map.Entry<Integer, V> next() {
+                return mapIter.next();
+            }
+        };
+        return iter;
+    }
 }

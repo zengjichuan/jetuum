@@ -12,7 +12,7 @@ import java.util.Map;
  * @version 1.0
  * @created 19-??-2014 14:29:06
  */
-public abstract interface Row extends Serializable{
+public abstract interface Row<V extends Number> extends Serializable{
 
 //	public void finalize() throws Throwable;
 
@@ -27,33 +27,33 @@ public abstract interface Row extends Serializable{
 	 * @param update1
 	 * @param update2
 	 */
-	public abstract Object addUpdates(int column_id, Object update1, final Object update2);
+	public abstract V addUpdates(int column_id, V update1, final V update2);
 
 	/**
 	 * 
 	 * @param update_batch
 	 */
-	public abstract void applyBatchInc(Map<Integer, Object> update_batch);
+	public abstract void applyBatchInc(Map<Integer, V> update_batch);
 
 	/**
 	 * 
 	 * @param update_batch
 	 */
-	public abstract void applyBatchIncUnsafe(final Map<Integer, Object> update_batch);
+	public abstract void applyBatchIncUnsafe(final Map<Integer, V> update_batch);
 
 	/**
 	 * 
 	 * @param column_id
 	 * @param update
 	 */
-	public abstract void applyInc(int column_id, final Object update);
+	public abstract void applyInc(int column_id, final V update);
 
 	/**
 	 * 
 	 * @param column_id
 	 * @param update
 	 */
-	public abstract void applyIncUnsafe(int column_id, final Object update);
+	public abstract void applyIncUnsafe(int column_id, final V update);
 
 	public abstract int getUpdateSize();
 
@@ -70,7 +70,7 @@ public abstract interface Row extends Serializable{
 	 * @param column_id
 	 * @param zero
 	 */
-	public abstract void initUpdate(int column_id, Object zero);
+	public abstract void initUpdate(int column_id, V zero);
 
 	/**
 	 * 
@@ -78,6 +78,6 @@ public abstract interface Row extends Serializable{
 	 * @param update1
 	 * @param update2
 	 */
-	public abstract Object subtractUpdates(int column_id, Object update1, final Object update2);
+	public abstract V subtractUpdates(int column_id, V update1, final V update2);
 
 }

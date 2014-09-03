@@ -8,8 +8,8 @@ import java.util.Map;
  * Created by ZengJichuan on 2014/9/2.
  */
 public class DenseRow implements Row {
-    public void addUpdates(int column_id, Object update1, Object update2) {
-
+    public Object addUpdates(int column_id, Object update1, Object update2) {
+        return  null;
     }
 
     public void applyBatchInc(Map<Integer, Object> update_batch) {
@@ -40,7 +40,7 @@ public class DenseRow implements Row {
 
     }
 
-    public void subtractUpdates(int column_id, Object update1, Object update2) {
-
+    public Object subtractUpdates(int column_id, Object update1, Object update2) {
+        return null;
     }
 }
