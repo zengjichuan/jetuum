@@ -45,7 +45,7 @@ public:
 
   // Move constructor: storage gets other's storage, leaving other
   // in an unspecified but valid state.
-  ServerTable(ServerTable && other):
+  ServerTable(ServerTable const & other):
     table_info_(other.table_info_),
     storage_(std::move(other.storage_)) ,
     tmp_row_buff_size_(other.tmp_row_buff_size_) { }

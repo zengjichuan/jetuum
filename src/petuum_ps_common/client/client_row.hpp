@@ -53,7 +53,7 @@ namespace petuum {
 class ClientRow : boost::noncopyable {
 public:
   // ClientRow takes ownership of row_data.
-  ClientRow(int32_t clock __attribute__((unused)), AbstractRow* row_data):
+  ClientRow(int32_t clock, AbstractRow* row_data):
       num_refs_(0),
       row_data_pptr_(new std::shared_ptr<AbstractRow>) {
     (*row_data_pptr_).reset(row_data);
@@ -61,7 +61,7 @@ public:
 
   virtual ~ClientRow() {};
 
-  virtual void SetClock(int32_t clock __attribute__((unused))) { }
+  virtual void SetClock(int32_t clock ) { }
 
   virtual int32_t GetClock() const {
     return -1;

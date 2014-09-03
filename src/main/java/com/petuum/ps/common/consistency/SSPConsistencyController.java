@@ -141,7 +141,7 @@ public class SSPConsistencyController extends ConsistencyController {
 	 * @param columnId
 	 * @param delta
 	 */
-	public void inc(int rowId, int columnId, Number delta) {
+	public void inc(int rowId, int columnId, Object delta) {
         threadCache.indexUpdate(rowId);
         RowOpLog rowOpLog = opLog.findInsertOpLog(rowId);
         Object opLogDelta = rowOpLog.findCreate(columnId, sampleRow);
