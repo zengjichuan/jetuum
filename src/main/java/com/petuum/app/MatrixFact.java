@@ -9,6 +9,9 @@ import com.petuum.ps.common.consistency.ConsistencyModel;
 import com.petuum.ps.common.storage.DenseRow;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -17,13 +20,13 @@ import java.util.Random;
 * Created by suyuxin on 14-8-23.
 */
 public class MatrixFact {
-    private static String hostFile = "localserver";
-    private static String dataFile = "3x3_9blocks";
-    private static String outputPrefix = "test";
-    private static float lambda = 0.0f;
-    private static float initStepSize = 0.5f;
-    private static float stepSizeOffset = 100f;
-    private static float stepSizePow = 0.5f;
+    private static Path hostFile = FileSystems.getDefault().getPath("localserver");
+    private static Path dataFile = FileSystems.getDefault().getPath("3x3_9blocks");
+    private static Path outputPrefix = FileSystems.getDefault().getPath("test");
+    private static double lambda = 0.0;
+    private static double initStepSize = 0.5;
+    private static double stepSizeOffset = 100;
+    private static double stepSizePow = 0.5;
     private static int rngSeed = 967234;
     private static int numClient = 1;
     private static int numWorkerThreads = 1;
@@ -37,8 +40,8 @@ public class MatrixFact {
     private void sgdElement(int i , int j, float xij, float stepSize, int globalWorkerId,
                             ClientTable tableL, ClientTable tableR, ClientTable tableLoss) {
         //read L(i, :) and R(:, j) from Petuum PS
-        DenseRow<Float> li = (DenseRow)tableL.threadGet(i);
-        DenseRow<Float> rj = (DenseRow)tableR.threadGet(j);
+        DenseRow li = (DenseRow)tableL.threadGet(i);
+        DenseRow rj = (DenseRow)tableR.threadGet(j);
         //compute L(i, : ) * R(:, j)
         float liRj = 0;
         for(int k = 0; k < K; k++) {
@@ -51,10 +54,10 @@ public class MatrixFact {
         //
         // The non-regularized gradient w.r.t. L(i,k) is -2*X(i,j)R(k,j) + 2*L(i,:)*R(:,j)*R(k,j).
         // The non-regularized gradient w.r.t. R(k,j) is -2*X(i,j)L(i,k) + 2*L(i,:)*R(:,j)*L(i,k).
-        Map<Integer, Float> liUpdate = new HashMap<Integer, Float>();
-        Map<Integer, Float> rjUpdate = new HashMap<Integer, Float>();
+        Map<Integer, Double> liUpdate = new HashMap<Integer, Double>();
+        Map<Integer, Double> rjUpdate = new HashMap<Integer, Double>();
         for(int k = 0; k < K; k++) {
-            float gradient = 0;
+            double gradient = 0;
             //compute update for L(i,k)
             gradient = -2 * (xij - liRj) * rj.get(k) + lambda * 2 * li.get(k);
             liUpdate.put(k, -gradient * stepSize);

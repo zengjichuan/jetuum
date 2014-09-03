@@ -1,15 +1,16 @@
 package com.petuum.ps.common;
 
-import com.google.common.io.Files;
 import com.petuum.ps.common.HostInfo;
 import com.petuum.ps.common.consistency.ConsistencyModel;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Vector;
+import java.util.function.Consumer;
 
 /**
  * Created by admin on 2014/8/13.
@@ -91,14 +92,15 @@ public class TableGroupConfig {
 
     public String occPathPrefix;
 
-    public void getHostInfos(String hostFile) throws IOException {
+    public void getHostInfos(Path hostFile) throws IOException {
 
-        for(String line : Files.asCharSource(new File(hostFile),
-                Charset.defaultCharset()).readLines()) {
-            String[] temp = line.split("\t");
-            int id = Integer.valueOf(temp[0]);
-            hostMap.put(id, new HostInfo(id, temp[1], temp[2]));
-        }
+        Files.lines(hostFile).forEach(new Consumer<String>() {
+            public void accept(String s) {
+                String[] temp = s.split("\t");
+                int id = Integer.valueOf(temp[0]);
+                hostMap.put(id, new HostInfo(id, temp[1], temp[2]));
+            }
+        });
         getServerIDsFromHostMap();
     }
     private void getServerIDsFromHostMap() {
