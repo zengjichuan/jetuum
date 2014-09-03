@@ -14,6 +14,7 @@ import zmq.Msg;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Vector;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
@@ -32,8 +33,8 @@ public class ServerThreads {
 
     private static Logger log = LogManager.getLogger(ServerThread.class);
     private static CyclicBarrier initBarrier;
-    private static Vector<Integer> threadIDs;
-    private static Vector<ServerThread> threads;
+    private static int[] threadIDs;
+    private static ArrayList<Thread> threads = new ArrayList<Thread>();
     private static ThreadLocal<ServerContext> serverContext;
     private static Method commBusRecvAny;
     private static Method commBusRecvTimeOutAny;
@@ -54,7 +55,11 @@ public class ServerThreads {
         public int clientID;
     }
 
-    private class ServerThread extends Thread {
+    private static class ServerThread implements Runnable {
+
+        public ServerThread(int threadID) {
+            this.threadID = threadID;
+        }
 
         private int threadID;
 
@@ -109,17 +114,12 @@ public class ServerThreads {
             }
 
         }
-
-        public void setThreadID(int id) {
-            threadID = id;
-        }
     }
 
     public static void init(int idST) throws NoSuchMethodException, BrokenBarrierException, InterruptedException {
 
         initBarrier = new CyclicBarrier(GlobalContext.getNumLocalServerThreads() + 1);
-        threads = new Vector<ServerThread>(GlobalContext.getNumLocalServerThreads());
-        threadIDs = new Vector<Integer>(GlobalContext.getNumLocalServerThreads());
+        threadIDs = new int[GlobalContext.getNumLocalServerThreads()];
         comm_bus = GlobalContext.commBus;
 
         if(GlobalContext.getNumClients() == 1) {
@@ -157,20 +157,20 @@ public class ServerThreads {
         }
 
         for(int i = 0; i < GlobalContext.getNumLocalServerThreads(); i++) {
-            threadIDs.set(i, idST + i);
+            threadIDs[i] = idST + i;
             log.info("Create server thread " + String.valueOf(i));
-            threads.get(i).setThreadID(idST + i);
+            threads.add(new Thread(new ServerThread(idST + i)));
             threads.get(i).start();
         }
         initBarrier.await();
     }
 
-    private static void SSPPushServerPushRow() throws NoSuchMethodException {
+    public static void SSPPushServerPushRow() throws NoSuchMethodException {
 
         serverContext.get().serverObj.createSendServerPushRowMsgs(ServerThreads.class.getMethod("sendServerPushRowMsg"));
 
     }
-    private static void SSPRowSubscribe(){
+    public static void SSPPushRowSubscribe(){
 
     }
     // communication function
