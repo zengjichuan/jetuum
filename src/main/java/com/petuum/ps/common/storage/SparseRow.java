@@ -46,7 +46,7 @@ public class SparseRow<V extends Number> implements Row<V>, Iterable<Map.Entry<I
         }
     }
 
-    public V addUpdates(int column_id, Object update1, Object update2) {
+    public V addUpdates(int column_id, V update1, V update2) {
         // Ignore column_id
         double sum = ((V)update1).doubleValue()+((V)update2).doubleValue();
         return (V)Double.valueOf(sum);
@@ -62,19 +62,19 @@ public class SparseRow<V extends Number> implements Row<V>, Iterable<Map.Entry<I
 
     }
 
-    public void applyBatchIncUnsafe(Map<Integer, Object> updateBatch) {
-        for (Map.Entry<Integer, Object> entry : updateBatch.entrySet()){
+    public void applyBatchIncUnsafe(Map<Integer, V> updateBatch) {
+        for (Map.Entry<Integer, V> entry : updateBatch.entrySet()){
             int columnId = entry.getKey();
             rowData.put(columnId, (V)Double.valueOf(
                     rowData.getOrDefault(columnId, (V) Double.valueOf(0)).doubleValue()
                     + ((V)entry.getValue()).doubleValue()));
-            if (Math.abs(rowData.get(columnId).doubleValue()) < 1e9){
+            if (Math.abs(rowData.get(columnId).doubleValue()) < 1e-9){
                 rowData.remove(columnId);
             }
         }
     }
 
-    public void applyInc(int columnId, Object update) {
+    public void applyInc(int columnId, V update) {
         try {
             lock.writeLock().lock();
             applyIncUnsafe(columnId, update);
@@ -91,11 +91,9 @@ public class SparseRow<V extends Number> implements Row<V>, Iterable<Map.Entry<I
     public void applyIncUnsafe(int column_id, V update) {
         rowData.put(column_id, (V)Double.valueOf(update.doubleValue() +
                 rowData.getOrDefault(column_id, (V)(Double.valueOf(0))).doubleValue()));
-    }
-    //TODO: fix
-    public V addUpdates(int column_id, V update1, V update2) {
-        double sum = ((V)update1).doubleValue()+((V)update2).doubleValue();
-        return (V)Double.valueOf(sum);
+        if(Math.abs(rowData.get(column_id).doubleValue()) < 1e-9){
+            rowData.remove(column_id);
+        }
     }
 
     /**
@@ -106,6 +104,13 @@ public class SparseRow<V extends Number> implements Row<V>, Iterable<Map.Entry<I
         return updateSize;
     }
 
+    public void init(int capacity) {
+
+    }
+
+    public void initUpdate(int column_id, V zero) {
+
+    }
 
 
     public V subtractUpdates(int column_id, V update1, V update2) {
