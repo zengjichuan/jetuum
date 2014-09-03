@@ -40,8 +40,6 @@ public class MatrixFact {
     private static int staleness = 0;
     private static MatrixLoader dataMatrix;
 
-//TODO(yxsu): write the working thread of MF App
-
     private static void sgdElement(int i , int j, float xij, double stepSize, int globalWorkerId,
                             ClientTable tableL, ClientTable tableR, ClientTable tableLoss) {
         //read L(i, :) and R(:, j) from Petuum PS
@@ -192,7 +190,6 @@ public class MatrixFact {
         tableConfig.tableInfo.rowCapacity = K;
         tableConfig.processCacheCapacity = 100;
         PSTableGroup.createTable(0, tableConfig);
-        //..
 
         //finished creating tables
         PSTableGroup.createTableDone();

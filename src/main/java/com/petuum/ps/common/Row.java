@@ -33,7 +33,7 @@ public abstract interface Row extends Serializable{
 	 * 
 	 * @param update_batch
 	 */
-	public abstract void applyBatchInc(Map<Integer, Integer> update_batch);
+	public abstract void applyBatchInc(Map<Integer, Double> update_batch);
 
 	/**
 	 * 
