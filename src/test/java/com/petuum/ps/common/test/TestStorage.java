@@ -16,10 +16,10 @@ import java.util.Map;
  */
 public class TestStorage {
     public static void main(String args []){
-        Row fRow = new SparseRow<Float>(0f);
-        fRow.applyInc(0, 1f);
-        Map<Integer, Float> batch = new HashMap<Integer, Float>();
-        batch.put(1,22f);batch.put(2,33f);batch.put(3, 44f);
+        Row fRow = new SparseRow();
+        fRow.applyInc(0, 1d);
+        Map<Integer, Double> batch = new HashMap<Integer, Double>();
+        batch.put(1,22d);batch.put(2,33d);batch.put(3, 44d);
         fRow.applyBatchInc(batch);
         System.out.println(((SparseRow)fRow).get(0)+" "+((SparseRow)fRow).get(1)+" "+((SparseRow)fRow).get(2)+" "+((SparseRow)fRow).get(3));
 

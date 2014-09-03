@@ -9,40 +9,42 @@ import java.util.Map;
  */
 //TODO(yxsu): I will write DenseRow
 
-public class DenseRow<V extends Number> implements Row<V> {
-    public V addUpdates(int column_id, V update1, V update2) {
-        return  null;
+public class DenseRow implements Row {
+
+
+    public Double addUpdates(int column_id, Double update1, Double update2) {
+        return null;
     }
 
-    public void applyBatchInc(Map<Integer, V> update_batch) {
-
-    }
-
-    public void applyBatchIncUnsafe(Map<Integer, V> update_batch) {
-
-    }
-
-    public void applyInc(int column_id, V update) {
+    public void applyBatchInc(Map<Integer, Double> update_batch) {
 
     }
 
-    public void applyIncUnsafe(int column_id, V update) {
+    public void applyBatchIncUnsafe(Map<Integer, Double> update_batch) {
 
+    }
+
+    public void applyInc(int column_id, Double update) {
+
+    }
+
+    public void applyIncUnsafe(int column_id, Double update) {
+
+    }
+
+    public int getUpdateSize() {
+        return 0;
     }
 
     public void init(int capacity) {
 
     }
 
-    public void initUpdate(int column_id, V zero) {
+    public void initUpdate(int column_id, Double zero) {
 
     }
 
-    public V get(int columnId) {
-
-    }
-
-    public V subtractUpdates(int column_id, V update1, V update2) {
+    public Double subtractUpdates(int column_id, Double update1, Double update2) {
         return null;
     }
 }

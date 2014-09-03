@@ -346,7 +346,7 @@ public class BgWorkers {
                 int tablePos = opLogSerializer.getTablePos(tableId);
                 //table id
                 mem.putInt(tablePos, tableId);
-                //table update size
+                //table update size             Useless!!
                 mem.putInt(tablePos + Integer.SIZE, entryTable.getValue().getSampleRow().getUpdateSize());
                 //offset for table rows
                 mem.position(tablePos + Integer.SIZE + Integer.SIZE);
@@ -649,7 +649,7 @@ public class BgWorkers {
             RowOpLog rowOpLog = null;
             if (tableOpLog.findOpLog(rowId) != null){
                 IntBox columnId = new IntBox();
-                Object update = rowOpLog.beginIterate(columnId);
+                Double update = rowOpLog.beginIterate(columnId);
                 while (update != null){
                     rowData.applyIncUnsafe(columnId.intValue, update);
                     update = rowOpLog.next(columnId);
@@ -670,7 +670,7 @@ public class BgWorkers {
                     RowOpLog rowOpLog = bgOpLogPartition.findOpLog(rowId);
                     if(rowOpLog != null){
                         IntBox columnId = new IntBox();
-                        Object update = rowOpLog.beginIterate(columnId);
+                        Double update = rowOpLog.beginIterate(columnId);
                         while(update != null){
                             rowData.applyInc(columnId.intValue, update);
                             update = rowOpLog.next(columnId);

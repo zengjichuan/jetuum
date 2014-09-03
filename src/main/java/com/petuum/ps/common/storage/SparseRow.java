@@ -14,24 +14,24 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * Created by ZengJichuan on 2014/9/2.
  */
-public class SparseRow<V extends Number> implements Row<V>, Iterable<Map.Entry<Integer, V>> {
+public class SparseRow implements Row, Iterable<Map.Entry<Integer, Double>> {
 
     private ReadWriteLock lock;
 
-    private int updateSize;
+//    private int updateSize;
 
-    Map<Integer, V> rowData;
+    Map<Integer, Double> rowData;
 
-    public SparseRow(V sampleElem) {
+    public SparseRow() {
         this.lock = new ReentrantReadWriteLock();
-        this.updateSize = SerializationUtils.serialize(sampleElem).length;
-        this.rowData = new HashMap<Integer, V>();
+//        this.updateSize = SerializationUtils.serialize(sampleElem).length;
+        this.rowData = new HashMap<Integer, Double>();
     }
 
-    public V get(int columnId){
+    public Double get(int columnId){
         try {
             lock.readLock().lock();
-            return rowData.getOrDefault(columnId, (V)(Integer.valueOf(0)));
+            return rowData.getOrDefault(columnId, 0d);
         }finally {
             lock.readLock().unlock();
         }
@@ -46,13 +46,12 @@ public class SparseRow<V extends Number> implements Row<V>, Iterable<Map.Entry<I
         }
     }
 
-    public V addUpdates(int column_id, V update1, V update2) {
+    public Double addUpdates(int column_id, Double update1, Double update2) {
         // Ignore column_id
-        double sum = ((V)update1).doubleValue()+((V)update2).doubleValue();
-        return (V)Double.valueOf(sum);
+        return update1 + update2;
     }
 
-    public void applyBatchInc(Map<Integer, V> updateBatch) {
+    public void applyBatchInc(Map<Integer, Double> updateBatch) {
         try{
             lock.writeLock().lock();
             applyBatchIncUnsafe(updateBatch);
@@ -62,19 +61,17 @@ public class SparseRow<V extends Number> implements Row<V>, Iterable<Map.Entry<I
 
     }
 
-    public void applyBatchIncUnsafe(Map<Integer, V> updateBatch) {
-        for (Map.Entry<Integer, V> entry : updateBatch.entrySet()){
+    public void applyBatchIncUnsafe(Map<Integer, Double> updateBatch) {
+        for (Map.Entry<Integer, Double> entry : updateBatch.entrySet()){
             int columnId = entry.getKey();
-            rowData.put(columnId, (V)Double.valueOf(
-                    rowData.getOrDefault(columnId, (V) Double.valueOf(0)).doubleValue()
-                    + ((V)entry.getValue()).doubleValue()));
-            if (Math.abs(rowData.get(columnId).doubleValue()) < 1e-9){
+            rowData.put(columnId, rowData.getOrDefault(columnId, 0d) + entry.getValue());
+            if (Math.abs(rowData.get(columnId)) < 1e-9){
                 rowData.remove(columnId);
             }
         }
     }
 
-    public void applyInc(int columnId, V update) {
+    public void applyInc(int columnId, Double update) {
         try {
             lock.writeLock().lock();
             applyIncUnsafe(columnId, update);
@@ -84,50 +81,47 @@ public class SparseRow<V extends Number> implements Row<V>, Iterable<Map.Entry<I
     }
 
     /**
-     * convert Object to V, then to double and plus
+     * convert Object to Double, then to double and plus
      * @param column_id
      * @param update
      */
-    public void applyIncUnsafe(int column_id, V update) {
-        rowData.put(column_id, (V)Double.valueOf(update.doubleValue() +
-                rowData.getOrDefault(column_id, (V)(Double.valueOf(0))).doubleValue()));
-        if(Math.abs(rowData.get(column_id).doubleValue()) < 1e-9){
+    public void applyIncUnsafe(int column_id, Double update) {
+        rowData.put(column_id, update + rowData.getOrDefault(column_id, 0d));
+        if(Math.abs(rowData.get(column_id)) < 1e-9){
             rowData.remove(column_id);
         }
     }
 
     /**
-     * the size of V is not what you can see, i.e. Integer:81, Short:77, Double:84, Float:79
+     * the size of Double is not what you can see, i.e. Integer:81, Short:77, Double:84, Float:79
      * @return
      */
     public int getUpdateSize() {
-        return updateSize;
+        return 0;
     }
 
     public void init(int capacity) {
+    }
+
+    public void initUpdate(int column_id, Double zero) {
 
     }
 
-    public void initUpdate(int column_id, V zero) {
 
-    }
-
-
-    public V subtractUpdates(int column_id, V update1, V update2) {
+    public Double subtractUpdates(int column_id, Double update1, Double update2) {
         // Ignore column_id
-        double sum = update1.doubleValue() - update2.doubleValue();
-        return (V)Double.valueOf(sum);
+        return update1 - update2;
     }
 
     // ======== const_iterator Implementation ========
-    public Iterator<Map.Entry<Integer, V>> iterator() {
-        final Iterator<Map.Entry<Integer, V>> iter = new Iterator<Map.Entry<Integer, V>>() {
-            private Iterator<Map.Entry<Integer, V>> mapIter = rowData.entrySet().iterator();
+    public Iterator<Map.Entry<Integer, Double>> iterator() {
+        final Iterator<Map.Entry<Integer, Double>> iter = new Iterator<Map.Entry<Integer, Double>>() {
+            private Iterator<Map.Entry<Integer, Double>> mapIter = rowData.entrySet().iterator();
             public boolean hasNext() {
                 return mapIter.hasNext();
             }
 
-            public Map.Entry<Integer, V> next() {
+            public Map.Entry<Integer, Double> next() {
                 return mapIter.next();
             }
         };

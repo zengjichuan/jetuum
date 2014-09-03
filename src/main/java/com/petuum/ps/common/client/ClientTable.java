@@ -70,7 +70,7 @@ public class ClientTable {
 	 * @param row_id
 	 * @param updates
 	 */
-	public void batchInc(int row_id, Map<Integer, Object> updates){
+	public void batchInc(int row_id, Map<Integer, Double> updates){
         consistencyController.batchInc(row_id, updates);
 	}
 
@@ -123,7 +123,7 @@ public class ClientTable {
 	 * @param columnId
 	 * @param update    update
 	 */
-	public void inc(int rowId, int columnId, Object update){
+	public void inc(int rowId, int columnId, Double update){
         consistencyController.inc(rowId, columnId, update);
 	}
 
@@ -138,7 +138,7 @@ public class ClientTable {
 	 * @param rowId
 	 * @param updates
 	 */
-	public void threadBatchInc(int rowId, Map<Integer, Object> updates){
+	public void threadBatchInc(int rowId, Map<Integer, Double> updates){
         consistencyController.threadBatchInc(rowId, updates);
 	}
 
@@ -156,7 +156,7 @@ public class ClientTable {
 	 * @param column_id
 	 * @param update    update
 	 */
-	public void threadInc(int row_id, int column_id, Object update){
+	public void threadInc(int row_id, int column_id, Double update){
         consistencyController.threadInc(row_id, column_id, update);
 	}
 

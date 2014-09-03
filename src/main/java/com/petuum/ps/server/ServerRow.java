@@ -32,7 +32,7 @@ public class ServerRow {
         this.numClientsSubscribed=0;
         this.dirty=false;
     }
-    public void applyBatchInc(Map<Integer, Object> updates){
+    public void applyBatchInc(Map<Integer, Double> updates){
         rowData.applyBatchIncUnsafe(updates);
         dirty = true;
     }

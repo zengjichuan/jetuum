@@ -77,11 +77,11 @@ public class SSPConsistencyController extends ConsistencyController {
 	 * @param rowId
 	 * @param updates
 	 */
-	public void batchInc(int rowId, Map<Integer, Object> updates){
+	public void batchInc(int rowId, Map<Integer, Double> updates){
         threadCache.indexUpdate(rowId);
         RowOpLog rowOpLog = opLog.findInsertOpLog(rowId);
-        for (Map.Entry<Integer, Object> entry : updates.entrySet()){
-            Object opLogDelta = rowOpLog.findCreate(entry.getKey(), sampleRow);
+        for (Map.Entry<Integer, Double> entry : updates.entrySet()){
+            Double opLogDelta = rowOpLog.findCreate(entry.getKey(), sampleRow);
             opLogDelta = sampleRow.addUpdates(entry.getKey(), opLogDelta, entry.getValue());
             rowOpLog.insert(entry.getKey(), opLogDelta);        //replace the old
         }
@@ -141,10 +141,10 @@ public class SSPConsistencyController extends ConsistencyController {
 	 * @param columnId
 	 * @param delta
 	 */
-	public void inc(int rowId, int columnId, Object delta) {
+	public void inc(int rowId, int columnId, Double delta) {
         threadCache.indexUpdate(rowId);
         RowOpLog rowOpLog = opLog.findInsertOpLog(rowId);
-        Object opLogDelta = rowOpLog.findCreate(columnId, sampleRow);
+        Double opLogDelta = rowOpLog.findCreate(columnId, sampleRow);
         opLogDelta = sampleRow.addUpdates(columnId, opLogDelta, delta);
         rowOpLog.insert(columnId, opLogDelta);          //replace
         //update to process_storage
@@ -159,7 +159,7 @@ public class SSPConsistencyController extends ConsistencyController {
 	 * @param rowId
 	 * @param updates
 	 */
-	public void threadBatchInc(int rowId, Map<Integer, Object> updates){
+	public void threadBatchInc(int rowId, Map<Integer, Double> updates){
         threadCache.batchInc(rowId, updates);
     }
 
@@ -199,7 +199,7 @@ public class SSPConsistencyController extends ConsistencyController {
 	 * @param columnId
 	 * @param delta
 	 */
-	public void threadInc(int rowId, int columnId, Object delta){
+	public void threadInc(int rowId, int columnId, Double delta){
         threadCache.inc(rowId, columnId, delta);
     }
 

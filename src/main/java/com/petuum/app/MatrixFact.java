@@ -34,35 +34,35 @@ public class MatrixFact {
 
     private void sgdElement(int i , int j, float xij, float stepSize, int globalWorkerId,
                             ClientTable tableL, ClientTable tableR, ClientTable tableLoss) {
-        //read L(i, :) and R(:, j) from Petuum PS
-        DenseRow<Float> li = (DenseRow)tableL.threadGet(i);
-        DenseRow<Float> rj = (DenseRow)tableR.threadGet(j);
-        //compute L(i, : ) * R(:, j)
-        float liRj = 0;
-        for(int k = 0; k < K; k++) {
-            liRj += li.get(k) * rj.get(k);
-        }
-        // Update the loss function (does not include L2 regularizer term)
-        tableLoss.inc(0, globalWorkerId, Math.pow(xij - liRj, 2));
-        // Now update L(i,:) and R(:,j) based on the loss function at X(i,j).
-        // The non-regularized loss function at X(i,j) is ( X(i,j) - L(i,:)*R(:,j) )^2.
-        //
-        // The non-regularized gradient w.r.t. L(i,k) is -2*X(i,j)R(k,j) + 2*L(i,:)*R(:,j)*R(k,j).
-        // The non-regularized gradient w.r.t. R(k,j) is -2*X(i,j)L(i,k) + 2*L(i,:)*R(:,j)*L(i,k).
-        Map<Integer, Float> liUpdate = new HashMap<Integer, Float>();
-        Map<Integer, Float> rjUpdate = new HashMap<Integer, Float>();
-        for(int k = 0; k < K; k++) {
-            float gradient = 0;
-            //compute update for L(i,k)
-            gradient = -2 * (xij - liRj) * rj.get(k) + lambda * 2 * li.get(k);
-            liUpdate.put(k, -gradient * stepSize);
-            //compute update for R(k, j)
-            gradient = -2 * (xij - liRj) * li.get(k) + lambda * 2 * rj.get(k);
-            rjUpdate.put(k, -gradient * stepSize);
-        }
-        //commit updates to Petuum PS
-        tableL.batchInc(i, liUpdate);
-        tableR.batchInc(j, rjUpdate);
+//        //read L(i, :) and R(:, j) from Petuum PS
+//        DenseRow<Float> li = (DenseRow)tableL.threadGet(i);
+//        DenseRow<Float> rj = (DenseRow)tableR.threadGet(j);
+//        //compute L(i, : ) * R(:, j)
+//        float liRj = 0;
+//        for(int k = 0; k < K; k++) {
+//            liRj += li.get(k) * rj.get(k);
+//        }
+//        // Update the loss function (does not include L2 regularizer term)
+//        tableLoss.inc(0, globalWorkerId, Math.pow(xij - liRj, 2));
+//        // Now update L(i,:) and R(:,j) based on the loss function at X(i,j).
+//        // The non-regularized loss function at X(i,j) is ( X(i,j) - L(i,:)*R(:,j) )^2.
+//        //
+//        // The non-regularized gradient w.r.t. L(i,k) is -2*X(i,j)R(k,j) + 2*L(i,:)*R(:,j)*R(k,j).
+//        // The non-regularized gradient w.r.t. R(k,j) is -2*X(i,j)L(i,k) + 2*L(i,:)*R(:,j)*L(i,k).
+//        Map<Integer, Float> liUpdate = new HashMap<Integer, Float>();
+//        Map<Integer, Float> rjUpdate = new HashMap<Integer, Float>();
+//        for(int k = 0; k < K; k++) {
+//            float gradient = 0;
+//            //compute update for L(i,k)
+//            gradient = -2 * (xij - liRj) * rj.get(k) + lambda * 2 * li.get(k);
+//            liUpdate.put(k, -gradient * stepSize);
+//            //compute update for R(k, j)
+//            gradient = -2 * (xij - liRj) * li.get(k) + lambda * 2 * rj.get(k);
+//            rjUpdate.put(k, -gradient * stepSize);
+//        }
+//        //commit updates to Petuum PS
+//        tableL.batchInc(i, liUpdate);
+//        tableR.batchInc(j, rjUpdate);
     }
 
     public static void main(String[] args) throws Exception {

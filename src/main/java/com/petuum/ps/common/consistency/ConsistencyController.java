@@ -58,7 +58,7 @@ public abstract class ConsistencyController {
 	 * @param row_id
 	 * @param updates    updates
 	 */
-	public abstract void batchInc(int row_id,  Map<Integer, Object> updates);
+	public abstract void batchInc(int row_id,  Map<Integer, Double> updates);
 
 	public abstract void clock();
 
@@ -82,14 +82,14 @@ public abstract class ConsistencyController {
 	 * @param column_id
 	 * @param delta    delta
 	 */
-	public abstract void inc(int row_id, int column_id, final Object delta);
+	public abstract void inc(int row_id, int column_id, final Double delta);
 
 	/**
 	 * 
 	 * @param row_id
 	 * @param updates    updates
 	 */
-	public abstract void threadBatchInc(int row_id, final Map<Integer, Object> updates);
+	public abstract void threadBatchInc(int row_id, final Map<Integer, Double> updates);
 
 	/**
 	 * 
@@ -103,7 +103,7 @@ public abstract class ConsistencyController {
 	 * @param column_id
 	 * @param delta    delta
 	 */
-	public abstract void threadInc(int row_id, int column_id, final Object delta);
+	public abstract void threadInc(int row_id, int column_id, final Double delta);
 
 	public abstract void waitPendingAsnycGet();
 

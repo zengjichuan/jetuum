@@ -148,7 +148,7 @@ public class Server {
 
         IntBox tableId = new IntBox();
         IntBox rowId = new IntBox();
-        Map<Integer, Object> updates;
+        Map<Integer, Double> updates;
         BoolBox startedNewTable = new BoolBox();
 
         updates = opLogReader.next(tableId, rowId, startedNewTable);        //construct map

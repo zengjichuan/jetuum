@@ -15,13 +15,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by zjc on 2014/8/14.
  */
 public class BgOpLogPartition {
-    private HashMap<Integer, RowOpLog> opLogMap;
+    private Map<Integer, RowOpLog> opLogMap;
     private int tableId;
     private int updateSize;
 
     public BgOpLogPartition(int tableId, int updateSize) {
         this.tableId = tableId;
         this.updateSize = updateSize;
+        this.opLogMap = new HashMap<Integer, RowOpLog>();
     }
     public RowOpLog findOpLog(int rowId){
         return opLogMap.get(rowId);
@@ -46,23 +47,15 @@ public class BgOpLogPartition {
             mem.position(offsetByServer.get(serverId));
 
             mem.putInt(rowId);                          //rowId
-            int numUpdates = rowOpLog.getSize();
-            mem.putInt(numUpdates);             //mem update number
-            int memColIdOffset = mem.position();
-            int memUpdatesOffset = mem.position() + numUpdates * Integer.SIZE;
+            //Serialize the RowOpLog
+            byte[] rowOpLogBytes = SerializationUtils.serialize(rowOpLog.getMap());
 
-            IntBox columnId = new IntBox();
-            Object update = rowOpLog.beginIterate(columnId);
-            while(update != null){
-                mem.putInt(memColIdOffset, columnId.intValue);
-                memColIdOffset += Integer.SIZE;
+            int rowOpLogSize = rowOpLogBytes.length;
+            mem.putInt(rowOpLogSize);             //opLog mem size
+            mem.put(rowOpLogBytes);                 //opLog mem
 
-                mem.put(SerializationUtils.serialize((Serializable) update), memUpdatesOffset, updateSize);
-                update = rowOpLog.next(columnId);
-                memUpdatesOffset += updateSize;
-            }
             offsetByServer.put(serverId, offsetByServer.get(serverId) + Integer.SIZE + Integer.SIZE +
-                    (Integer.SIZE + updateSize) * numUpdates);
+                    rowOpLogSize);
             mem.putInt(0, mem.getInt(0)+1);         //row num add 1
         }
     }
