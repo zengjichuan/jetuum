@@ -5,6 +5,7 @@ import com.petuum.ps.common.consistency.ConsistencyModel;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -93,7 +94,7 @@ public class TableGroupConfig {
     public String occPathPrefix;
 
     public void getHostInfos(Path hostFile) throws IOException {
-
+        System.out.println(FileSystems.getDefault().getPath(""));
         Files.lines(hostFile).forEach(new Consumer<String>() {
             public void accept(String s) {
                 String[] temp = s.split("\t");

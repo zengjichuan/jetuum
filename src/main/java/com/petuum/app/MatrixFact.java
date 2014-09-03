@@ -8,6 +8,7 @@ import com.petuum.ps.common.client.TableGroup;
 import com.petuum.ps.common.consistency.ConsistencyModel;
 import com.petuum.ps.common.storage.DenseRow;
 import com.petuum.ps.common.util.MatrixLoader;
+import com.petuum.ps.common.util.StandardMatrixLoader;
 import com.sun.deploy.util.SessionState;
 
 import java.io.IOException;
@@ -24,8 +25,8 @@ import java.util.concurrent.BrokenBarrierException;
 * Created by suyuxin on 14-8-23.
 */
 public class MatrixFact {
-    private static Path hostFile = FileSystems.getDefault().getPath("localserver");
-    private static Path dataFile = FileSystems.getDefault().getPath("3x3_9blocks");
+    private static Path hostFile = FileSystems.getDefault().getPath("machines", "localserver");
+    private static Path dataFile = FileSystems.getDefault().getPath("dataset", "3x3_9blocks");
     private static Path outputPrefix = FileSystems.getDefault().getPath("test");
     private static double lambda = 0.0;
     private static double initStepSize = 0.5;
@@ -181,7 +182,7 @@ public class MatrixFact {
         //next..
         PSTableGroup.init(tableGroupconfig, false);
         //load data
-
+        dataMatrix = new StandardMatrixLoader(dataFile, getTotalNumWorker());
 
         //config ps table
         ClientTableConfig tableConfig = new ClientTableConfig();
