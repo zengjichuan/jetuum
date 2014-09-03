@@ -12,7 +12,7 @@ import java.util.Map;
  * @version 1.0
  * @created 19-??-2014 14:29:06
  */
-public abstract interface Row<V extends Number> extends Serializable{
+public abstract interface Row<V extends Object> extends Serializable{
 
 //	public void finalize() throws Throwable;
 
