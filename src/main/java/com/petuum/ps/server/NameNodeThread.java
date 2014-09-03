@@ -111,9 +111,9 @@ public class NameNodeThread {
         }
 
         if(GlobalContext.getNumClients() == 1) {
-            commBusSendAny = CommBus.class.getMethod("sendInproc", int.class, NumberedMsg.class);
+            commBusSendAny = CommBus.class.getMethod("sendInproc", int.class, ByteBuffer.class);
         } else {
-            commBusSendAny = CommBus.class.getMethod("send", int.class, NumberedMsg.class);
+            commBusSendAny = CommBus.class.getMethod("send", int.class, ByteBuffer.class);
         }
         thread.start();
         latch.await();
