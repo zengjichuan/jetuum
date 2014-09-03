@@ -2,6 +2,7 @@ package com.petuum.ps.server;
 
 import com.petuum.ps.common.HostInfo;
 import com.petuum.ps.common.NumberedMsg;
+import com.petuum.ps.common.TableInfo;
 import com.petuum.ps.common.comm.CommBus;
 import com.petuum.ps.common.consistency.ConsistencyModel;
 import com.petuum.ps.common.util.IntBox;
@@ -164,10 +165,12 @@ public class ServerThreads {
         initBarrier.await();
     }
 
-    private static void SSPPushServerPushRow(){
+    private static void SSPPushServerPushRow() throws NoSuchMethodException {
+
+        serverContext.get().serverObj.createSendServerPushRowMsgs(ServerThreads.class.getMethod("sendServerPushRowMsg"));
 
     }
-    private static void SSPServerPushRow(){
+    private static void SSPRowSubscribe(){
 
     }
     // communication function
@@ -253,28 +256,108 @@ public class ServerThreads {
         log.info("InitNonNameNode done");
 
     }
-    private static void sendToAllBgThreads(NumberedMsg msg){
-
-
+    private static void sendToAllBgThreads(NumberedMsg msg) throws InvocationTargetException, IllegalAccessException {
+        for(int i = 0; i < GlobalContext.getNumTotalBgThreads(); i++) {
+            int bgId = serverContext.get().bgThreadIds.get(i);
+            commBusSendAny.invoke(comm_bus, bgId, msg.getByteBuffer());
+        }
     }
-    private static boolean handleShutDownMsg(){
-
+    private static boolean handleShutDownMsg() throws InvocationTargetException, IllegalAccessException {
+        int numShutdownBgs = serverContext.get().numShutdownBgs;
+        numShutdownBgs++;
+        if(numShutdownBgs == GlobalContext.getNumTotalBgThreads()) {
+            ServerShutDownAckMsg shutDownAckMsg = new ServerShutDownAckMsg(null);
+            for(int i = 0; i < GlobalContext.getNumTotalBgThreads(); i++) {
+                int bgId = serverContext.get().bgThreadIds.get(i);
+                commBusSendAny.invoke(comm_bus, bgId, shutDownAckMsg.getByteBuffer());
+            }
+            return true;
+        }
         return false;
     }
-    private static void handleCreateTable(int senderId, CreateTableMsg createTableMsg){
+    private static void handleCreateTable(int senderId, CreateTableMsg createTableMsg) throws InvocationTargetException, IllegalAccessException {
+
+        int tableId = createTableMsg.getTableId();
+
+        CreateTableReplyMsg createTableReplyMsg = new CreateTableReplyMsg(null);
+        createTableReplyMsg.setTableId(tableId);
+        commBusSendAny.invoke(comm_bus, createTableReplyMsg.getByteBuffer());
+
+        TableInfo tableInfo = new TableInfo();
+        tableInfo.tableStaleness = createTableMsg.getStaleness();
+        tableInfo.rowType = createTableMsg.getRowType();
+        tableInfo.rowCapacity = createTableMsg.getRowCapacity();
+        serverContext.get().serverObj.CreateTable(tableId, tableInfo);
 
     }
-    private static void handleRowRequest(int senderId, RowRequestMsg rowRequestMsg){
+    private static void handleRowRequest(int senderId, RowRequestMsg rowRequestMsg) throws InvocationTargetException, IllegalAccessException {
+        int tableId = rowRequestMsg.getTableId();
+        int rowId = rowRequestMsg.getRowId();
+        int clock = rowRequestMsg.getClock();
+        int serverClock = serverContext.get().serverObj.getMinClock();
+        if(serverClock < clock) {
+            serverContext.get().serverObj.addRowRequest(senderId, tableId, rowId, clock);
+            return;
+        }
 
+        int version = serverContext.get().serverObj.getBgVersion(senderId);
+
+        ServerRow serverRow = serverContext.get().serverObj.findCreateRow(tableId, rowId);
+        rowSubscribe.invoke(ServerThreads.class, serverRow, GlobalContext.threadId2ClientId(senderId));
+        replyRowRequest(senderId, serverRow, tableId, rowId, serverClock, version);
     }
     private static void replyRowRequest(int bgId, ServerRow serverRow, int tableId,
                                         int rowId, int serverClock, int version){
 
-    }
-    private static void handleOpLogMsg(int senderId, ClientSendOpLogMsg clientSendOpLogMsg){
+        ByteBuffer serverRowBuffer = serverRow.serialize();
+        ServerRowRequestReplyMsg serverRowRequestReplyMsg = new ServerRowRequestReplyMsg(serverRowBuffer);
+        serverRowRequestReplyMsg.setTableId(tableId);
+        serverRowRequestReplyMsg.setRowId(rowId);
+        serverRowRequestReplyMsg.setClock(serverClock);
+        serverRowRequestReplyMsg.setVersion(version);
+        serverRowRequestReplyMsg.setrowSize(serverRowBuffer.capacity());
+
+        //TransferMem ...
 
     }
-    private static void sendServerPushRowMsg(int bgId, ServerPushRowMsg msg, boolean lastMsg){
+    private static void handleOpLogMsg(int senderId, ClientSendOpLogMsg clientSendOpLogMsg) throws InvocationTargetException, IllegalAccessException {
+
+        int clientId = clientSendOpLogMsg.getClientId();
+        boolean isClock = clientSendOpLogMsg.getIsClock();
+        int version = clientSendOpLogMsg.getVersion();
+
+        serverContext.get().serverObj.applyOpLog(clientSendOpLogMsg.getData(), senderId, version);
+
+        if(isClock) {
+            boolean clockChanged = serverContext.get().serverObj.clock(clientId, senderId);
+            if(clockChanged) {
+                Vector<ServerRowRequest> requests = new Vector<ServerRowRequest>();
+                serverContext.get().serverObj.getFulfilledRowRequests(requests);
+                for(ServerRowRequest request : requests) {
+                    int tableId = request.tableId;
+                    int rowId = request.rowId;
+                    int bgId = request.bgId;
+                    int version2 = serverContext.get().serverObj.getBgVersion(bgId);
+                    ServerRow serverRow = serverContext.get().serverObj.findCreateRow(tableId, rowId);
+                    rowSubscribe.invoke(ServerThreads.class, serverRow, GlobalContext.threadId2ClientId(bgId));
+                    int serverClock = serverContext.get().serverObj.getMinClock();
+                    replyRowRequest(bgId, serverRow, tableId, rowId, serverClock, version2);
+                }
+                serverPushRow.invoke(ServerThreads.class);
+            }
+        }
+    }
+    private static void sendServerPushRowMsg(int bgId, ServerPushRowMsg msg, boolean lastMsg) throws InvocationTargetException, IllegalAccessException {
+
+        msg.setVersion(serverContext.get().serverObj.getBgVersion(bgId));
+
+        if(lastMsg) {
+            msg.setIsClock(true);
+            msg.setClock(serverContext.get().serverObj.getMinClock());
+        } else {
+            msg.setIsClock(false);
+            commBusSendAny.invoke(comm_bus, bgId, msg.getByteBuffer());
+        }
 
     }
 

@@ -24,6 +24,18 @@ public class ServerPushRowMsg extends ArbitrarySizedMsg {
         sequence.putInt(AVAI_SIZE_OFFSET, avaiSize);
     }
 
+    public void setAvaiSize(int avaiSize) {
+        int version = getVersion();
+        boolean isClock = getIsClock();
+        int clock = getClock();
+        sequence = ByteBuffer.allocate(getHeaderSize() + avaiSize);
+        sequence.putInt(MSG_TYPE_OFFSET, K_SERVER_PUSH_ROW);
+        sequence.putInt(AVAI_SIZE_OFFSET, avaiSize);
+        setIsClock(isClock);
+        setClock(clock);
+        setVersion(version);
+    }
+
     public int getVersion() {
         return sequence.getInt(VERSION_OFFSET);
     }
@@ -58,9 +70,5 @@ public class ServerPushRowMsg extends ArbitrarySizedMsg {
     public ByteBuffer getData() {
         byte[] byteList = sequence.array();
         return ByteBuffer.wrap(byteList, getHeaderSize(), byteList.length - getHeaderSize());
-    }
-
-    public void setAvaiSize(int avaiSize) {
-        sequence.putInt(AVAI_SIZE_OFFSET, avaiSize);
     }
 }

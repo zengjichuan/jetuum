@@ -23,6 +23,15 @@ public class ServerRowRequestReplyMsg extends ArbitrarySizedMsg {
         sequence.putInt(MSG_TYPE_OFFSET, K_SERVER_ROW_REQUEST_REPLY);
     }
 
+    public ServerRowRequestReplyMsg(ByteBuffer buffer) {
+        super(null);
+        assert buffer != null;
+        sequence = ByteBuffer.allocate(ArbitrarySizedMsg.getHeaderSize() + buffer.capacity());
+        sequence.putInt(MSG_TYPE_OFFSET, K_SERVER_ROW_REQUEST_REPLY);
+        sequence.position(getHeaderSize());
+        sequence.put(buffer);
+    }
+
     public int getTableId() {
         return sequence.getInt(TABLE_ID_OFFSET);
     }
