@@ -1,5 +1,6 @@
 package com.petuum.ps.common.client;
 import com.petuum.ps.common.comm.CommBus;
+import com.petuum.ps.common.util.IntBox;
 import com.petuum.ps.common.util.VectorClockMT;
 import com.petuum.ps.common.ClientTableConfig;
 import com.petuum.ps.common.TableGroupConfig;
@@ -37,7 +38,7 @@ public class TableGroup {
 	 * @param tableGroupConfig
 	 * @param tableAccess
 	 */
-	public TableGroup(final TableGroupConfig tableGroupConfig, boolean tableAccess, Integer initThreadID) throws NoSuchMethodException, InterruptedException, BrokenBarrierException {
+	public TableGroup(final TableGroupConfig tableGroupConfig, boolean tableAccess, IntBox initThreadID) throws NoSuchMethodException, InterruptedException, BrokenBarrierException {
         GlobalContext.init(tableGroupConfig.numTotalServerThreads,
                 tableGroupConfig.numLocalServerThreads,
                 tableGroupConfig.numLocalAppThreads,
@@ -54,8 +55,8 @@ public class TableGroup {
                 tableGroupConfig.aggressiveClock);
         num_app_threads_registered_.set(1);
         int localIDMin = GlobalContext.getThreadIdMin(tableGroupConfig.clientId);
-        initThreadID = localIDMin + GlobalContext.K_INIT_THREAD_ID_OFFSET;
-        CommBus.Config config = new CommBus.Config(initThreadID, CommBus.K_NONE, "");
+        initThreadID.intValue = localIDMin + GlobalContext.K_INIT_THREAD_ID_OFFSET;
+        CommBus.Config config = new CommBus.Config(initThreadID.intValue, CommBus.K_NONE, "");
         GlobalContext.commBus.threadRegister(config);
 
         if(GlobalContext.getNameNodeClientId() == tableGroupConfig.clientId) {
@@ -66,9 +67,9 @@ public class TableGroup {
         }
 
         BgWorkers.init(tables_);
-        ThreadContext.registerThread(initThreadID);
+        ThreadContext.registerThread(initThreadID.intValue);
         if(tableAccess) {
-            vector_clock_.addClock(initThreadID, 0);
+            vector_clock_.addClock(initThreadID.intValue, 0);
         }
         if(tableGroupConfig.aggressiveClock) {
             clockInternal = TableGroup.class.getMethod("clockAggressive");
