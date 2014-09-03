@@ -27,7 +27,7 @@ public class TableGroup {
 	 * Max staleness among all tables.
 	 */
 	private  int max_table_staleness_;
-	private  AtomicInteger num_app_threads_registered_;
+	private  AtomicInteger num_app_threads_registered_ = new AtomicInteger();
 	private  Map<Integer, ClientTable> tables_;
 	private  VectorClockMT vector_clock_;
     private Method clockInternal;
@@ -55,6 +55,8 @@ public class TableGroup {
                 tableGroupConfig.aggressiveClock);
         num_app_threads_registered_.set(1);
         int localIDMin = GlobalContext.getThreadIdMin(tableGroupConfig.clientId);
+        int localIDMax = GlobalContext.getThreadIdMax(tableGroupConfig.clientId);
+        GlobalContext.commBus = new CommBus(localIDMin, localIDMax, 1);
         initThreadID.intValue = localIDMin + GlobalContext.K_INIT_THREAD_ID_OFFSET;
         CommBus.Config config = new CommBus.Config(initThreadID.intValue, CommBus.K_NONE, "");
         GlobalContext.commBus.threadRegister(config);
