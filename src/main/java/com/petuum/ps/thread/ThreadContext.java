@@ -4,7 +4,7 @@ package com.petuum.ps.thread;
  * Created by zjc on 2014/8/14.
  */
 public class ThreadContext {
-    private static ThreadLocal<Info> threadInfo;
+    private static ThreadLocal<Info> threadInfo = new ThreadLocal<Info>();
     private static class Info{
         int entityId;
         int clock;

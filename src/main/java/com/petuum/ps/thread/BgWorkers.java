@@ -122,7 +122,7 @@ public class BgWorkers {
         bgCreateTableMsg.setProcessCacheCapacity(tableConfig.processCacheCapacity);
         bgCreateTableMsg.setThreadCacheCapacity(tableConfig.threadCacheCapacity);
         bgCreateTableMsg.setOplogCapacity(tableConfig.opLogCapacity);
-        commBus.sendInproc(idStart, bgCreateTableMsg);
+        commBus.sendInproc(idStart, bgCreateTableMsg.getByteBuffer());
         //wait
         Msg zmqMsg = new Msg();
         IntBox senderId = new IntBox();
@@ -231,7 +231,7 @@ public class BgWorkers {
 
     private void sendToAllLocalBgThreads(NumberedMsg msg){
         for (int bgId : threadIds){
-            int sentSize = commBus.sendInproc(bgId, msg);
+            int sentSize = commBus.sendInproc(bgId, msg.getByteBuffer());
         }
     }
 
@@ -263,7 +263,7 @@ public class BgWorkers {
         requestRowMsg.setClock(clock);
 
         int bgId = GlobalContext.getBgPartitionNum(rowId) + idStart;
-        int sentSize = commBus.sendInproc(bgId, requestRowMsg);
+        int sentSize = commBus.sendInproc(bgId, requestRowMsg.getByteBuffer());
         Msg zmqMsg = new Msg();
         IntBox sendId = new IntBox();
         commBus.recvInproc(sendId, zmqMsg);
@@ -279,7 +279,7 @@ public class BgWorkers {
         requestRowMsg.setClock(clock);
 
         int bgId = GlobalContext.getBgPartitionNum(rowId) + idStart;
-        int sentSize = commBus.sendInproc(bgId, requestRowMsg);
+        int sentSize = commBus.sendInproc(bgId, requestRowMsg.getByteBuffer());
     }
 
     public static void connectToBg(int bgId) {
@@ -631,7 +631,7 @@ public class BgWorkers {
             }
             RowRequestReplyMsg rowRequestReplyMsg = new RowRequestReplyMsg(null);
             for (int appThreadId : appThreadIds){
-                int sentSize = commBus.sendInproc(appThreadId, rowRequestReplyMsg);
+                int sentSize = commBus.sendInproc(appThreadId, rowRequestReplyMsg.getByteBuffer());
             }
         }
 
@@ -693,7 +693,7 @@ public class BgWorkers {
             if (clientRow != null){
                 if(clientRow.getClock() >= clock){
                     RowRequestReplyMsg rowRequestReplyMsg = new RowRequestReplyMsg(null);
-                    commBus.sendInproc(appThreadId, rowRequestReplyMsg);
+                    commBus.sendInproc(appThreadId, rowRequestReplyMsg.getByteBuffer());
                     return;
                 }
             }
