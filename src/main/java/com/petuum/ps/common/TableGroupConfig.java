@@ -5,10 +5,10 @@ import com.petuum.ps.common.consistency.ConsistencyModel;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 import java.util.function.Consumer;
@@ -57,11 +57,11 @@ public class TableGroupConfig {
     /**
      * IDs of all servers.
      */
-    public Vector<Integer> serverIds;
+    public ArrayList<Integer> serverIds;
     /**
      * mapping server ID to host info.
      */
-    public Map<Integer, HostInfo> hostMap;
+    public Map<Integer, HostInfo> hostMap = new HashMap<Integer, HostInfo>();
     /**
      * My client id.
      */
@@ -94,18 +94,19 @@ public class TableGroupConfig {
     public String occPathPrefix;
 
     public void getHostInfos(Path hostFile) throws IOException {
-        System.out.println(FileSystems.getDefault().getPath(""));
-        Files.lines(hostFile).forEach(new Consumer<String>() {
+
+        Files.lines(hostFile).forEachOrdered(new Consumer<String>() {
             public void accept(String s) {
-                String[] temp = s.split("\t");
+                System.out.println(s);
+                String[] temp = s.split(" ");
                 int id = Integer.valueOf(temp[0]);
-                hostMap.put(id, new HostInfo(id, temp[1], temp[2]));
+                hostMap.putIfAbsent(id, new HostInfo(id, temp[1], temp[2]));
             }
         });
         getServerIDsFromHostMap();
     }
     private void getServerIDsFromHostMap() {
-        serverIds = new Vector<Integer>(hostMap.size() - 1);
+        serverIds = new ArrayList<Integer>(hostMap.size() - 1);
         int index = 0;
         for(Integer id : hostMap.keySet()) {
             if(id == 0)
