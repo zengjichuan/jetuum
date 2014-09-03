@@ -5,11 +5,14 @@ import com.petuum.ps.common.PSTableGroup;
 import com.petuum.ps.common.TableGroupConfig;
 import com.petuum.ps.common.consistency.ConsistencyModel;
 
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+
 /**
  * Created by ZengJichuan on 2014/9/3.
  */
 public class HelloWorld {
-    private static String hostFile = "localserver";
+    private static Path hostFile = FileSystems.getDefault().getPath("localserver");
     private static int numTotalServerThread = 1;
     private static int numTotalNumClient = 1;
     private static int numTotalBgThread = 1;
