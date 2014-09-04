@@ -170,8 +170,8 @@ public class ServerThreads {
         serverContext.get().serverObj.createSendServerPushRowMsgs(ServerThreads.class.getMethod("sendServerPushRowMsg"));
 
     }
-    public static void SSPPushRowSubscribe(){
-
+    public static void SSPPushRowSubscribe(ServerRow serverRow, int clientId){
+        serverRow.subscribe(clientId);
     }
 
     public static void SSPRowSubscribe() {

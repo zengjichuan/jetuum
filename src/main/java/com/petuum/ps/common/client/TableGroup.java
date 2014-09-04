@@ -9,6 +9,7 @@ import com.petuum.ps.server.ServerThreads;
 import com.petuum.ps.thread.BgWorkers;
 import com.petuum.ps.thread.GlobalContext;
 import com.petuum.ps.thread.ThreadContext;
+import com.sun.deploy.util.SessionState;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -54,6 +55,7 @@ public class TableGroup {
                 tableGroupConfig.consistencyModel,
                 tableGroupConfig.aggressiveClock);
         num_app_threads_registered_.set(1);
+        this.vector_clock_ = new VectorClockMT();
         int localIDMin = GlobalContext.getThreadIdMin(tableGroupConfig.clientId);
         int localIDMax = GlobalContext.getThreadIdMax(tableGroupConfig.clientId);
         GlobalContext.commBus = new CommBus(localIDMin, localIDMax, 1);
@@ -67,8 +69,8 @@ public class TableGroup {
         } else {
             ServerThreads.init(localIDMin);
         }
-
-        BgWorkers.init(tables_);
+        //TODO: for test
+        //BgWorkers.init(tables_);
         ThreadContext.registerThread(initThreadID.intValue);
         if(tableAccess) {
             vector_clock_.addClock(initThreadID.intValue, 0);
@@ -85,11 +87,25 @@ public class TableGroup {
 	}
 
 	private void clockAggressive(){
-
+        for (ClientTable clientTable : tables_.values()){
+            clientTable.clock();
+        }
+        int clock = vector_clock_.tick(ThreadContext.getId());
+        if (clock != 0){
+            BgWorkers.clockAllTables();
+        }else{
+            BgWorkers.sendOpLogsAllTables();
+        }
 	}
 
 	private void clockConservative(){
-
+        for (ClientTable clientTable : tables_.values()){
+            clientTable.clock();
+        }
+        int clock = vector_clock_.tick(ThreadContext.getId());
+        if (clock != 0) {
+            BgWorkers.clockAllTables();
+        }
 	}
 
 	/**

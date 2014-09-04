@@ -229,11 +229,15 @@ public class BgWorkers {
         createTableBarrier.await();
     }
 
-    public void clockAllTables(){
+    public static void clockAllTables(){
         sendToAllLocalBgThreads(new BgClockMsg(null));
     }
 
-    private void sendToAllLocalBgThreads(NumberedMsg msg){
+    public static void sendOpLogsAllTables(){
+        sendToAllLocalBgThreads(new BgSendOpLogMsg(null));
+    }
+
+    private static void sendToAllLocalBgThreads(NumberedMsg msg){
         for (int bgId : threadIds){
             int sentSize = commBus.sendInproc(bgId, msg.getByteBuffer());
         }
