@@ -26,7 +26,7 @@ public class ClientTableConfig {
 	public int threadCacheCapacity;
 
 	public ClientTableConfig(){
-
+        this.tableInfo = new TableInfo();
 	}
 
 	public void finalize() throws Throwable {
