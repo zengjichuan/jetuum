@@ -69,8 +69,7 @@ public class TableGroup {
         } else {
             ServerThreads.init(localIDMin);
         }
-        //TODO: for test
-        //BgWorkers.init(tables_);
+        BgWorkers.init(tables_);
         ThreadContext.registerThread(initThreadID.intValue);
         if(tableAccess) {
             vector_clock_.addClock(initThreadID.intValue, 0);

@@ -143,7 +143,7 @@ public class ServerThreads {
                 break;
             case SSPPush:
                 serverPushRow = ServerThreads.class.getMethod("SSPPushServerPushRow");
-                rowSubscribe = ServerThreads.class.getMethod("SSPPushRowSubscribe");
+                rowSubscribe = ServerThreads.class.getMethod("SSPPushRowSubscribe", ServerRow.class, int.class);
                 log.info("RowSubscribe = SSPPushRowSubscribe");
                 break;
             default:
