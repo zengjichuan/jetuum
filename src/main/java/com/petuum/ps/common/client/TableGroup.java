@@ -1,4 +1,5 @@
 package com.petuum.ps.common.client;
+import com.google.common.base.Preconditions;
 import com.petuum.ps.common.comm.CommBus;
 import com.petuum.ps.common.util.IntBox;
 import com.petuum.ps.common.util.VectorClockMT;
@@ -11,6 +12,7 @@ import com.petuum.ps.thread.GlobalContext;
 import com.petuum.ps.thread.ThreadContext;
 import com.sun.deploy.util.SessionState;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
@@ -70,7 +72,7 @@ public class TableGroup {
             ServerThreads.init(localIDMin);
         }
         //TODO: for test
-        //BgWorkers.init(tables_);
+        BgWorkers.init(tables_);
         ThreadContext.registerThread(initThreadID.intValue);
         if(tableAccess) {
             vector_clock_.addClock(initThreadID.intValue, 0);
@@ -83,8 +85,15 @@ public class TableGroup {
 	}
 
 	public void clock(){
-
-	}
+        ThreadContext.clock();
+        try {
+            clockInternal.invoke(TableGroup.class, new Object[]{});
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+    }
 
 	private void clockAggressive(){
         for (ClientTable clientTable : tables_.values()){
@@ -141,12 +150,14 @@ public class TableGroup {
 	 * @param table_id
 	 */
 	public ClientTable getTableOrDie(int table_id){
-        return null;
+        return Preconditions.checkNotNull(tables_.get(table_id));
 	}
 
 	public void globalBarrier(){
-
-	}
+        for (int i = 0; i < max_table_staleness_; i++) {
+            clock();
+        }
+    }
 
 	public int registerThread() throws BrokenBarrierException, InterruptedException {
         int appThreadIdOffset = num_app_threads_registered_.getAndIncrement();
