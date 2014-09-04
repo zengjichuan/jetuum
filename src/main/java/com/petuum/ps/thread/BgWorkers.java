@@ -80,8 +80,8 @@ public class BgWorkers {
 
     //function pointer GetRowOpLogFunc
 
-    private static Vector<Runnable> threads;
-    private static Vector<Integer> threadIds;
+    private static Vector<Thread> threads = new Vector<Thread>();
+    private static Vector<Integer> threadIds = new Vector<Integer>();
     private static Map<Integer, ClientTable> tables;
     private static int idStart;
 
@@ -132,8 +132,6 @@ public class BgWorkers {
     }
 
     public static void init(Map<Integer, ClientTable> rTables){
-        threads.setSize(GlobalContext.getNumBgThreads());
-        threadIds.setSize(GlobalContext.getNumBgThreads());
         tables = rTables;
         idStart = GlobalContext.getHeadBgId(GlobalContext.getClientId());
         commBus = GlobalContext.commBus;
@@ -201,9 +199,11 @@ public class BgWorkers {
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
-        ExecutorService threadPool = Executors.newFixedThreadPool(GlobalContext.getNumBgThreads());
+
         for (int i = 0; i < GlobalContext.getNumBgThreads(); i++) {
-            threadPool.execute(new BgThread(threadIds.get(i)));
+            threadIds.add(i + idStart);
+            threads.add(new Thread(new BgThread(i + idStart)));
+            threads.get(i).start();
         }
         try {
             initBarrier.await();

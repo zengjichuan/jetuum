@@ -24,7 +24,7 @@ import java.util.concurrent.CyclicBarrier;
  */
 
 class ServerContext{
-    Vector<Integer> bgThreadIds;
+    int[] bgThreadIds;
     Server serverObj;
     int numShutdownBgs;
 }
@@ -35,7 +35,7 @@ public class ServerThreads {
     private static CyclicBarrier initBarrier;
     private static int[] threadIDs;
     private static ArrayList<Thread> threads = new ArrayList<Thread>();
-    private static ThreadLocal<ServerContext> serverContext;
+    private static ThreadLocal<ServerContext> serverContext = new ThreadLocal<ServerContext>();
     private static Method commBusRecvAny;
     private static Method commBusRecvTimeOutAny;
     private static Method commBusSendAny;
@@ -173,6 +173,10 @@ public class ServerThreads {
     public static void SSPPushRowSubscribe(){
 
     }
+
+    public static void SSPRowSubscribe() {
+        
+    }
     // communication function
     // assuming the caller is not name node
     private static void connectToNameNode(){
@@ -215,7 +219,7 @@ public class ServerThreads {
     private static void setupServerContext(){
 
         serverContext.set(new ServerContext());
-        serverContext.get().bgThreadIds = new Vector<Integer>(GlobalContext.getNumTotalBgThreads());
+        serverContext.get().bgThreadIds = new int[GlobalContext.getNumTotalBgThreads()];
         serverContext.get().numShutdownBgs = 0;
 
     }
@@ -247,7 +251,7 @@ public class ServerThreads {
         for(int numBgs = 0; numBgs < GlobalContext.getNumTotalBgThreads(); numBgs++) {
             ConnectionResult result = getConnection();
             assert result.isClient;
-            serverContext.get().bgThreadIds.set(numBgs, result.senderID);
+            serverContext.get().bgThreadIds[numBgs] = result.senderID;
             serverContext.get().serverObj.addClientBgPair(result.clientID, result.senderID);
         }
 
@@ -258,7 +262,7 @@ public class ServerThreads {
     }
     private static void sendToAllBgThreads(NumberedMsg msg) throws InvocationTargetException, IllegalAccessException {
         for(int i = 0; i < GlobalContext.getNumTotalBgThreads(); i++) {
-            int bgId = serverContext.get().bgThreadIds.get(i);
+            int bgId = serverContext.get().bgThreadIds[i];
             commBusSendAny.invoke(comm_bus, bgId, msg.getByteBuffer());
         }
     }
@@ -268,7 +272,7 @@ public class ServerThreads {
         if(numShutdownBgs == GlobalContext.getNumTotalBgThreads()) {
             ServerShutDownAckMsg shutDownAckMsg = new ServerShutDownAckMsg(null);
             for(int i = 0; i < GlobalContext.getNumTotalBgThreads(); i++) {
-                int bgId = serverContext.get().bgThreadIds.get(i);
+                int bgId = serverContext.get().bgThreadIds[i];
                 commBusSendAny.invoke(comm_bus, bgId, shutDownAckMsg.getByteBuffer());
             }
             return true;
