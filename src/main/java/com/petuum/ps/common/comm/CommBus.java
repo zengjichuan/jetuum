@@ -127,6 +127,7 @@ public class CommBus {
         threadInfo.get().numBytesInterprocRecvBuff = config.numBytesInterprocRecvBuff;
 
         if((config.lType & K_IN_PROC) != 0){
+
             threadInfo.get().inprocSock = zmqContext.createSocket(ZMQ.ROUTER);
             ZMQ.Socket sock = threadInfo.get().inprocSock;
             setUpRouterSocket(sock, config.entityId,
@@ -148,11 +149,11 @@ public class CommBus {
         }
     }
 
-    public boolean commBusRecvAsyncAny(Integer senderId, Msg msg) {
+    public boolean commBusRecvAsyncAny(IntBox senderId, Msg msg) {
         return true;
     }
 
-    public void commBusRecvAny(Integer senderId, Msg msg) {
+    public void commBusRecvAny(IntBox senderId, Msg msg) {
 
     }
     public void threadDeregister(){
@@ -169,6 +170,7 @@ public class CommBus {
     public void connectTo(int entityId, ByteBuffer connectMsg){
         Preconditions.checkArgument(isLocalEntity(entityId));
         ZMQ.Socket sock = threadInfo.get().inprocSock;
+
         if (sock == null){
             threadInfo.get().inprocSock = zmqContext.createSocket(ZMQ.ROUTER);
             sock = threadInfo.get().inprocSock;
@@ -176,6 +178,7 @@ public class CommBus {
                     threadInfo.get().numBytesInprocSendBuff,
                     threadInfo.get().numBytesInprocRecvBuff);
         }
+
         StringBuffer connectAddr = new StringBuffer();
         makeInprocAddr(entityId, connectAddr);
         int zmqId = ZmqUtil.entityID2ZmqID(entityId);

@@ -10,10 +10,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @version 1.0
  * @created 19-??-2014 21:08:18
  */
-public abstract class ClientRow {
+public class ClientRow {
 
 //	private AtomicInteger numRefs;
 	private Row rowData;
+    private int clock;
 
     public void setRowData(Row row) {
         rowData = row;
@@ -30,6 +31,7 @@ public abstract class ClientRow {
 	 */
 	public ClientRow(int clock, Row rowData){
         this.rowData = rowData;
+        this.clock = clock;
 	}
 
 	public void decRef(){
@@ -37,7 +39,7 @@ public abstract class ClientRow {
 	}
 
 	public int getClock(){
-		return -1;
+		return clock;
 	}
 
 	public Row getRowData(){
@@ -53,7 +55,7 @@ public abstract class ClientRow {
 	 * @param clock
 	 */
 	public void setClock(int clock){
-
+        this.clock = clock;
 	}
 
 }

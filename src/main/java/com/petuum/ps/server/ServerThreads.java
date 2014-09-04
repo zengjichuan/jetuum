@@ -175,7 +175,7 @@ public class ServerThreads {
     }
 
     public static void SSPRowSubscribe() {
-        
+
     }
     // communication function
     // assuming the caller is not name node
