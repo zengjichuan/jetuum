@@ -28,7 +28,7 @@ public class ZmqUtil {
     public static void zmqSetSocketOpt(ZMQ.Socket socket, int option, int optVal){
         switch (option){
             case ZMQ_IDENTITY:
-                socket.setIdentity(ByteBuffer.allocate(Integer.SIZE).putInt(optVal).array());break;
+                socket.setIdentity(ByteBuffer.allocate(Integer.BYTES).putInt(optVal).array());break;
             case ZMQ_ROUTER_MANDATORY:
                 socket.setRouterMandatory(optVal != 0 ? true : false);break;
             case ZMQ_SNDBUF:
