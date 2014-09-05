@@ -10,9 +10,9 @@ import java.nio.ByteBuffer;
  */
 public class AppConnectMsg extends NumberedMsg {
 
-    public AppConnectMsg(Msg msg) {
-        super(msg);
-        if(msg == null)
+    public AppConnectMsg(ByteBuffer msgBuf) {
+        super(msgBuf);
+        if(msgBuf == null)
             sequence = ByteBuffer.allocate(getSize());
         sequence.putInt(MSG_TYPE_OFFSET, K_APP_CONNECT);
     }

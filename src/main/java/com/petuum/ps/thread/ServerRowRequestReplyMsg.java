@@ -16,12 +16,12 @@ public class ServerRowRequestReplyMsg extends ArbitrarySizedMsg {
     protected static final int VERSION_OFFSET = TABLE_ID_OFFSET + 3 * INT_LENGTH;
     protected static final int ROW_SIZE_OFFSET = TABLE_ID_OFFSET + 4 * INT_LENGTH;
 
-    public ServerRowRequestReplyMsg(Msg msg) {
-        super(msg);
-        if(msg == null)
-            sequence = ByteBuffer.allocate(ArbitrarySizedMsg.getSize());
-        sequence.putInt(MSG_TYPE_OFFSET, K_SERVER_ROW_REQUEST_REPLY);
-    }
+//    public ServerRowRequestReplyMsg(Msg msg) {
+//        super(msg);
+//        if(msg == null)
+//            sequence = ByteBuffer.allocate(ArbitrarySizedMsg.getSize());
+//        sequence.putInt(MSG_TYPE_OFFSET, K_SERVER_ROW_REQUEST_REPLY);
+//    }
 
     public ServerRowRequestReplyMsg(ByteBuffer buffer) {
         super(null);

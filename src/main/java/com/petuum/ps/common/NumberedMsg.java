@@ -42,9 +42,9 @@ public class NumberedMsg {
         return ACK_NUM_OFFSET + INT_LENGTH;
     }
 
-    public NumberedMsg(Msg msg) {
-        if(msg != null)
-            sequence = ByteBuffer.wrap(msg.data());
+    public NumberedMsg(ByteBuffer buff) {
+        if(buff != null)
+            sequence = buff;
     }
 
     public int getMsgType() {

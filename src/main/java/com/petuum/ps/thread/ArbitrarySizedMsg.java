@@ -13,8 +13,8 @@ public class ArbitrarySizedMsg extends NumberedMsg {
 
     protected static final int AVAI_SIZE_OFFSET = NumberedMsg.getSize();
 
-    public ArbitrarySizedMsg(Msg msg) {
-        super(msg);
+    public ArbitrarySizedMsg(ByteBuffer msgBuf) {
+        super(msgBuf);
     }
 
     public int getAvaiSize() {

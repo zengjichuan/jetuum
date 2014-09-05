@@ -10,7 +10,6 @@ import com.petuum.ps.thread.GlobalContext;
 import com.petuum.ps.thread.ThreadContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import zmq.Msg;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -99,15 +98,15 @@ public class NameNodeThread {
         commbus = GlobalContext.commBus;
 
         if(GlobalContext.getNumClients() == 1) {
-            commBusRecvAny = CommBus.class.getMethod("recvInproc", IntBox.class, Msg.class);
+            commBusRecvAny = CommBus.class.getMethod("recvInproc", IntBox.class);
         } else {
-            commBusRecvAny = CommBus.class.getMethod("recv", IntBox.class, Msg.class);
+            commBusRecvAny = CommBus.class.getMethod("recv", IntBox.class);
         }
 
         if(GlobalContext.getNumClients() == 1) {
-            commBusRecvTimeOutAny = CommBus.class.getMethod("recvInprocTimeout", IntBox.class, Msg.class, long.class);
+            commBusRecvTimeOutAny = CommBus.class.getMethod("recvInprocTimeout", IntBox.class, long.class);
         } else {
-            commBusRecvTimeOutAny = CommBus.class.getMethod("recvTimeOut", IntBox.class, Msg.class, long.class);
+            commBusRecvTimeOutAny = CommBus.class.getMethod("recvTimeOut", IntBox.class, long.class);
         }
 
         if(GlobalContext.getNumClients() == 1) {
@@ -176,12 +175,12 @@ public class NameNodeThread {
 
     private static ConnectionResult getConnection() throws InvocationTargetException, IllegalAccessException {
         IntBox senderID = new IntBox();
-        Msg zmqMsg = new Msg();
-        commBusRecvAny.invoke(commbus, senderID, zmqMsg);
-        NumberedMsg msg = new NumberedMsg(zmqMsg);
+        ByteBuffer msgBuf = null;
+        msgBuf = (ByteBuffer) commBusRecvAny.invoke(commbus, senderID);
+        NumberedMsg msg = new NumberedMsg(msgBuf);
         ConnectionResult result = new ConnectionResult();
         if(msg.getMsgType() == NumberedMsg.K_CLIENT_CONNECT) {
-            ClientConnectMsg cMsg = new ClientConnectMsg(zmqMsg);
+            ClientConnectMsg cMsg = new ClientConnectMsg(msgBuf);
             result.isClient = true;
             result.clientID = cMsg.getClientID();
         } else {

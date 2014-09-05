@@ -5,8 +5,6 @@ import com.petuum.ps.common.NumberedMsg;
 import com.petuum.ps.common.util.IntBox;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
-import zmq.Msg;
-import zmq.ZError;
 
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
@@ -149,13 +147,6 @@ public class CommBus {
         }
     }
 
-    public boolean commBusRecvAsyncAny(IntBox senderId, Msg msg) {
-        return true;
-    }
-
-    public void commBusRecvAny(IntBox senderId, Msg msg) {
-
-    }
     public void threadDeregister(){
         threadInfo.remove();
     }

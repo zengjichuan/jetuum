@@ -14,9 +14,9 @@ public class ClientSendOpLogMsg extends ArbitrarySizedMsg {
     protected static final int CLIENT_ID_OFFSET = IS_CLOCK_OFFSET + 1;//IS_CLOCK_OFFSET is boolean type
     protected static final int VERSION_OFFSET = CLIENT_ID_OFFSET + INT_LENGTH;
 
-    public ClientSendOpLogMsg(Msg msg) {
-        super(msg);
-        if(msg == null)
+    public ClientSendOpLogMsg(ByteBuffer msgBuf) {
+        super(msgBuf);
+        if(msgBuf == null)
             sequence = ByteBuffer.allocate(ArbitrarySizedMsg.getSize());
         sequence.putInt(MSG_TYPE_OFFSET, K_CLIENT_SEND_OP_LOG);
     }

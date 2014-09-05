@@ -11,9 +11,9 @@ import java.nio.ByteBuffer;
 public class CreateTableReplyMsg extends NumberedMsg {
 
     protected static final int TABLE_ID_OFFSET = NumberedMsg.getSize();
-    public CreateTableReplyMsg(Msg msg) {
-        super(msg);
-        if(msg == null)
+    public CreateTableReplyMsg(ByteBuffer msgBuf) {
+        super(msgBuf);
+        if(msgBuf == null)
             sequence = ByteBuffer.allocate(getSize());
         sequence.putInt(MSG_TYPE_OFFSET, K_CREATE_TABLE_REPLY);
     }

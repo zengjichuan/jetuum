@@ -15,9 +15,9 @@ public class CreateTableMsg extends NumberedMsg {
     protected static final int ROW_TYPE_OFFSET = TABLE_ID_OFFSET + 2 * INT_LENGTH;
     protected static final int ROW_CAPACITY_OFFSET = TABLE_ID_OFFSET + 3 * INT_LENGTH;
 
-    public CreateTableMsg(Msg msg) {
-        super(msg);
-        if(msg == null)
+    public CreateTableMsg(ByteBuffer msgBuf) {
+        super(msgBuf);
+        if(msgBuf == null)
             sequence = ByteBuffer.allocate(getSize());
         sequence.putInt(MSG_TYPE_OFFSET, K_CREATE_TABLE);
     }

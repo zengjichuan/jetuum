@@ -9,7 +9,6 @@ import com.petuum.ps.common.util.IntBox;
 import com.petuum.ps.thread.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import zmq.Msg;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -73,12 +72,12 @@ public class ServerThreads {
                 initServer(threadID);
 
                 IntBox senderID = new IntBox();
-                Msg zmqMsg = new Msg();
+                ByteBuffer msgBuf = null;
                 boolean destroy_mem = false;
 
                 while(true) {
-                    commBusRecvAnyWrapper.invoke(comm_bus, senderID, zmqMsg);
-                    int msgType = new NumberedMsg(zmqMsg).getMsgType();
+                    msgBuf = (ByteBuffer) commBusRecvAnyWrapper.invoke(comm_bus, senderID);
+                    int msgType = new NumberedMsg(msgBuf).getMsgType();
 
                     switch (msgType) {
                         case NumberedMsg.K_CLIENT_SHUT_DOWN:
@@ -89,13 +88,13 @@ public class ServerThreads {
                                 return;
                             }
                         case NumberedMsg.K_CREATE_TABLE:
-                            handleCreateTable(senderID.intValue, new CreateTableMsg(zmqMsg));
+                            handleCreateTable(senderID.intValue, new CreateTableMsg(msgBuf));
                             break;
                         case NumberedMsg.K_ROW_REQUEST:
-                            handleRowRequest(senderID.intValue, new RowRequestMsg(zmqMsg));
+                            handleRowRequest(senderID.intValue, new RowRequestMsg(msgBuf));
                             break;
                         case NumberedMsg.K_CLIENT_SEND_OP_LOG:
-                            handleOpLogMsg(senderID.intValue, new ClientSendOpLogMsg(zmqMsg));
+                            handleOpLogMsg(senderID.intValue, new ClientSendOpLogMsg(msgBuf));
                             break;
                         default:
                             log.error("Unrecognized message type " + String.valueOf(msgType));
@@ -123,14 +122,14 @@ public class ServerThreads {
         comm_bus = GlobalContext.commBus;
 
         if(GlobalContext.getNumClients() == 1) {
-            commBusRecvAny = CommBus.class.getMethod("recvInproc", IntBox.class, Msg.class);
-            commBusRecvAsyncAny = CommBus.class.getMethod("recvInprocAsync", IntBox.class, Msg.class);
-            commBusRecvTimeOutAny = CommBus.class.getMethod("recvInprocTimeout", IntBox.class, Msg.class, long.class);
+            commBusRecvAny = CommBus.class.getMethod("recvInproc", IntBox.class);
+            commBusRecvAsyncAny = CommBus.class.getMethod("recvInprocAsync", IntBox.class);
+            commBusRecvTimeOutAny = CommBus.class.getMethod("recvInprocTimeout", IntBox.class, long.class);
             commBusSendAny = CommBus.class.getMethod("sendInproc", int.class, ByteBuffer.class);
         }else {
-            commBusRecvAny = CommBus.class.getMethod("recv", IntBox.class, Msg.class);
-            commBusRecvAsyncAny = CommBus.class.getMethod("recvAsync", IntBox.class, Msg.class);
-            commBusRecvTimeOutAny = CommBus.class.getMethod("recvTimeOut", IntBox.class, Msg.class, long.class);
+            commBusRecvAny = CommBus.class.getMethod("recv", IntBox.class);
+            commBusRecvAsyncAny = CommBus.class.getMethod("recvAsync", IntBox.class);
+            commBusRecvTimeOutAny = CommBus.class.getMethod("recvTimeOut", IntBox.class, long.class);
             commBusSendAny = CommBus.class.getMethod("send", int.class, ByteBuffer.class);
         }
 
@@ -196,12 +195,11 @@ public class ServerThreads {
 
     private static ConnectionResult getConnection() throws InvocationTargetException, IllegalAccessException {
         IntBox senderID = new IntBox();
-        Msg zmqMsg = new Msg();
         ConnectionResult result = new ConnectionResult();
-        commBusRecvAny.invoke(comm_bus, senderID, zmqMsg);
-        NumberedMsg msg = new NumberedMsg(zmqMsg);
+        ByteBuffer msgBuf = (ByteBuffer) commBusRecvAny.invoke(comm_bus, senderID);
+        NumberedMsg msg = new NumberedMsg(msgBuf);
         if(msg.getMsgType() == NumberedMsg.K_CLIENT_CONNECT) {
-            ClientConnectMsg cMsg = new ClientConnectMsg(zmqMsg);
+            ClientConnectMsg cMsg = new ClientConnectMsg(msgBuf);
             result.isClient = true;
             result.clientID = cMsg.getClientID();
         } else {

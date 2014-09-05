@@ -10,9 +10,9 @@ import java.nio.ByteBuffer;
  */
 public class ServerConnectMsg extends NumberedMsg {
 
-    public ServerConnectMsg(Msg msg) {
-        super(msg);
-        if(msg == null)
+    public ServerConnectMsg(ByteBuffer msgBuf) {
+        super(msgBuf);
+        if(msgBuf == null)
             sequence = ByteBuffer.allocate(getSize());
         sequence.putInt(MSG_TYPE_OFFSET, K_SERVER_CONNECT);
     }

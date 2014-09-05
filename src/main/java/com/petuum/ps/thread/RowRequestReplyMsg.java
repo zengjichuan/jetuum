@@ -10,9 +10,9 @@ import java.nio.ByteBuffer;
  */
 public class RowRequestReplyMsg extends NumberedMsg {
 
-    public RowRequestReplyMsg(Msg msg) {
-        super(msg);
-        if(msg == null)
+    public RowRequestReplyMsg(ByteBuffer msgBuf) {
+        super(msgBuf);
+        if(msgBuf == null)
             sequence = ByteBuffer.allocate(getSize());
         sequence.putInt(MSG_TYPE_OFFSET, K_ROW_REQUEST_REPLY);
     }

@@ -12,8 +12,8 @@ public class ServerPushRowMsg extends ArbitrarySizedMsg {
     protected static final int CLOCK_OFFSET = ArbitrarySizedMsg.getHeaderSize();
     protected static final int VERSION_OFFSET = CLOCK_OFFSET + INT_LENGTH;
     protected static final int IS_CLOCK_OFFSET = CLOCK_OFFSET + 2 * INT_LENGTH;
-    public ServerPushRowMsg(Msg msg) {
-        super(msg);
+    public ServerPushRowMsg(ByteBuffer msgBuf) {
+        super(msgBuf);
         sequence.putInt(MSG_TYPE_OFFSET, K_SERVER_PUSH_ROW);
     }
 

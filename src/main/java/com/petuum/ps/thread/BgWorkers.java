@@ -14,7 +14,7 @@ import com.petuum.ps.oplog.OpLogSerializer;
 import com.petuum.ps.oplog.TableOpLog;
 import org.apache.commons.lang3.SerializationUtils;
 import org.zeromq.ZMQ;
-import zmq.Msg;
+
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -102,11 +102,19 @@ public class BgWorkers {
     private static Condition systemClockCv;
     private static HashMap<Integer, HashMap<Integer, Boolean>> tableOpLogIndex;
 
-    private static void commBusRecvAnyBusy(IntBox senderId, Msg msg){
-        boolean received = commBus.commBusRecvAsyncAny(senderId, msg);
-        while (!received){
-            received = commBus.commBusRecvAsyncAny(senderId, msg);
+    private static ByteBuffer commBusRecvAnyBusy(IntBox senderId){
+        ByteBuffer receivedBuff = null;
+        try {
+            receivedBuff = (ByteBuffer) commBusRecvAsyncAny.invoke(commBus, new Object[]{senderId});
+            while (receivedBuff == null){
+                receivedBuff = (ByteBuffer) commBusRecvAsyncAny.invoke(commBus, new Object[]{senderId});
+            }
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
         }
+        return receivedBuff;
     }
 
     public static boolean createTable(int tableId, ClientTableConfig tableConfig) {
@@ -121,10 +129,8 @@ public class BgWorkers {
         bgCreateTableMsg.setOplogCapacity(tableConfig.opLogCapacity);
         commBus.sendInproc(idStart, bgCreateTableMsg.getByteBuffer());
         //wait
-        Msg zmqMsg = new Msg();
         IntBox senderId = new IntBox();
-        commBus.recvInproc(senderId, zmqMsg);
-        assert new NumberedMsg(zmqMsg).getMsgType() == NumberedMsg.K_CREATE_TABLE_REPLY;
+        assert new NumberedMsg(commBus.recvInproc(senderId)).getMsgType() == NumberedMsg.K_CREATE_TABLE_REPLY;
         return true;
     }
 
@@ -154,20 +160,20 @@ public class BgWorkers {
         createTableBarrier = new CyclicBarrier(2);
         try {
             if (GlobalContext.getNumClients() == 1) {
-                commBusRecvAny = CommBus.class.getMethod("recvInproc", IntBox.class, Msg.class);
+                commBusRecvAny = CommBus.class.getMethod("recvInproc", IntBox.class);
                 commBusRecvAsyncAny = commBus.getClass().getMethod("recvInprocAsync",
-                        new Class[]{IntBox.class, Msg.class});
+                        new Class[]{IntBox.class});
                 commBusRecvTimeOutAny = commBus.getClass().getMethod("recvInprocTimeout",
-                        new Class[]{IntBox.class, Msg.class, long.class});
+                        new Class[]{IntBox.class, long.class});
                 commBusSendAny = commBus.getClass().getMethod("sendInproc",
                         new Class[]{int.class, ByteBuffer.class});
             }else{
                 commBusRecvAny = commBus.getClass().getMethod("recv",
-                        new Class[]{IntBox.class, Msg.class});
+                        new Class[]{IntBox.class});
                 commBusRecvAsyncAny = commBus.getClass().getMethod("recvAsync",
-                        new Class[]{IntBox.class, Msg.class});
+                        new Class[]{IntBox.class});
                 commBusRecvTimeOutAny = commBus.getClass().getMethod("recvTimeout",
-                        new Class[]{IntBox.class, Msg.class, long.class});
+                        new Class[]{IntBox.class, long.class});
                 commBusSendAny = commBus.getClass().getMethod("send",
                         new Class[]{int.class, ByteBuffer.class});
             }
@@ -195,10 +201,10 @@ public class BgWorkers {
             }
             if (GlobalContext.isAggressiveCpu()){
                 commBusRecvAnyWrapper = BgWorkers.class.getMethod("commBusRecvAnyBusy",
-                        new Class[]{IntBox.class, Msg.class});
+                        new Class[]{IntBox.class});
             }else{
                 commBusRecvAnyWrapper = BgWorkers.class.getMethod("commBusRecvAnySleep",
-                        new Class[]{IntBox.class, Msg.class});
+                        new Class[]{IntBox.class});
             }
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -239,15 +245,13 @@ public class BgWorkers {
 
     private static void sendToAllLocalBgThreads(NumberedMsg msg){
         for (int bgId : threadIds){
-            int sentSize = commBus.sendInproc(bgId, msg.getByteBuffer());
+            commBus.sendInproc(bgId, msg.getByteBuffer());
         }
     }
 
     public void getAsyncRowRequestReply(){
-        Msg zmqMsg = new Msg();
         IntBox senderId = new IntBox();
-        commBus.recvInproc(senderId, zmqMsg);
-        Preconditions.checkArgument(new NumberedMsg(zmqMsg).getMsgType() == NumberedMsg.K_ROW_REQUEST_REPLY);
+        Preconditions.checkArgument(new NumberedMsg(commBus.recvInproc(senderId)).getMsgType() == NumberedMsg.K_ROW_REQUEST_REPLY);
     }
 
     public int getSystemClock(){
@@ -271,11 +275,9 @@ public class BgWorkers {
         requestRowMsg.setClock(clock);
 
         int bgId = GlobalContext.getBgPartitionNum(rowId) + idStart;
-        int sentSize = commBus.sendInproc(bgId, requestRowMsg.getByteBuffer());
-        Msg zmqMsg = new Msg();
+        commBus.sendInproc(bgId, requestRowMsg.getByteBuffer());
         IntBox sendId = new IntBox();
-        commBus.recvInproc(sendId, zmqMsg);
-        int msgType = new NumberedMsg(zmqMsg).getMsgType();
+        int msgType = new NumberedMsg(commBus.recvInproc(sendId)).getMsgType();
         Preconditions.checkArgument(msgType == NumberedMsg.K_ROW_REQUEST_REPLY);
         return  true;
     }
@@ -287,7 +289,7 @@ public class BgWorkers {
         requestRowMsg.setClock(clock);
 
         int bgId = GlobalContext.getBgPartitionNum(rowId) + idStart;
-        int sentSize = commBus.sendInproc(bgId, requestRowMsg.getByteBuffer());
+        commBus.sendInproc(bgId, requestRowMsg.getByteBuffer());
     }
 
     public static void connectToBg(int bgId) {
@@ -295,8 +297,16 @@ public class BgWorkers {
         commBus.connectTo(bgId, appConnectMsg.getByteBuffer());
     }
 
-    public static void commBusRecvAnySleep(IntBox senderId, Msg msg){
-        commBus.commBusRecvAny(senderId, msg);
+    public static ByteBuffer commBusRecvAnySleep(IntBox senderId){
+        ByteBuffer receivedBuff = null;
+        try {
+            receivedBuff = (ByteBuffer) commBusRecvAny.invoke(commBus, new Object[]{senderId});
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+        return receivedBuff;
     }
 
    public static RowOpLog SSPGetRowOpLog(TableOpLog tableOpLog, int rowId){
@@ -477,17 +487,17 @@ public class BgWorkers {
                     e.printStackTrace();
                 }
             }
-            Msg zmqMsg = new Msg();
+            ByteBuffer msgBuf = null;
             IntBox senderId = new IntBox();
             int msgType;
             ByteBuffer msgMem;
             boolean destroyMem = false;
             while(true){
                 try {
-                    commBusRecvAnyWrapper.invoke(BgWorkers.class,
-                            new Object []{senderId, zmqMsg});
+                    msgBuf = (ByteBuffer) commBusRecvAnyWrapper.invoke(BgWorkers.class,
+                            new Object []{senderId});
 
-                msgType = new NumberedMsg(zmqMsg).getMsgType();
+                msgType = new NumberedMsg(msgBuf).getMsgType();
 
                 switch (msgType){
                     case NumberedMsg.K_APP_CONNECT:
@@ -532,12 +542,12 @@ public class BgWorkers {
                     break;
                     case NumberedMsg.K_ROW_REQUEST:
                     {
-                        checkForwardRowRequestToServer(senderId.intValue, new RowRequestMsg(zmqMsg));
+                        checkForwardRowRequestToServer(senderId.intValue, new RowRequestMsg(msgBuf));
                     }
                     break;
                     case NumberedMsg.K_SERVER_ROW_REQUEST_REPLY:
                     {
-                        handleServerRowRequestReply(senderId, new ServerRowRequestReplyMsg(zmqMsg));
+                        handleServerRowRequestReply(senderId, new ServerRowRequestReplyMsg(msgBuf));
                     }
                     break;
                     case NumberedMsg.K_BG_CLOCK:
@@ -553,7 +563,7 @@ public class BgWorkers {
                     break;
                     case NumberedMsg.K_SERVER_PUSH_ROW:
                     {
-                        ServerPushRowMsg serverPushRowMsg = new ServerPushRowMsg(zmqMsg);
+                        ServerPushRowMsg serverPushRowMsg = new ServerPushRowMsg(msgBuf);
                         int version = serverPushRowMsg.getVersion();
                         bgContext.get().rowRequestOpLogMgr.serverAcknowledgeVersion(senderId.intValue, version);
                         applyServerPushedRow(version, serverPushRowMsg.getData());
@@ -639,7 +649,7 @@ public class BgWorkers {
             }
             RowRequestReplyMsg rowRequestReplyMsg = new RowRequestReplyMsg(null);
             for (int appThreadId : appThreadIds){
-                int sentSize = commBus.sendInproc(appThreadId, rowRequestReplyMsg.getByteBuffer());
+                commBus.sendInproc(appThreadId, rowRequestReplyMsg.getByteBuffer());
             }
         }
 
@@ -732,11 +742,11 @@ public class BgWorkers {
                 IntBox senderId = new IntBox();
                 ClientTableConfig clientTableConfig = new ClientTableConfig();
                 {
-                    Msg zmqMsg = new Msg();
-                    commBus.recvInproc(senderId, zmqMsg);
-                    int msgType = new NumberedMsg(zmqMsg).getMsgType();
+                    ByteBuffer msgBuffer = null;
+                    msgBuffer = commBus.recvInproc(senderId);
+                    int msgType = new NumberedMsg(msgBuffer).getMsgType();
                     Preconditions.checkArgument(msgType == NumberedMsg.K_BG_CREATE_TABLE);
-                    BgCreateTableMsg bgCreateTableMsg = new BgCreateTableMsg(zmqMsg);
+                    BgCreateTableMsg bgCreateTableMsg = new BgCreateTableMsg(msgBuffer);
                     //set up client table config
                     clientTableConfig.tableInfo.tableStaleness = bgCreateTableMsg.getStaleness();
                     clientTableConfig.tableInfo.rowType = bgCreateTableMsg.getRowType();
@@ -767,45 +777,43 @@ public class BgWorkers {
                 }
                 //wait for response from name node
                 {
-                    Msg zmqMsg = new Msg();
+                    ByteBuffer msgBuf = null;
                     IntBox nameNodeId = new IntBox();
                     try {
-                        commBusRecvAny.invoke(commBus, new Object[]{nameNodeId, zmqMsg});
+                        msgBuf = (ByteBuffer) commBusRecvAny.invoke(commBus, new Object[]{nameNodeId});
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();
                     } catch (InvocationTargetException e) {
                         e.printStackTrace();
                     }
-                    int msgType = new NumberedMsg(zmqMsg).getMsgType();
+                    int msgType = new NumberedMsg(msgBuf).getMsgType();
                     Preconditions.checkArgument(msgType == NumberedMsg.K_CREATE_TABLE_REPLY);
-                    CreateTableReplyMsg createTableReplyMsg = new CreateTableReplyMsg(zmqMsg);
+                    CreateTableReplyMsg createTableReplyMsg = new CreateTableReplyMsg(msgBuf);
                     Preconditions.checkArgument(createTableReplyMsg.getTableId() == tableId);
                     //Create ClientTable
                     ClientTable clientTable = new ClientTable(tableId, clientTableConfig);
                     tables.put(tableId, clientTable);   //not thread safe
-                    int sentSize = commBus.sendInproc(senderId.intValue, zmqMsg);
+                    commBus.sendInproc(senderId.intValue, msgBuf);
                 }
             }
             {
-                Msg zmqMsg = new Msg();
+                ByteBuffer msgBuf = null;
                 IntBox senderId = new IntBox();
                 try {
-                    commBusRecvAny.invoke(commBus, new Object[]{senderId, zmqMsg});
+                    msgBuf = (ByteBuffer) commBusRecvAny.invoke(commBus, new Object[]{senderId});
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 } catch (InvocationTargetException e) {
                     e.printStackTrace();
                 }
-                int msgType = new NumberedMsg(zmqMsg).getMsgType();
+                int msgType = new NumberedMsg(msgBuf).getMsgType();
                 Preconditions.checkArgument(msgType == NumberedMsg.K_CREATED_ALL_TABLES);
             }
         }
 
         private static void recvAppInitThreadConnection(IntBox numConnectedAppThreads) {
-            Msg zmqMsg = new Msg();
             IntBox senderId = new IntBox();
-            commBus.recvInproc(senderId, zmqMsg);
-            int msgType = new NumberedMsg(zmqMsg).getMsgType();
+            int msgType = new NumberedMsg(commBus.recvInproc(senderId)).getMsgType();
             Preconditions.checkArgument(msgType == NumberedMsg.K_APP_CONNECT);
             numConnectedAppThreads.intValue++;
             Preconditions.checkArgument(
@@ -820,14 +828,14 @@ public class BgWorkers {
             int nameNodeId = GlobalContext.getNameNodeId();
             connectToNameNodeOrServer(nameNodeId);
             //wait for connectServerMsg
-            Msg zmqMsg = new Msg();
+            ByteBuffer msgBuf = null;
             IntBox senderId = new IntBox();
             if(commBus.isLocalEntity(nameNodeId)){
-                commBus.recvInproc(senderId, zmqMsg);
+                msgBuf = commBus.recvInproc(senderId);
             }else{
-                commBus.recvInterproc(senderId, zmqMsg);
+                msgBuf = commBus.recvInterproc(senderId);
             }
-            int msgType = new NumberedMsg(zmqMsg).getMsgType();
+            int msgType = new NumberedMsg(msgBuf).getMsgType();
             Preconditions.checkArgument(senderId.intValue == nameNodeId);
             Preconditions.checkArgument(msgType == NumberedMsg.K_CONNECT_SERVER);
 
@@ -841,16 +849,16 @@ public class BgWorkers {
             //get message from servers for permission to start
             for (int numStartedServers = 0; numStartedServers < GlobalContext.getNumServers();
                  numStartedServers++){
-                Msg zmqMsg_ = new Msg();
+                ByteBuffer msgBuf_ = null;
                 IntBox senderId_ = new IntBox();
                 try {
-                    commBusRecvAny.invoke(commBus, new Object []{senderId_, zmqMsg_});
+                    msgBuf_ = (ByteBuffer) commBusRecvAny.invoke(commBus, new Object []{senderId_});
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 } catch (InvocationTargetException e) {
                     e.printStackTrace();
                 }
-                int msgType_ = new NumberedMsg(zmqMsg_).getMsgType();
+                int msgType_ = new NumberedMsg(msgBuf_).getMsgType();
                 Preconditions.checkArgument(msgType_ == NumberedMsg.K_CLIENT_START);
             }
         }

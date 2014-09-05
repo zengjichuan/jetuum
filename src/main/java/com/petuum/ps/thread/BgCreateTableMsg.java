@@ -19,9 +19,9 @@ public class BgCreateTableMsg extends NumberedMsg {
     protected static final int THREAD_CACHE_CAPACITY_OFFSET = TABLE_ID_OFFSET + 5 * INT_LENGTH;
     protected static final int OPLOG_CAPACITY_OFFSET = TABLE_ID_OFFSET + 6 * INT_LENGTH;
 
-    public BgCreateTableMsg(Msg msg) {
-        super(msg);
-        if(msg == null)
+    public BgCreateTableMsg(ByteBuffer msgBuf) {
+        super(msgBuf);
+        if(msgBuf == null)
             sequence = ByteBuffer.allocate(getSize());
         sequence.putInt(MSG_TYPE_OFFSET, K_BG_CREATE_TABLE);
     }

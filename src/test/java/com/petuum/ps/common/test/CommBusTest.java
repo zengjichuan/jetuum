@@ -22,7 +22,7 @@ public class CommBusTest {
             IntBox box = new IntBox();
             Msg msg = new Msg();
             while(true) {
-                commBus.recvInproc(box, msg);
+//                commBus.recvInproc(box, msg);
                 System.out.println(box.intValue);
             }
         }
@@ -34,7 +34,7 @@ public class CommBusTest {
             commBus.threadRegister(config);
             System.out.println("Client 1 is ready to accept connection");
             //send
-            commBus.sendInproc(0, new Msg());
+//            commBus.sendInproc(0, new Msg());
         }
     });
 

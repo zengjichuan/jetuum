@@ -11,9 +11,9 @@ import java.nio.ByteBuffer;
 public class ClientConnectMsg extends NumberedMsg {
 
     protected static final int CLIENT_ID_OFFSET = NumberedMsg.getSize();
-    public ClientConnectMsg(Msg msg) {
-        super(msg);
-        if(msg == null)
+    public ClientConnectMsg(ByteBuffer msgBuf) {
+        super(msgBuf);
+        if(msgBuf == null)
             sequence = ByteBuffer.allocate(getSize());
         sequence.putInt(MSG_TYPE_OFFSET, K_CLIENT_CONNECT);
     }
