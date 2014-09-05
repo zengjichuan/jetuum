@@ -3,6 +3,7 @@ package com.petuum.ps.common.test.zmq;
 import com.petuum.ps.common.comm.ZmqUtil;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
+import org.zeromq.ZMsg;
 
 import java.nio.ByteBuffer;
 
@@ -37,14 +38,23 @@ public class ZMQRouterTest {
         public void run() {
             threadInfo.set(new ZMQData());
             //  Socket to talk to clients
+
+            String bindEndpoint = "tcp://*:5555";
+            String connectEndpoint = "tcp://localhost:5555";
             threadInfo.get().sock = zmqContext.createSocket(ZMQ.ROUTER);
             ZMQ.Socket responder = threadInfo.get().sock;
-            //setUpRouterSocket(responder, 0, 10, 10);
-            responder.bind("inproc://test");
-            System.out.println("Begin to receive....");
+
+            responder.setIdentity(bindEndpoint.getBytes());
+            responder.bind(bindEndpoint);
+            System.out.printf ("I: service is ready at %s\n", bindEndpoint);
+
             while (!Thread.currentThread().isInterrupted()) {
                 // Wait for next request from the client
-                System.out.println(responder.recvStr());
+                System.out.println("Begin to receive....");
+                ZMsg request = ZMsg.recvMsg(responder);
+                if(request != null) {
+                    System.out.println("received");
+                }
             }
             responder.close();
         }
@@ -55,15 +65,19 @@ public class ZMQRouterTest {
             threadInfo.set(new ZMQData());
             //  Socket to talk to server
             System.out.println("Connecting to hello world server…");
-            threadInfo.get().sock = zmqContext.createSocket(ZMQ.REQ);
-            ZMQ.Socket requester = threadInfo.get().sock;
-            //setUpRouterSocket(requester, 1, 10, 10);
-            requester.bind("inproc://test");
+            String bindEndpoint = "tcp://*:5556";
+            String connectEndpoint = "tcp://localhost:5555";
+            threadInfo.get().sock = zmqContext.createSocket(ZMQ.ROUTER);
+            ZMQ.Socket responder = threadInfo.get().sock;
+
+            responder.setIdentity(bindEndpoint.getBytes());
+            responder.bind(bindEndpoint);
+            responder.connect(connectEndpoint);
 
             for (int requestNbr = 0; requestNbr != 10; requestNbr++) {
                 String request = "Hello";
                 System.out.println("Sending Hello " + requestNbr);
-                requester.send(request.getBytes(), 0);
+                responder.send(request.getBytes(), 0);
 
                 try {
                     Thread.sleep(1000);
@@ -71,7 +85,7 @@ public class ZMQRouterTest {
                     e.printStackTrace();
                 }
             }
-            requester.close();
+            responder.close();
         }
     });
 
