@@ -3,6 +3,7 @@ package com.petuum.ps.common.comm;
 import com.google.common.base.Preconditions;
 import com.petuum.ps.common.util.IntBox;
 import org.zeromq.ZMQ;
+import org.zeromq.ZMsg;
 import zmq.Msg;
 
 import java.nio.ByteBuffer;
@@ -47,11 +48,12 @@ public class ZmqUtil {
                                  ByteBuffer msgBuf){
         socket.connect(connectAddr);
         boolean suc = false;
-
+        ZMsg msg = new ZMsg();
+        msg.push(msgBuf.array());
+        msg.push(String.valueOf(zmqId));
         do{
-            suc = socket.send(Integer.toString(zmqId).getBytes(), 0);
+            suc = msg.send(socket);
             if (suc == true) {
-                socket.sendByteBuffer(msgBuf, 0);
                 break;
             }
             try {

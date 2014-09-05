@@ -10,26 +10,27 @@ import org.zeromq.ZMsg;
  */
 public class ZMQFreelanceTest {
 
-    public static ZContext ctx = new ZContext();
+    public static ZContext ctx = new ZContext(1);
 
     public static Thread client = new Thread(new Runnable() {
         public void run() {
             //  Create new freelance client object
-            flcliapi client = new flcliapi();
+            //flcliapi client = new flcliapi();
             ZMQ.Socket router = ctx.createSocket(ZMQ.ROUTER);
-            router.connect("tcp://localhost:5555");
-            //  Connect to several endpoints
-            //client.connect("tcp://localhost:5555");
-            //client.connect("tcp://localhost:5556");
-            //client.connect("tcp://localhost:5557");
-            //router.connect("tcp://localhost:5555");
+
+            router.bind("ipc://test1");
+            router.connect("ipc://test2");
+
+
+
             //  Send a bunch of name resolution 'requests', measure time
             int requests = 100;
             long start = System.currentTimeMillis();
             while (requests-- > 0) {
-                ZMsg request = new ZMsg();
-                request.add("random name");
-                boolean reply = request.send(router);
+
+                //boolean reply = request.send(router);
+                router.send("1".getBytes());
+                boolean reply = router.send("random name");
                 //ZMsg reply = client.request(request);
                 if (reply == false) {
                     System.out.printf("E: name service not available, aborting\n");
@@ -53,8 +54,8 @@ public class ZMQFreelanceTest {
 
 
             //  Prepare server socket with predictable identity
-            String bindEndpoint = "tcp://*:5555";
-            String connectEndpoint = "tcp://localhost:5555";
+            String bindEndpoint = "ipc://test2";
+            String connectEndpoint = "1";
             ZMQ.Socket server = ctx.createSocket(ZMQ.ROUTER);
             server.setIdentity(connectEndpoint.getBytes());
             server.bind(bindEndpoint);

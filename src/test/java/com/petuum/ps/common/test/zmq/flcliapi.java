@@ -71,6 +71,7 @@ public class flcliapi
     public ZMsg request(ZMsg request)
     {
         request.push("REQUEST");
+
         request.send(pipe);
         ZMsg reply = ZMsg.recvMsg(pipe);
         if (reply != null) {

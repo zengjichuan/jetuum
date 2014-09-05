@@ -20,7 +20,7 @@ public class CommBus {
     public static final int K_IN_PROC=1;
     public static final int K_INTER_PROC=2;
 
-    private static String kInProcPrefix ="inproc://comm_bus";
+    private static String kInProcPrefix ="ipc://comm_bus";
     private static String kInterProcPrefix="tcp://";
 
     private ZContext zmqContext;
