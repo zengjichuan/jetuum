@@ -3,6 +3,7 @@ package com.petuum.ps.common.comm;
 import com.google.common.base.Preconditions;
 import com.petuum.ps.common.util.IntBox;
 import org.zeromq.ZMQ;
+import org.zeromq.ZMsg;
 import zmq.Msg;
 
 import java.nio.ByteBuffer;
@@ -28,7 +29,7 @@ public class ZmqUtil {
     public static void zmqSetSocketOpt(ZMQ.Socket socket, int option, int optVal){
         switch (option){
             case ZMQ_IDENTITY:
-                socket.setIdentity(ByteBuffer.allocate(Integer.SIZE).putInt(optVal).array());break;
+                socket.setIdentity(String.valueOf(optVal).getBytes());break;
             case ZMQ_ROUTER_MANDATORY:
                 socket.setRouterMandatory(optVal != 0 ? true : false);break;
             case ZMQ_SNDBUF:
@@ -47,11 +48,12 @@ public class ZmqUtil {
                                  ByteBuffer msgBuf){
         socket.connect(connectAddr);
         boolean suc = false;
-
+        ZMsg msg = new ZMsg();
+        msg.push(msgBuf.array());
+        msg.push(String.valueOf(zmqId));
         do{
-            suc = socket.send(Integer.toString(zmqId).getBytes(), 0);
+            suc = msg.send(socket);
             if (suc == true) {
-                socket.sendByteBuffer(msgBuf, 0);
                 break;
             }
             try {
@@ -63,33 +65,29 @@ public class ZmqUtil {
     }
 
     // True for received, false for not
-    public static boolean zmqRecvAsync(ZMQ.Socket socket, Msg msg){
+    public static ByteBuffer zmqRecvAsync(ZMQ.Socket socket){
         boolean received = false;
-        msg.put(socket.recv(ZMQ.DONTWAIT));
-        if(msg.size()!=0)
-            received = true;
-        return received;
+        ZMsg msg = ZMsg.recvMsg(socket, ZMQ.DONTWAIT);
+        if(msg == null)
+            return null;
+        else
+            return ByteBuffer.wrap(msg.pop().getData());
+    }
+    public static ByteBuffer zmqRecvAsync(ZMQ.Socket socket, IntBox zmqId){
 
+        ZMsg msg = ZMsg.recvMsg(socket, ZMQ.DONTWAIT);
+        if (msg == null)
+            return null;
+        else {
+            zmqId.intValue = Integer.valueOf(msg.popString());
+            return ByteBuffer.wrap(msg.pop().getData());
+        }
     }
-    public static boolean zmqRecvAsync(ZMQ.Socket socket, IntBox zmqId, Msg msg){
-        Msg msgZid = new Msg();
-        boolean received = zmqRecvAsync(socket, msgZid);
-        if (!received)
-            return false;
-        zmqId.intValue = ByteBuffer.wrap(msgZid.data()).getInt();
-        zmqRecv(socket, msg);
-        return true;
-    }
-    public static void zmqRecv(ZMQ.Socket sock, Msg msg) {
-        boolean received = false;
-        msg.put(sock.recv());
-        Preconditions.checkArgument(received);
-    }
-    public static void zmqRecv(ZMQ.Socket sock, IntBox zmqId, Msg msg) {
-        Msg msgZid = new Msg();
-        zmqRecv(sock, msgZid);
-        zmqId.intValue = ByteBuffer.wrap(msgZid.data()).getInt();
-        zmqRecv(sock, msg);
+
+    public static ByteBuffer zmqRecv(ZMQ.Socket sock, IntBox zmqId) {
+        ZMsg msg = ZMsg.recvMsg(sock);
+        zmqId.intValue = Integer.valueOf(msg.popString());
+        return ByteBuffer.wrap(msg.pop().getData());
     }
 
     /**
@@ -99,10 +97,6 @@ public class ZmqUtil {
      * @param flag
      * @return
      */
-    public static int zmqSend(ZMQ.Socket sock, ByteBuffer data, int flag){
-        data.flip();
-        return sock.sendByteBuffer(data, flag);
-    }
 
     /**
      * 0 means cannot be sent, try again;
@@ -110,21 +104,15 @@ public class ZmqUtil {
      * @param sock
      * @param zmqId
      * @param data
-     * @param flag
      * @return
      */
-    public static int zmqSend(ZMQ.Socket sock, int zmqId, ByteBuffer data, int flag){
-        int zidSend = zmqSend(sock, ByteBuffer.allocate(Integer.SIZE).putInt(zmqId), flag | ZMQ.SNDMORE);
-        if (zidSend == 0)   return 0;
-        return zmqSend(sock, data, flag);
-    }
-    public static int zmqSend(ZMQ.Socket sock, int zmqId, Msg msg, int flag){
-        int zidSentSize = zmqSend(sock, ByteBuffer.allocate(Integer.SIZE).putInt(zmqId) ,flag | ZMQ.SNDMORE);
-        if (zidSentSize == 0) return 0;
-        return zmqSend(sock, msg,flag);
+    public static boolean zmqSend(ZMQ.Socket sock, int zmqId, ByteBuffer data){
+
+        ZMsg msg = new ZMsg();
+        msg.push(data.array());
+        msg.push(String.valueOf(zmqId));
+        return msg.send(sock);
+
     }
 
-    private static int zmqSend(ZMQ.Socket sock, Msg msg, int flag) {
-        return sock.sendByteBuffer(msg.buf(), flag);
-    }
 }

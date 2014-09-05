@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.petuum.ps.common.*;
 import com.petuum.ps.common.client.ClientRow;
 import com.petuum.ps.common.client.ClientTable;
+import com.petuum.ps.common.client.SSPClientRow;
 import com.petuum.ps.common.client.SerializedRowReader;
 import com.petuum.ps.common.comm.CommBus;
 import com.petuum.ps.common.consistency.ConsistencyModel;
@@ -18,10 +19,7 @@ import zmq.Msg;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
@@ -39,8 +37,7 @@ public class BgWorkers {
             serverOpLogMsgMap = new HashMap<Integer, ClientSendOpLogMsg>();
             serverOpLogMsgSizeMap = new HashMap<Integer, Integer>();
             tableServerOpLogSizeMap = new HashMap<Integer, Integer>();
-
-
+            serverVectorClock = new VectorClock();
         }
 
         /**
@@ -88,7 +85,7 @@ public class BgWorkers {
     private static CyclicBarrier initBarrier;
     private static CyclicBarrier createTableBarrier;
 
-    private static ThreadLocal<BgContext> bgContext;
+    private static ThreadLocal<BgContext> bgContext = new ThreadLocal<BgContext>();
     private static CommBus commBus;
     //function pointers
     private static Method commBusRecvAny;
@@ -98,14 +95,14 @@ public class BgWorkers {
     private static Method commBusRecvAnyWrapper;
 
 
-    private static AtomicInteger systemClock;
-    private static VectorClockMT bgServerClock;
+    private static AtomicInteger systemClock = new AtomicInteger();
+    private static VectorClockMT bgServerClock = new VectorClockMT();
     private static ReentrantLock systemClockLock;
 
     private static Condition systemClockCv;
     private static HashMap<Integer, HashMap<Integer, Boolean>> tableOpLogIndex;
 
-    private static void commBusRecvAnyBusy(Integer senderId, Msg msg){
+    private static void commBusRecvAnyBusy(IntBox senderId, Msg msg){
         boolean received = commBus.commBusRecvAsyncAny(senderId, msg);
         while (!received){
             received = commBus.commBusRecvAsyncAny(senderId, msg);
@@ -131,6 +128,14 @@ public class BgWorkers {
         return true;
     }
 
+    public static ClientRow createClientRow(int clock, Row rowData) {
+        return new ClientRow(clock, rowData);
+    }
+
+    public static SSPClientRow createSSPClientRow(int clock, Row rowdData) {
+        return new SSPClientRow(clock, rowdData);
+    }
+
     public static void init(Map<Integer, ClientTable> rTables){
         tables = rTables;
         idStart = GlobalContext.getHeadBgId(GlobalContext.getClientId());
@@ -149,21 +154,20 @@ public class BgWorkers {
         createTableBarrier = new CyclicBarrier(2);
         try {
             if (GlobalContext.getNumClients() == 1) {
-                commBusRecvAny = commBus.getClass().getMethod("recvInProc",
-                        new Class[]{Integer.class, Msg.class});
+                commBusRecvAny = CommBus.class.getMethod("recvInproc", IntBox.class, Msg.class);
                 commBusRecvAsyncAny = commBus.getClass().getMethod("recvInprocAsync",
-                        new Class[]{Integer.class, Msg.class});
+                        new Class[]{IntBox.class, Msg.class});
                 commBusRecvTimeOutAny = commBus.getClass().getMethod("recvInprocTimeout",
-                        new Class[]{Integer.class, Msg.class, long.class});
+                        new Class[]{IntBox.class, Msg.class, long.class});
                 commBusSendAny = commBus.getClass().getMethod("sendInproc",
                         new Class[]{int.class, ByteBuffer.class});
             }else{
                 commBusRecvAny = commBus.getClass().getMethod("recv",
-                        new Class[]{Integer.class, Msg.class});
+                        new Class[]{IntBox.class, Msg.class});
                 commBusRecvAsyncAny = commBus.getClass().getMethod("recvAsync",
-                        new Class[]{Integer.class, Msg.class});
+                        new Class[]{IntBox.class, Msg.class});
                 commBusRecvTimeOutAny = commBus.getClass().getMethod("recvTimeout",
-                        new Class[]{Integer.class, Msg.class, long.class});
+                        new Class[]{IntBox.class, Msg.class, long.class});
                 commBusSendAny = commBus.getClass().getMethod("send",
                         new Class[]{int.class, ByteBuffer.class});
             }
@@ -178,15 +182,15 @@ public class BgWorkers {
 //                    bgThreadMain = BgWorkers.class.getMethod("sspBgThreadMain");
                     myCreateClientRow = BgWorkers.class.getMethod("createSSPClientRow",
                             new Class[]{int.class, Row.class});
-                    getRowOpLog = BgWorkers.class.getMethod("sspGetRowOpLog",
-                            new Class[]{TableOpLog.class, int.class, RowOpLog.class});//RowOpLog **row_oplog_ptr
+                    getRowOpLog = BgWorkers.class.getMethod("SSPGetRowOpLog",
+                            new Class[]{TableOpLog.class, int.class});//RowOpLog **row_oplog_ptr
                     break;
                 case SSPPush:
 //                    bgThreadMain = BgWorkers.class.getMethod("sspGbThreadMain");
                     myCreateClientRow = BgWorkers.class.getMethod("createClientRow",
                             new Class[]{int.class, Row.class});
-                    getRowOpLog = BgWorkers.class.getMethod("sspgetRowOpLog",
-                            new Class[]{TableOpLog.class, int.class, RowOpLog.class});
+                    getRowOpLog = BgWorkers.class.getMethod("SSPGetRowOpLog",
+                            new Class[]{TableOpLog.class, int.class});
                     break;
             }
             if (GlobalContext.isAggressiveCpu()){
@@ -291,11 +295,11 @@ public class BgWorkers {
         commBus.connectTo(bgId, appConnectMsg.getByteBuffer());
     }
 
-    private static void commBusRecvAnySleep(Integer senderId, Msg msg){
+    public static void commBusRecvAnySleep(IntBox senderId, Msg msg){
         commBus.commBusRecvAny(senderId, msg);
     }
 
-   private static RowOpLog SSPGetRowOpLog(TableOpLog tableOpLog, int rowId){
+   public static RowOpLog SSPGetRowOpLog(TableOpLog tableOpLog, int rowId){
         return tableOpLog.getEraseOpLog(rowId);
    }
     private static void handleClockMsg(boolean clockAdvanced){

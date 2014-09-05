@@ -20,7 +20,7 @@ public class CommBus {
     public static final int K_IN_PROC=1;
     public static final int K_INTER_PROC=2;
 
-    private static String kInProcPrefix ="inproc://comm_bus";
+    private static String kInProcPrefix ="ipc://comm_bus";
     private static String kInterProcPrefix="tcp://";
 
     private ZContext zmqContext;
@@ -127,6 +127,7 @@ public class CommBus {
         threadInfo.get().numBytesInterprocRecvBuff = config.numBytesInterprocRecvBuff;
 
         if((config.lType & K_IN_PROC) != 0){
+
             threadInfo.get().inprocSock = zmqContext.createSocket(ZMQ.ROUTER);
             ZMQ.Socket sock = threadInfo.get().inprocSock;
             setUpRouterSocket(sock, config.entityId,
@@ -148,11 +149,11 @@ public class CommBus {
         }
     }
 
-    public boolean commBusRecvAsyncAny(Integer senderId, Msg msg) {
+    public boolean commBusRecvAsyncAny(IntBox senderId, Msg msg) {
         return true;
     }
 
-    public void commBusRecvAny(Integer senderId, Msg msg) {
+    public void commBusRecvAny(IntBox senderId, Msg msg) {
 
     }
     public void threadDeregister(){
@@ -169,6 +170,7 @@ public class CommBus {
     public void connectTo(int entityId, ByteBuffer connectMsg){
         Preconditions.checkArgument(isLocalEntity(entityId));
         ZMQ.Socket sock = threadInfo.get().inprocSock;
+
         if (sock == null){
             threadInfo.get().inprocSock = zmqContext.createSocket(ZMQ.ROUTER);
             sock = threadInfo.get().inprocSock;
@@ -176,6 +178,7 @@ public class CommBus {
                     threadInfo.get().numBytesInprocSendBuff,
                     threadInfo.get().numBytesInprocRecvBuff);
         }
+
         StringBuffer connectAddr = new StringBuffer();
         makeInprocAddr(entityId, connectAddr);
         int zmqId = ZmqUtil.entityID2ZmqID(entityId);
@@ -204,43 +207,29 @@ public class CommBus {
         ZmqUtil.zmqConnectSend(sock, connectAddr.toString(), zmqId, connectMsg);
     }
 
-    public int send(int entityId, ByteBuffer data){
+    public boolean send(int entityId, ByteBuffer data){
         ZMQ.Socket sock;
         if(isLocalEntity(entityId))
             sock = threadInfo.get().inprocSock;
         else
             sock = threadInfo.get().interprocSock;
         int recvId = ZmqUtil.entityID2ZmqID(entityId);
-        return ZmqUtil.zmqSend(sock, recvId, data, 0);         //is necessary to return size?
+        return ZmqUtil.zmqSend(sock, recvId, data);         //is necessary to return size?
     }
 
-    public int send(int entityId, Msg msg){
-        ZMQ.Socket sock;
-        if(isLocalEntity(entityId))
-            sock = threadInfo.get().inprocSock;
-        else
-            sock = threadInfo.get().interprocSock;
-        int recvId = ZmqUtil.entityID2ZmqID(entityId);
-         return ZmqUtil.zmqSend(sock, recvId, msg, 0);         //is necessary to return size?
-    }
-    public int sendInproc(int entityId, ByteBuffer data){
+    public boolean sendInproc(int entityId, ByteBuffer data){
         ZMQ.Socket sock = threadInfo.get().inprocSock;
         int recvId = ZmqUtil.entityID2ZmqID(entityId);
-        return ZmqUtil.zmqSend(sock, recvId, data, 0);
+        return ZmqUtil.zmqSend(sock, recvId, data);
     }
 
-    public int sendInproc(int entityId, Msg msg){
-        ZMQ.Socket sock = threadInfo.get().inprocSock;
-        int recvId = ZmqUtil.entityID2ZmqID(entityId);
-        return ZmqUtil.zmqSend(sock, recvId, msg, 0);
-    }
-    public int sendInterproc(int entityId, ByteBuffer data){
+    public boolean sendInterproc(int entityId, ByteBuffer data){
         ZMQ.Socket sock = threadInfo.get().interprocSock;
         int recvId = ZmqUtil.entityID2ZmqID(entityId);
-        return ZmqUtil.zmqSend(sock, recvId, data, 0);
+        return ZmqUtil.zmqSend(sock, recvId, data);
     }
 
-    public void recv(IntBox entityId, Msg msg){
+    public ByteBuffer recv(IntBox entityId){
         if(threadInfo.get().pollItems == null) {
             threadInfo.get().pollItems = new ZMQ.Poller(2);
             threadInfo.get().pollItems.register(threadInfo.get().inprocSock, ZMQ.Poller.POLLIN);
@@ -254,11 +243,12 @@ public class CommBus {
             sock = threadInfo.get().interprocSock;
         }
         IntBox senderId = new IntBox();
-        ZmqUtil.zmqRecv(sock, senderId, msg);
+        ByteBuffer buffer = ZmqUtil.zmqRecv(sock, senderId);
         entityId.intValue = ZmqUtil.zmqID2EntityID(senderId.intValue);
+        return buffer;
     }
 
-    public boolean recvAsync(IntBox entityId, Msg msg){
+    public ByteBuffer recvAsync(IntBox entityId){
         if(threadInfo.get().pollItems == null) {
             threadInfo.get().pollItems = new ZMQ.Poller(2);
             threadInfo.get().pollItems.register(threadInfo.get().inprocSock, ZMQ.Poller.POLLIN);
@@ -271,14 +261,14 @@ public class CommBus {
         }else if (threadInfo.get().pollItems.pollin(1)){
             sock = threadInfo.get().interprocSock;
         }else
-            return false;
+            return null;
         IntBox senderId = new IntBox();
-        ZmqUtil.zmqRecv(sock, senderId, msg);
+        ByteBuffer buffer = ZmqUtil.zmqRecv(sock, senderId);
         entityId.intValue = ZmqUtil.zmqID2EntityID(senderId.intValue);
-        return true;
+        return buffer;
     }
 
-    public boolean recvTimeOut(IntBox entityId, Msg msg, long timeoutMilli){
+    public ByteBuffer recvTimeOut(IntBox entityId, long timeoutMilli){
         if(threadInfo.get().pollItems == null) {
             threadInfo.get().pollItems = new ZMQ.Poller(2);
             threadInfo.get().pollItems.register(threadInfo.get().inprocSock, ZMQ.Poller.POLLIN);
@@ -291,26 +281,27 @@ public class CommBus {
         }else if (threadInfo.get().pollItems.pollin(1)){
             sock = threadInfo.get().interprocSock;
         }else
-            return false;
+            return null;
         IntBox senderId = new IntBox();
-        ZmqUtil.zmqRecv(sock, senderId, msg);
+        ByteBuffer buffer = ZmqUtil.zmqRecv(sock, senderId);
         entityId.intValue = ZmqUtil.zmqID2EntityID(senderId.intValue);
-        return true;
+        return buffer;
     }
-    public void recvInproc(IntBox entityId, Msg msg){
+    public ByteBuffer recvInproc(IntBox entityId){
         IntBox senderId = new IntBox();
-        ZmqUtil.zmqRecv(threadInfo.get().inprocSock, senderId, msg);
+        ByteBuffer buffer = ZmqUtil.zmqRecv(threadInfo.get().inprocSock, senderId);
         entityId.intValue = ZmqUtil.zmqID2EntityID(senderId.intValue);
+        return buffer;
     }
-    public boolean recvInprocAsync(IntBox entityId, Msg msg){
+    public ByteBuffer recvInprocAsync(IntBox entityId){
         IntBox senderId = new IntBox();
-        boolean recved = ZmqUtil.zmqRecvAsync(threadInfo.get().inprocSock, senderId, msg);
-        if (recved){
+        ByteBuffer buffer = ZmqUtil.zmqRecvAsync(threadInfo.get().inprocSock, senderId);
+        if (buffer != null){
             entityId.intValue = ZmqUtil.zmqID2EntityID(senderId.intValue);
         }
-        return recved;
+        return buffer;
     }
-    public boolean recvInprocTimeout(IntBox entityId, Msg msg, long timeoutMilli){
+    public ByteBuffer recvInprocTimeout(IntBox entityId, long timeoutMilli){
         if(threadInfo.get().inprocPollItem == null) {
             threadInfo.get().inprocPollItem =
                     new ZMQ.PollItem(threadInfo.get().inprocSock, ZMQ.Poller.POLLIN);
@@ -322,30 +313,30 @@ public class CommBus {
         if (poller.pollin(0)){
             sock = threadInfo.get().inprocSock;
         }else{
-            return false;
+            return null;
         }
         IntBox senderId = new IntBox();
-        ZmqUtil.zmqRecv(sock, senderId, msg);
+        ByteBuffer buffer = ZmqUtil.zmqRecv(sock, senderId);
         entityId.intValue = ZmqUtil.zmqID2EntityID(senderId.intValue);
-
-        return true;
+        return buffer;
     }
 
-    public void recvInterproc(IntBox entityId, Msg msg){
+    public ByteBuffer recvInterproc(IntBox entityId){
         IntBox senderId = new IntBox();
-        ZmqUtil.zmqRecv(threadInfo.get().interprocSock, senderId, msg);
+        ByteBuffer buffer = ZmqUtil.zmqRecv(threadInfo.get().interprocSock, senderId);
         entityId.intValue = ZmqUtil.zmqID2EntityID(senderId.intValue);
+        return buffer;
     }
 
-    public boolean recvInterprocAsync(IntBox entityId, Msg msg){
+    public ByteBuffer recvInterprocAsync(IntBox entityId){
         IntBox senderId = new IntBox();
-        boolean recved = ZmqUtil.zmqRecvAsync(threadInfo.get().interprocSock, senderId, msg);
-        if (recved){
+        ByteBuffer buffer = ZmqUtil.zmqRecvAsync(threadInfo.get().interprocSock, senderId);
+        if (buffer !=  null){
             entityId.intValue = ZmqUtil.zmqID2EntityID(senderId.intValue);
         }
-        return recved;
+        return buffer;
     }
-    public boolean recvInterprocTimeout(IntBox entityId, Msg msg, long timeoutMilli){
+    public ByteBuffer recvInterprocTimeout(IntBox entityId, long timeoutMilli){
         if(threadInfo.get().interprocPollItem == null) {
             threadInfo.get().interprocPollItem =
                     new ZMQ.PollItem(threadInfo.get().interprocSock, ZMQ.Poller.POLLIN);
@@ -357,13 +348,13 @@ public class CommBus {
         if (poller.pollin(0)){
             sock = threadInfo.get().interprocSock;
         }else{
-            return false;
+            return null;
         }
         IntBox senderId = new IntBox();
-        ZmqUtil.zmqRecv(sock, senderId, msg);
+        ByteBuffer buffer = ZmqUtil.zmqRecv(sock, senderId);
         entityId.intValue = ZmqUtil.zmqID2EntityID(senderId.intValue);
 
-        return true;
+        return buffer;
     }
 
     public Method recvFunc;
