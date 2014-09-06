@@ -46,7 +46,7 @@ class CreateTableInfo {
 }
 
 class NameNodeContext {
-    public Vector<Integer> bgThreadIDs;
+    public int[] bgThreadIDs;
     public Map<Integer, CreateTableInfo> createTableMap;
     public Server serverObj;
     public int numShutdownBgs;
@@ -128,13 +128,13 @@ public class NameNodeThread {
 
     private static void setupNameNodeContext() {
         nameNodeContext.set(new NameNodeContext());
-        nameNodeContext.get().bgThreadIDs = new Vector(GlobalContext.getNumTotalBgThreads());
+        nameNodeContext.get().bgThreadIDs = new int[GlobalContext.getNumTotalBgThreads()];
         nameNodeContext.get().numShutdownBgs = 0;
+        nameNodeContext.get().serverObj = new Server();
     }
 
     private static void setupCommBus() {
         int myID = ThreadContext.getId();
-        //myID = GlobalContext.getNameNodeId();
         CommBus.Config config = new CommBus.Config(myID, CommBus.K_IN_PROC, "");
 
         if(GlobalContext.getNumClients() > 1) {
@@ -156,7 +156,7 @@ public class NameNodeThread {
         for(int numConnections = 0; numConnections < numExpectedConns; numConnections++) {
             ConnectionResult cResult = getConnection();
             if(cResult.isClient) {
-                nameNodeContext.get().bgThreadIDs.set(numBgs, cResult.senderID);
+                nameNodeContext.get().bgThreadIDs[numBgs] = cResult.senderID;
                 numBgs++;
                 nameNodeContext.get().serverObj.addClientBgPair(cResult.clientID, cResult.senderID);
                 log.info("Name node get client " + String.valueOf(cResult.senderID));
@@ -186,11 +186,9 @@ public class NameNodeThread {
             ClientConnectMsg cMsg = new ClientConnectMsg(msgBuf);
             result.isClient = true;
             result.clientID = cMsg.getClientID();
-            log.info("a client " + String.valueOf(result.clientID) + " connect message received");
         } else {
             assert msg.getMsgType() == NumberedMsg.K_SERVER_CONNECT;
             result.isClient = false;
-            log.info("a server connect message received");
         }
         result.senderID = senderID.intValue;
         return result;
@@ -198,9 +196,10 @@ public class NameNodeThread {
 
     private static void sendToAllBgThreads(NumberedMsg msg) throws InvocationTargetException, IllegalAccessException {
         for(int i = 0; i < GlobalContext.getNumTotalBgThreads(); i++) {
-            int bdID = nameNodeContext.get().bgThreadIDs.get(i);
-            int sentSize = (Integer)commBusSendAny.invoke(commbus, bdID, msg.getByteBuffer());
-            assert sentSize == NumberedMsg.getSize();
+            int bdID = nameNodeContext.get().bgThreadIDs[i];
+            if(!(Boolean)commBusSendAny.invoke(commbus, bdID, msg.getByteBuffer())) {
+                log.error("fails to send to bg thread with Id = " + String.valueOf(bdID));
+            }
         }
     }
 }

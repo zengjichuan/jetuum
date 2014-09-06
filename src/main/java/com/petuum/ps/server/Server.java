@@ -71,6 +71,9 @@ public class Server {
         this.serverId = serverId;
     }
     public void addClientBgPair(int clientId, int bgId){
+        if(clientBgMap.get(clientId) == null)
+            clientBgMap.putIfAbsent(clientId, new Vector<Integer>());
+
         clientBgMap.get(clientId).add(bgId);
         clinetIds.add(clientId);
         clientClocks.addClock(clientId, 0);

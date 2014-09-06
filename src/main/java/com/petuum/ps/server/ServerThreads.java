@@ -40,9 +40,7 @@ public class ServerThreads {
     private static Method commBusSendAny;
     private static Method commBusRecvAsyncAny;
     private static Method commBusRecvAnyWrapper;
-    private static Method commBusRecvAnyBusy;
-    private static Method commBusRecvAnySleep;
-
+    
     private static Method serverPushRow;
     private static Method rowSubscribe;
 
@@ -150,9 +148,9 @@ public class ServerThreads {
         }
 
         if(GlobalContext.isAggressiveCpu()) {
-            commBusRecvAnyWrapper = commBusRecvAnyBusy;
+            commBusRecvAnyWrapper = ServerThreads.class.getMethod("commBusRecvAnyBusy", IntBox.class);
         } else {
-            commBusRecvAnyWrapper = commBusRecvAnySleep;
+            commBusRecvAnyWrapper = ServerThreads.class.getMethod("commBusRecvAnySleep", IntBox.class);
         }
 
         for(int i = 0; i < GlobalContext.getNumLocalServerThreads(); i++) {
@@ -169,6 +167,19 @@ public class ServerThreads {
         serverContext.get().serverObj.createSendServerPushRowMsgs(ServerThreads.class.getMethod("sendServerPushRowMsg"));
 
     }
+
+    public static ByteBuffer commBusRecvAnyBusy(IntBox senderId) throws InvocationTargetException, IllegalAccessException {
+        ByteBuffer buffer = (ByteBuffer)commBusRecvAsyncAny.invoke(comm_bus, senderId);
+        while(buffer == null) {
+            buffer = (ByteBuffer)commBusRecvAsyncAny.invoke(comm_bus, senderId);
+        }
+        return buffer;
+    }
+
+    public static ByteBuffer commBusRecvAnySleep(IntBox senderId) throws InvocationTargetException, IllegalAccessException {
+        return (ByteBuffer)commBusRecvAny.invoke(comm_bus, senderId);
+    }
+
     public static void SSPPushRowSubscribe(ServerRow serverRow, int clientId){
         serverRow.subscribe(clientId);
     }
@@ -220,6 +231,7 @@ public class ServerThreads {
         serverContext.set(new ServerContext());
         serverContext.get().bgThreadIds = new int[GlobalContext.getNumTotalBgThreads()];
         serverContext.get().numShutdownBgs = 0;
+        serverContext.get().serverObj = new Server();
 
     }
     private static void setupCommBus(){

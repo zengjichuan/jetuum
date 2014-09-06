@@ -33,6 +33,7 @@ public class VectorClock {
      */
     public VectorClock(Vector<Integer> ids){
         minClock = 0;
+        vecClock = AtomicLongMap.create();
         int size = ids.size();
         for (int i = 0; i < size; i++) {
             vecClock.put(ids.get(i), 0);

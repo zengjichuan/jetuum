@@ -852,7 +852,7 @@ public class BgWorkers {
                 ByteBuffer msgBuf_ = null;
                 IntBox senderId_ = new IntBox();
                 try {
-                    msgBuf_ = (ByteBuffer) commBusRecvAny.invoke(commBus, new Object []{senderId_});
+                    msgBuf_ = (ByteBuffer) commBusRecvAny.invoke(commBus, senderId_);
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 } catch (InvocationTargetException e) {
