@@ -84,6 +84,10 @@ public class NameNodeThread {
             } catch (BrokenBarrierException e) {
                 log.error(e.getMessage());
             }
+
+            while(true) {
+
+            }
         }
     });
 
@@ -118,8 +122,8 @@ public class NameNodeThread {
         latch.await();
     }
 
-    public static void shutDown() {
-
+    public static void shutDown() throws InterruptedException {
+        thread.join();
     }
 
     private static void setupNameNodeContext() {
@@ -130,16 +134,15 @@ public class NameNodeThread {
 
     private static void setupCommBus() {
         int myID = ThreadContext.getId();
-        CommBus.Config config = new CommBus.Config();
-        config.entityId = myID;
+        //myID = GlobalContext.getNameNodeId();
+        CommBus.Config config = new CommBus.Config(myID, CommBus.K_IN_PROC, "");
 
         if(GlobalContext.getNumClients() > 1) {
             config.lType = CommBus.K_IN_PROC | CommBus.K_INTER_PROC;
             HostInfo hostInfo = GlobalContext.getHostInfo(myID);
             config.networkAddr = hostInfo.ip + ":" + hostInfo.port;
-        } else {
-            config.lType = CommBus.K_IN_PROC;
         }
+
         commbus.threadRegister(config);
         log.info("NameNode is ready to accept connections!");
     }
@@ -175,17 +178,19 @@ public class NameNodeThread {
 
     private static ConnectionResult getConnection() throws InvocationTargetException, IllegalAccessException {
         IntBox senderID = new IntBox();
-        ByteBuffer msgBuf = null;
-        msgBuf = (ByteBuffer) commBusRecvAny.invoke(commbus, senderID);
+        ByteBuffer msgBuf = (ByteBuffer) commBusRecvAny.invoke(commbus, senderID);
+
         NumberedMsg msg = new NumberedMsg(msgBuf);
         ConnectionResult result = new ConnectionResult();
         if(msg.getMsgType() == NumberedMsg.K_CLIENT_CONNECT) {
             ClientConnectMsg cMsg = new ClientConnectMsg(msgBuf);
             result.isClient = true;
             result.clientID = cMsg.getClientID();
+            log.info("a client " + String.valueOf(result.clientID) + " connect message received");
         } else {
             assert msg.getMsgType() == NumberedMsg.K_SERVER_CONNECT;
             result.isClient = false;
+            log.info("a server connect message received");
         }
         result.senderID = senderID.intValue;
         return result;

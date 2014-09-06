@@ -50,18 +50,25 @@ public class ZmqUtil {
         boolean suc = false;
         ZMsg msg = new ZMsg();
         msg.push(msgBuf.array());
+        msg.push("");
         msg.push(String.valueOf(zmqId));
-        do{
-            suc = msg.send(socket);
-            if (suc == true) {
-                break;
-            }
-            try {
-                Thread.sleep(0, 500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }while(true);
+        try {
+            do {
+                Thread.sleep(100);
+                suc = msg.send(socket, false);
+                if (suc == true) {
+                    break;
+                }
+                try {
+                    Thread.sleep(0, 500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } while (true);
+        }catch(Exception e) {
+            System.out.println(e.toString());
+            System.out.println(msg.toString());
+        }
     }
 
     // True for received, false for not
@@ -70,8 +77,10 @@ public class ZmqUtil {
         ZMsg msg = ZMsg.recvMsg(socket, ZMQ.DONTWAIT);
         if(msg == null)
             return null;
-        else
+        else {
+            msg.pop();
             return ByteBuffer.wrap(msg.pop().getData());
+        }
     }
     public static ByteBuffer zmqRecvAsync(ZMQ.Socket socket, IntBox zmqId){
 
@@ -80,6 +89,7 @@ public class ZmqUtil {
             return null;
         else {
             zmqId.intValue = Integer.valueOf(msg.popString());
+            msg.pop();
             return ByteBuffer.wrap(msg.pop().getData());
         }
     }
@@ -87,6 +97,7 @@ public class ZmqUtil {
     public static ByteBuffer zmqRecv(ZMQ.Socket sock, IntBox zmqId) {
         ZMsg msg = ZMsg.recvMsg(sock);
         zmqId.intValue = Integer.valueOf(msg.popString());
+        msg.pop();
         return ByteBuffer.wrap(msg.pop().getData());
     }
 
@@ -110,6 +121,7 @@ public class ZmqUtil {
 
         ZMsg msg = new ZMsg();
         msg.push(data.array());
+        msg.push("");
         msg.push(String.valueOf(zmqId));
         return msg.send(sock);
 

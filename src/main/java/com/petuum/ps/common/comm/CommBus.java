@@ -92,8 +92,7 @@ public class CommBus {
         int myId = ZmqUtil.entityID2ZmqID(id);
         ZmqUtil.zmqSetSocketOpt(socket, ZmqUtil.ZMQ_IDENTITY, myId);
 
-        Integer socketMandatory = 1;
-        ZmqUtil.zmqSetSocketOpt(socket, ZmqUtil.ZMQ_ROUTER_MANDATORY, socketMandatory);
+        ZmqUtil.zmqSetSocketOpt(socket, ZmqUtil.ZMQ_ROUTER_MANDATORY, 0);
 
         if (numBytesSendBuff != 0){
             ZmqUtil.zmqSetSocketOpt(socket, ZmqUtil.ZMQ_SNDBUF, numBytesSendBuff);

@@ -180,16 +180,17 @@ public class ServerThreads {
     // assuming the caller is not name node
     private static void connectToNameNode(){
         int nameNodeID = GlobalContext.getNameNodeId();
+        ServerConnectMsg msg = new ServerConnectMsg(null);
 
         if(comm_bus.isLocalEntity(nameNodeID)) {
             log.info("Connect to local name node");
-            comm_bus.connectTo(nameNodeID, new ServerConnectMsg(null).getByteBuffer());
+            comm_bus.connectTo(nameNodeID, msg.getByteBuffer());
         } else {
             log.info("Connect to remote name node");
             HostInfo nameNodeInfo = GlobalContext.getHostInfo(nameNodeID);
             String nameNodeAddr = nameNodeInfo.ip + ":" + nameNodeInfo.port;
             log.info("name_node_addr = " + String.valueOf(nameNodeAddr));
-            comm_bus.connectTo(nameNodeID, nameNodeAddr, new ServerConnectMsg(null).getByteBuffer());
+            comm_bus.connectTo(nameNodeID, nameNodeAddr, msg.getByteBuffer());
         }
     }
 
@@ -242,7 +243,7 @@ public class ServerThreads {
         log.info("Server thread registered CommBus");
 
     }
-    private static void initServer(int serverId) throws InvocationTargetException, IllegalAccessException {
+    private static void initServer(int serverId) throws InvocationTargetException, IllegalAccessException, InterruptedException {
 
         connectToNameNode();
 

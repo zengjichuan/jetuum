@@ -5,17 +5,11 @@ package com.petuum.ps.common.test;
  */
 public class CaseTest {
     public static void main(String[] args) {
-        int a = 10;
-        switch (a) {
-            case 10:
-                System.out.println("it's equal to 10");
-            case 20:
-                System.out.println("its equal to 20");
-        }
-
-        Byte one;
-        one = 1;
+       String one = "0";
         System.out.println(one);
-        System.out.println(one.toString());
+        String two = String.valueOf(0);
+        if(one.equals(two)) {
+            System.out.println("equal");
+        }
     }
 }

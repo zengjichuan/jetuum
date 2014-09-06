@@ -13,6 +13,8 @@ import com.petuum.ps.common.util.*;
 import com.petuum.ps.oplog.OpLogSerializer;
 import com.petuum.ps.oplog.TableOpLog;
 import org.apache.commons.lang3.SerializationUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.zeromq.ZMQ;
 
 
@@ -101,6 +103,7 @@ public class BgWorkers {
 
     private static Condition systemClockCv;
     private static HashMap<Integer, HashMap<Integer, Boolean>> tableOpLogIndex;
+    private static Logger log = LogManager.getLogger(BgWorkers.class);
 
     private static ByteBuffer commBusRecvAnyBusy(IntBox senderId){
         ByteBuffer receivedBuff = null;
@@ -142,7 +145,7 @@ public class BgWorkers {
         return new SSPClientRow(clock, rowdData);
     }
 
-    public static void init(Map<Integer, ClientTable> rTables){
+    public static void init(Map<Integer, ClientTable> rTables) throws NoSuchMethodException {
         tables = rTables;
         idStart = GlobalContext.getHeadBgId(GlobalContext.getClientId());
         commBus = GlobalContext.commBus;
@@ -158,29 +161,25 @@ public class BgWorkers {
         }
         initBarrier = new CyclicBarrier(GlobalContext.getNumBgThreads() + 1);
         createTableBarrier = new CyclicBarrier(2);
-        try {
-            if (GlobalContext.getNumClients() == 1) {
-                commBusRecvAny = CommBus.class.getMethod("recvInproc", IntBox.class);
-                commBusRecvAsyncAny = commBus.getClass().getMethod("recvInprocAsync",
-                        new Class[]{IntBox.class});
-                commBusRecvTimeOutAny = commBus.getClass().getMethod("recvInprocTimeout",
-                        new Class[]{IntBox.class, long.class});
-                commBusSendAny = commBus.getClass().getMethod("sendInproc",
-                        new Class[]{int.class, ByteBuffer.class});
-            }else{
-                commBusRecvAny = commBus.getClass().getMethod("recv",
-                        new Class[]{IntBox.class});
-                commBusRecvAsyncAny = commBus.getClass().getMethod("recvAsync",
-                        new Class[]{IntBox.class});
-                commBusRecvTimeOutAny = commBus.getClass().getMethod("recvTimeout",
-                        new Class[]{IntBox.class, long.class});
-                commBusSendAny = commBus.getClass().getMethod("send",
-                        new Class[]{int.class, ByteBuffer.class});
-            }
-        }catch (NoSuchMethodException e) {
-                e.printStackTrace();
+        if (GlobalContext.getNumClients() == 1) {
+            commBusRecvAny = CommBus.class.getMethod("recvInproc", IntBox.class);
+            commBusRecvAsyncAny = commBus.getClass().getMethod("recvInprocAsync",
+                    new Class[]{IntBox.class});
+            commBusRecvTimeOutAny = commBus.getClass().getMethod("recvInprocTimeout",
+                    new Class[]{IntBox.class, long.class});
+            commBusSendAny = commBus.getClass().getMethod("sendInproc",
+                    new Class[]{int.class, ByteBuffer.class});
+        }else{
+            commBusRecvAny = commBus.getClass().getMethod("recv",
+                    new Class[]{IntBox.class});
+            commBusRecvAsyncAny = commBus.getClass().getMethod("recvAsync",
+                    new Class[]{IntBox.class});
+            commBusRecvTimeOutAny = commBus.getClass().getMethod("recvTimeout",
+                    new Class[]{IntBox.class, long.class});
+            commBusSendAny = commBus.getClass().getMethod("send",
+                    new Class[]{int.class, ByteBuffer.class});
         }
-        Method bgThreadMain;
+
         ConsistencyModel consistencyModel = GlobalContext.getConsistencyModel();
         try {
             switch (consistencyModel) {
@@ -456,6 +455,7 @@ public class BgWorkers {
 
         public void run() {
 //        STATS_REGISTER_THREAD(kBgThread);
+            log.info("Bg Worker starts here, my_id = " + String.valueOf(myId));
             ThreadContext.registerThread(myId);
 
             initBgContext();
@@ -865,7 +865,8 @@ public class BgWorkers {
 
         private static void connectToNameNodeOrServer(int serverId) {
             ClientConnectMsg clientConnectMsg = new ClientConnectMsg(null);
-            clientConnectMsg.setClientId(GlobalContext.getClientId());
+            int clientId = GlobalContext.getClientId();
+            clientConnectMsg.setClientId(clientId);
             ByteBuffer msg = clientConnectMsg.getByteBuffer();
 
             if (commBus.isLocalEntity(serverId)){
