@@ -40,7 +40,7 @@ public class ServerThreads {
     private static Method commBusSendAny;
     private static Method commBusRecvAsyncAny;
     private static Method commBusRecvAnyWrapper;
-    
+
     private static Method serverPushRow;
     private static Method rowSubscribe;
 
@@ -274,7 +274,14 @@ public class ServerThreads {
     private static void sendToAllBgThreads(NumberedMsg msg) throws InvocationTargetException, IllegalAccessException {
         for(int i = 0; i < GlobalContext.getNumTotalBgThreads(); i++) {
             int bgId = serverContext.get().bgThreadIds[i];
-            commBusSendAny.invoke(comm_bus, bgId, msg.getByteBuffer());
+            while(!(Boolean)commBusSendAny.invoke(comm_bus, bgId, msg.getByteBuffer()))
+            {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
     private static boolean handleShutDownMsg() throws InvocationTargetException, IllegalAccessException {
