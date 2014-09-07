@@ -21,7 +21,7 @@ import java.util.concurrent.BrokenBarrierException;
 */
 public class MatrixFact {
     private static Path hostFile = FileSystems.getDefault().getPath("machines", "localserver");
-    private static Path dataFile = FileSystems.getDefault().getPath("dataset", "3x3_9blocks");
+    private static Path dataFile = FileSystems.getDefault().getPath("dataset", "9x9_3blocks");
     private static Path outputPrefix = FileSystems.getDefault().getPath("test");
     private static double lambda = 0.0;
     private static double initStepSize = 0.5;

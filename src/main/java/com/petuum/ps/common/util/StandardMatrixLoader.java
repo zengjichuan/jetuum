@@ -13,19 +13,19 @@ import java.util.function.Consumer;
 public class StandardMatrixLoader implements MatrixLoader{
     private int n_;
     private int m_;
-    private Vector<Integer> xRow;
-    private Vector<Integer> xCol;
-    private Vector<Float> xVal;
+    private Vector<Integer> xRow = new Vector<Integer>();
+    private Vector<Integer> xCol = new Vector<Integer>();
+    private Vector<Float> xVal = new Vector<Float>();
 
     private int numWorkers;
-    private Vector<Integer> workerNextElPos;
+    private int[] workerNextElPos;
 
     public StandardMatrixLoader(Path inputFile, int numWorkers) throws IOException {
         this.numWorkers = numWorkers;
-        this.workerNextElPos = new Vector<Integer>(numWorkers);
+        this.workerNextElPos = new int[numWorkers];
         // Initialize workers to start of data
         for(int i = 0; i < numWorkers; i++) {
-            workerNextElPos.set(i, i);
+            workerNextElPos[i] = i;
         }
         //Load data
         readSparseMatrix(inputFile);
@@ -51,7 +51,7 @@ public class StandardMatrixLoader implements MatrixLoader{
         m_ = 0;
         Files.lines(inputFile, StandardCharsets.US_ASCII).forEach(new Consumer<String>() {
             public void accept(String s) {
-                String[] temp = s.split("\t");
+                String[] temp = s.split(" ");
                 int row = Integer.valueOf(temp[0]);
                 int col = Integer.valueOf(temp[1]);
                 xRow.add(row);
@@ -64,17 +64,17 @@ public class StandardMatrixLoader implements MatrixLoader{
     }
 
     public Element getNextEl(int workerId) {
-        int dataId = workerNextElPos.get(workerId);
+        int dataId = workerNextElPos[workerId];
         Element result = new Element();
         result.row = xRow.get(dataId);
         result.col = xCol.get(dataId);
         result.value = xVal.get(dataId);
         //Advance to next element
-        workerNextElPos.set(workerId, workerNextElPos.get(workerId) + numWorkers);
+        workerNextElPos[workerId] = workerNextElPos[workerId] + numWorkers;
         result.isLastEl = false;
-        if(workerNextElPos.get(workerId) >= getNNZ()) {
+        if(workerNextElPos[workerId] >= getNNZ()) {
             //return to start of data
-            workerNextElPos.set(workerId, workerId);
+            workerNextElPos[workerId] = workerId;
             result.isLastEl = true;
         }
         return result;
