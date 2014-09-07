@@ -12,10 +12,7 @@ import org.apache.logging.log4j.Logger;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
-import java.util.ArrayDeque;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -27,13 +24,7 @@ import java.util.concurrent.CyclicBarrier;
 class CreateTableInfo {
     public int numClientsReplied;
     public int numServersReplied;
-    public Queue<Integer> bgsToReply;
-
-    public CreateTableInfo() {
-        numClientsReplied = 0;
-        numServersReplied = 0;
-        bgsToReply.clear();
-    }
+    public Queue<Integer> bgsToReply = new ArrayDeque<Integer>();
 
     public boolean receviedFromAllServers() {
         return (numServersReplied == GlobalContext.getNumServers());
@@ -236,6 +227,7 @@ public class NameNodeThread {
         nameNodeContext.get().bgThreadIDs = new int[GlobalContext.getNumTotalBgThreads()];
         nameNodeContext.get().numShutdownBgs = 0;
         nameNodeContext.get().serverObj = new Server();
+        nameNodeContext.get().createTableMap = new HashMap<Integer, CreateTableInfo>();
     }
 
     private static void setupCommBus() {
