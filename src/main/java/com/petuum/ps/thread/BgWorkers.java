@@ -766,9 +766,7 @@ public class BgWorkers {
                     //send msg to name node
                     int nameNodeId = GlobalContext.getNameNodeId();
                     try {
-                        int sendSize = (Integer)commBusSendAny.invoke(commBus,
-                                new Object[]{nameNodeId, createTableMsg.getByteBuffer()});
-                        Preconditions.checkArgument(sendSize == createTableMsg.getSize());
+                        commBusSendAny.invoke(commBus, nameNodeId, createTableMsg.getByteBuffer());
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();
                     } catch (InvocationTargetException e) {
@@ -813,8 +811,12 @@ public class BgWorkers {
 
         private static void recvAppInitThreadConnection(IntBox numConnectedAppThreads) {
             IntBox senderId = new IntBox();
-            int msgType = new NumberedMsg(commBus.recvInproc(senderId)).getMsgType();
-            Preconditions.checkArgument(msgType == NumberedMsg.K_APP_CONNECT);
+            while (true) {
+                int msgType = new NumberedMsg(commBus.recvInproc(senderId)).getMsgType();
+                log.info("received a message with type " + String.valueOf(msgType) + " from " + String.valueOf(senderId.intValue));
+                //Preconditions.checkArgument(msgType == NumberedMsg.K_APP_CONNECT);
+                if(msgType == NumberedMsg.K_APP_CONNECT)break;
+            }
             numConnectedAppThreads.intValue++;
             Preconditions.checkArgument(
                     numConnectedAppThreads.intValue <= GlobalContext.getNumAppThreads());
