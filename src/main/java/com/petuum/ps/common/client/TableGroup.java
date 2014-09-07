@@ -95,7 +95,7 @@ public class TableGroup {
         }
     }
 
-	private void clockAggressive(){
+	public void clockAggressive(){
         for (ClientTable clientTable : tables_.values()){
             clientTable.clock();
         }
@@ -107,7 +107,7 @@ public class TableGroup {
         }
 	}
 
-	private void clockConservative(){
+	public void clockConservative(){
         for (ClientTable clientTable : tables_.values()){
             clientTable.clock();
         }

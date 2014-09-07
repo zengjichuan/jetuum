@@ -4,10 +4,7 @@ import com.petuum.ps.common.HostInfo;
 import com.petuum.ps.common.NumberedMsg;
 import com.petuum.ps.common.comm.CommBus;
 import com.petuum.ps.common.util.IntBox;
-import com.petuum.ps.thread.ClientConnectMsg;
-import com.petuum.ps.thread.ConnectServerMsg;
-import com.petuum.ps.thread.GlobalContext;
-import com.petuum.ps.thread.ThreadContext;
+import com.petuum.ps.thread.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -172,7 +169,7 @@ public class NameNodeThread {
 
         sendToAllBgThreads(new ConnectServerMsg(null));
         log.info("Send ConnectServerMsg done");
-        sendToAllBgThreads(new ClientConnectMsg(null));
+        sendToAllBgThreads(new ClientStartMsg(null));
         log.info("initNameNode done");
     }
 

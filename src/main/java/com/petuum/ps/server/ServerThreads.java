@@ -274,6 +274,7 @@ public class ServerThreads {
     private static void sendToAllBgThreads(NumberedMsg msg) throws InvocationTargetException, IllegalAccessException {
         for(int i = 0; i < GlobalContext.getNumTotalBgThreads(); i++) {
             int bgId = serverContext.get().bgThreadIds[i];
+            commBusSendAny.invoke(comm_bus, bgId, msg.getByteBuffer());
             while(!(Boolean)commBusSendAny.invoke(comm_bus, bgId, msg.getByteBuffer()))
             {
                 try {
