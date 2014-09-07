@@ -41,7 +41,7 @@ public class RowOpLog implements Serializable {
         if(rst == null){
             Double update = new Double(0);
             try {
-                initUpdate.invoke(sampleRow, new Object[]{columnId, update});
+                initUpdate.invoke(sampleRow, columnId, update);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             } catch (InvocationTargetException e) {

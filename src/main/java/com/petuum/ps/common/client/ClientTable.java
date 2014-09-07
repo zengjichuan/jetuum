@@ -38,6 +38,7 @@ public class ClientTable {
         this.sampleRow = classRegistry.createObject(rowType);
         this.tableId = tableId;
         this.threadCache = new ThreadLocal<ThreadTable>();
+        this.threadCache.set(new ThreadTable(this.sampleRow));
 
         switch (GlobalContext.getConsistencyModel()){
             case SSP:
@@ -48,7 +49,7 @@ public class ClientTable {
             }
             case SSPPush:
             {
-//                consistencyController = new SSPPushConsistencyController();
+                //consistencyController = new SSPPushConsistencyController();
                 break;
             }
             default:

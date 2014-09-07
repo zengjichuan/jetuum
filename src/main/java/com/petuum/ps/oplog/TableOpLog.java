@@ -13,38 +13,38 @@ import java.util.Vector;
  */
 public class TableOpLog {
     private int tableId;
-    private Vector<OpLogPartition> opLogPartitions;
+    private OpLogPartition[] opLogPartitions;
 
     public TableOpLog(int tableId, Row sampleRow) {
         this.tableId = tableId;
-        this.opLogPartitions = new Vector<OpLogPartition>(GlobalContext.getNumBgThreads());
+        this.opLogPartitions = new OpLogPartition[GlobalContext.getNumBgThreads()];
         for (int i = 0; i < GlobalContext.getNumBgThreads(); i++){
-            opLogPartitions.set(i, new OpLogPartition(sampleRow, tableId));
+            opLogPartitions[i]= new OpLogPartition(sampleRow, tableId);
         }
     }
 
     public void inc(int rowId, int columnId, Double delta){
         int partitionNum = GlobalContext.getBgPartitionNum(rowId);
-        opLogPartitions.get(partitionNum).inc(rowId, columnId, delta);
+        opLogPartitions[partitionNum].inc(rowId, columnId, delta);
     }
 
     public void batchInc(int rowId, Map<Integer, Double> deltaBatch){
         int partitionNum = GlobalContext.getBgPartitionNum(rowId);
-        opLogPartitions.get(partitionNum).batchInc(rowId, deltaBatch);
+        opLogPartitions[partitionNum].batchInc(rowId, deltaBatch);
     }
 
     public RowOpLog findOpLog(int rowId){
         int partitionNum = GlobalContext.getBgPartitionNum(rowId);
-        return opLogPartitions.get(partitionNum).findOpLog(rowId);
+        return opLogPartitions[partitionNum].findOpLog(rowId);
     }
 
     public RowOpLog findInsertOpLog(int rowId){
         int partitionNum = GlobalContext.getBgPartitionNum(rowId);
-        return opLogPartitions.get(partitionNum).findInsertOpLog(rowId);
+        return opLogPartitions[partitionNum].findInsertOpLog(rowId);
     }
 
     public RowOpLog getEraseOpLog(int rowId){
         int partitionNum = GlobalContext.getBgPartitionNum(rowId);
-        return opLogPartitions.get(partitionNum).getEraseOpLog(rowId);
+        return opLogPartitions[partitionNum].getEraseOpLog(rowId);
     }
 }

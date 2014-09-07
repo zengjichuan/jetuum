@@ -50,7 +50,7 @@ public class OpLogPartition {
     private RowOpLog createRowOpLog() {
         RowOpLog rowOpLog = null;
         try {
-            rowOpLog = new RowOpLog(Row.class.getMethod("initUpdate", new Class[]{int.class, Object.class}));
+            rowOpLog = new RowOpLog(Row.class.getMethod("initUpdate", int.class, Double.class));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }

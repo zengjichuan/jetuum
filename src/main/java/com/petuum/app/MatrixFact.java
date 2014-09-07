@@ -31,7 +31,7 @@ public class MatrixFact {
     private static int numClient = 1;
     private static int numWorkerThreads = 1;
     private static int clientID = 0;
-    private static int K = 100;
+    private static int K = 2;
     private static int numIterations = 100;
     private static int staleness = 0;
     private static MatrixLoader dataMatrix;
@@ -150,6 +150,8 @@ public class MatrixFact {
                 e.printStackTrace();
             } catch (InterruptedException e) {
                 e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
             } finally {
                 PSTableGroup.deregisterThread();
             }
@@ -165,7 +167,7 @@ public class MatrixFact {
         tableGroupconfig.numTotalClients = numClient;
         tableGroupconfig.numTables = 3;//L_table, R_table, loss_table
         tableGroupconfig.getHostInfos(hostFile);
-        tableGroupconfig.consistencyModel = ConsistencyModel.SSPPush;
+        tableGroupconfig.consistencyModel = ConsistencyModel.SSP;
         //local parameters for this process
         tableGroupconfig.numLocalServerThreads = 1;
         tableGroupconfig.numLocalBgThreads = 1;
@@ -198,6 +200,7 @@ public class MatrixFact {
 
         for(int i = 0; i < numWorkerThreads; i++) {
             threads.add(new Thread(new SolveMF(i)));
+            threads.get(i).start();
         }
 
         PSTableGroup.waitThreadRegister();

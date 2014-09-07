@@ -503,6 +503,7 @@ public class BgWorkers {
                 switch (msgType){
                     case NumberedMsg.K_APP_CONNECT:
                     {
+                        log.info("get a AppConnectMsg from " + String.valueOf(senderId.intValue));
                         numConnectedAppThreads.intValue++;
                         Preconditions.checkArgument(
                                 numConnectedAppThreads.intValue<=GlobalContext.getNumAppThreads());
@@ -510,6 +511,7 @@ public class BgWorkers {
                     break;
                     case NumberedMsg.K_APP_THREAD_DEREG:
                     {
+                        log.info("get a AppThreadDeregMsg from " + String.valueOf(senderId.intValue));
                         numDeregisteredAppThreads.intValue++;
                         if (numDeregisteredAppThreads.intValue == GlobalContext.getNumAppThreads()){
                             try {
@@ -533,6 +535,7 @@ public class BgWorkers {
                     break;
                     case NumberedMsg.K_SERVER_SHUT_DOWN_ACK:
                     {
+                        log.info("get a ServerShutDownAck from " + String.valueOf(senderId.intValue));
                         numShutdownAckedServers.intValue++;
                         if(numShutdownAckedServers.intValue == GlobalContext.getNumServers() + 1){
                             commBus.threadDeregister();
@@ -543,27 +546,32 @@ public class BgWorkers {
                     break;
                     case NumberedMsg.K_ROW_REQUEST:
                     {
+                        log.info("get a RowRequestMsg from " + String.valueOf(senderId.intValue));
                         checkForwardRowRequestToServer(senderId.intValue, new RowRequestMsg(msgBuf));
                     }
                     break;
                     case NumberedMsg.K_SERVER_ROW_REQUEST_REPLY:
                     {
+                        log.info("get a ServerRowRequestReply from " + String.valueOf(senderId.intValue));
                         handleServerRowRequestReply(senderId, new ServerRowRequestReplyMsg(msgBuf));
                     }
                     break;
                     case NumberedMsg.K_BG_CLOCK:
                     {
+                        log.info("get a BgClockMsg from " + String.valueOf(senderId.intValue));
                         handleClockMsg(true);
                         //STATS_BG_CLOCK();
                     }
                     break;
                     case NumberedMsg.K_BG_SEND_OP_LOG:
                     {
+                        log.info("get a BgSendOpLogMsg from " + String.valueOf(senderId.intValue));
                         handleClockMsg(false);
                     }
                     break;
                     case NumberedMsg.K_SERVER_PUSH_ROW:
                     {
+                        log.info("get a ServerPushRow from " + String.valueOf(senderId.intValue));
                         ServerPushRowMsg serverPushRowMsg = new ServerPushRowMsg(msgBuf);
                         int version = serverPushRowMsg.getVersion();
                         bgContext.get().rowRequestOpLogMgr.serverAcknowledgeVersion(senderId.intValue, version);
@@ -588,6 +596,7 @@ public class BgWorkers {
                     }
                     break;
                     default:
+                        log.error("Unrecognized Message from " + String.valueOf(senderId.intValue));
                 }
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();

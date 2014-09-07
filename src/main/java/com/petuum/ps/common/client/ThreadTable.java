@@ -8,9 +8,7 @@ import com.petuum.ps.oplog.TableOpLogIndex;
 import com.petuum.ps.thread.GlobalContext;
 import org.apache.commons.lang3.SerializationUtils;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Yuxin Su
@@ -19,13 +17,18 @@ import java.util.Set;
  */
 public class ThreadTable {
 
-	private List<Set<Integer>> opLogIndex;
+	private Vector<Set<Integer>> opLogIndex;
     private Map<Integer, RowOpLog> opLogMap;
 	private Map<Integer, Row> rowStorage;
 	private Row sampleRow;
 
 	public ThreadTable(Row sampleRow){
         this.sampleRow = sampleRow;
+        opLogIndex = new Vector<Set<Integer>>();
+        for(int i = 0; i < GlobalContext.getNumBgThreads(); i++){
+            opLogIndex.add(new HashSet<Integer>());
+        }
+        rowStorage = new HashMap<Integer, Row>();
 	}
 
 	public void finalize() throws Throwable {
@@ -76,7 +79,7 @@ public class ThreadTable {
 	public void insertRow(int rowId, final Row toInsert){
         //clone
         Row copyRow = SerializationUtils.clone(toInsert);
-        rowStorage.put(rowId, copyRow);
+        rowStorage.putIfAbsent(rowId, copyRow);
         RowOpLog rowOpLog = opLogMap.get(rowId);
         if(rowOpLog != null) {
             IntBox columnId = new IntBox();
