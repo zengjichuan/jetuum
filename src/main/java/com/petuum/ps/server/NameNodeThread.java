@@ -2,6 +2,7 @@ package com.petuum.ps.server;
 
 import com.petuum.ps.common.HostInfo;
 import com.petuum.ps.common.NumberedMsg;
+import com.petuum.ps.common.TableInfo;
 import com.petuum.ps.common.comm.CommBus;
 import com.petuum.ps.common.util.IntBox;
 import com.petuum.ps.thread.*;
@@ -11,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Vector;
@@ -72,6 +74,39 @@ public class NameNodeThread {
             try {
                 latch.await();
                 initNameNode();
+
+                while(true) {
+                    IntBox senderId = new IntBox();
+                    ByteBuffer buffer = (ByteBuffer)commBusRecvAny.invoke(commbus, senderId);
+                    int msgType = new NumberedMsg(buffer).getMsgType();
+                    log.info("Name Node receives a message with type " + String.valueOf(msgType));
+
+                    switch (msgType) {
+                        case NumberedMsg.K_CLIENT_SHUT_DOWN:
+                        {
+                            log.info("get ClientShutDown from bg " + String.valueOf(senderId.intValue));
+                            if(handleShutDownMsg()) {
+                                log.info("NameNode shutting down");
+                                commbus.threadDeregister();
+                                return;
+                            }
+                            break;
+                        }
+                        case NumberedMsg.K_CREATE_TABLE:
+                        {
+                            handleCreateTable(senderId, new CreateTableMsg(buffer));
+                            break;
+                        }
+                        case NumberedMsg.K_CREATE_TABLE_REPLY:
+                        {
+                            handleCreateTableReply(new CreateTableReplyMsg(buffer));
+                            break;
+                        }
+                        default:
+                            log.fatal("Unrecognized message type " + String.valueOf(msgType) + " from " + String.valueOf(senderId.intValue));
+                    }
+
+                }
             } catch (InvocationTargetException e) {
                 log.error(e.getMessage());
             } catch (IllegalAccessException e) {
@@ -81,10 +116,6 @@ public class NameNodeThread {
             } catch (BrokenBarrierException e) {
                 log.error(e.getMessage());
             }
-
-            while(true) {
-
-            }
         }
     });
 
@@ -92,6 +123,83 @@ public class NameNodeThread {
         public int senderID;
         public boolean isClient;
         public int clientID;
+    }
+
+    private static void handleCreateTable(IntBox senderId, CreateTableMsg msg) throws InvocationTargetException, IllegalAccessException {
+        int tableId = msg.getTableId();
+        Map<Integer, CreateTableInfo> createTableMap = nameNodeContext.get().createTableMap;
+        if(!createTableMap.containsKey(tableId)) {
+            TableInfo tableInfo = new TableInfo();
+            tableInfo.tableStaleness = msg.getStaleness();
+            tableInfo.rowType = msg.getRowType();
+            tableInfo.rowCapacity = msg.getRowCapacity();
+            nameNodeContext.get().serverObj.CreateTable(tableId, tableInfo);
+
+            createTableMap.putIfAbsent(tableId, new CreateTableInfo());
+            sendToAllServers(msg);
+        }
+        if(createTableMap.get(tableId).receviedFromAllServers()) {
+            CreateTableReplyMsg replyMsg = new CreateTableReplyMsg(null);
+            replyMsg.setTableId(msg.getTableId());
+            commBusSendAny.invoke(commbus, senderId, replyMsg);
+            createTableMap.get(tableId).numClientsReplied++;
+            if(haveCreatedAllTables()) {
+                sendCreateAllTablesMsg();
+            }
+        } else {
+            createTableMap.get(tableId).bgsToReply.add(senderId.intValue);
+        }
+    }
+
+    private static void handleCreateTableReply(CreateTableReplyMsg msg) throws InvocationTargetException, IllegalAccessException {
+        int tableId = msg.getTableId();
+        Map<Integer, CreateTableInfo> createTableMap = nameNodeContext.get().createTableMap;
+        createTableMap.get(tableId).numServersReplied++;
+
+        if(createTableMap.get(tableId).receviedFromAllServers()) {
+            Queue<Integer> bgsToReply = createTableMap.get(tableId).bgsToReply;
+            while(!bgsToReply.isEmpty()) {
+                int bgId = bgsToReply.poll();
+                commBusSendAny.invoke(commbus, bgId, msg.getByteBuffer());
+                createTableMap.get(tableId).numClientsReplied++;
+            }
+            if(haveCreatedAllTables()) {
+                sendCreateAllTablesMsg();
+            }
+        }
+    }
+
+    private static boolean haveCreatedAllTables() {
+        Map<Integer, CreateTableInfo> createTableMap = nameNodeContext.get().createTableMap;
+        if(createTableMap.size() < GlobalContext.getNumTables())
+            return false;
+
+        for(Map.Entry<Integer, CreateTableInfo> entry : createTableMap.entrySet()) {
+            if(!entry.getValue().repliedToAllClients())
+                return false;
+        }
+        return true;
+    }
+
+    private static void sendCreateAllTablesMsg() throws InvocationTargetException, IllegalAccessException {
+        CreateAllTablesMsg createAllTablesMsg = new CreateAllTablesMsg(null);
+        int numClients = GlobalContext.getNumClients();
+
+        for(int clientIdx = 0; clientIdx < numClients; clientIdx++) {
+            int headBgId = GlobalContext.getHeadBgId(clientIdx);
+            commBusSendAny.invoke(commbus, headBgId, createAllTablesMsg.getByteBuffer());
+        }
+    }
+
+    private static boolean handleShutDownMsg() throws InvocationTargetException, IllegalAccessException {
+        int numShutDownBgs = ++(nameNodeContext.get().numShutdownBgs);
+        if(numShutDownBgs == GlobalContext.getNumTotalBgThreads()) {
+            for(int i = 0; i < GlobalContext.getNumTotalBgThreads(); i++) {
+                commBusSendAny.invoke(commbus, nameNodeContext.get().bgThreadIDs[i], new ServerShutDownAckMsg(null));
+            }
+            return true;
+        }
+        return false;
     }
 
     public static void init() throws NoSuchMethodException, InterruptedException, BrokenBarrierException {
@@ -197,6 +305,13 @@ public class NameNodeThread {
             if(!(Boolean)commBusSendAny.invoke(commbus, bdID, msg.getByteBuffer())) {
                 log.error("fails to send to bg thread with Id = " + String.valueOf(bdID));
             }
+        }
+    }
+
+    private static void sendToAllServers(NumberedMsg msg) throws InvocationTargetException, IllegalAccessException {
+        int[] serverIds = GlobalContext.getServerIds();
+        for(int i = 0; i < serverIds.length; i++) {
+            commBusSendAny.invoke(commbus, serverIds[i], msg.getByteBuffer());
         }
     }
 }

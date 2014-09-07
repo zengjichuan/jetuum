@@ -727,7 +727,7 @@ public class BgWorkers {
                     addRowRequest(rowRequest, tableId, rowId);
             if(shouldBeSent){
                 int serverId = GlobalContext.getRowPartitionServerId(tableId, rowId);
-                int sentSize = (Integer)commBusSendAny.invoke(commBus, new Object[]{serverId, rowRequestMsg.getByteBuffer()});
+                commBusSendAny.invoke(commBus, serverId, rowRequestMsg.getByteBuffer());
             }
         }
 
