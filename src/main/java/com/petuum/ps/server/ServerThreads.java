@@ -275,6 +275,7 @@ public class ServerThreads {
         for(int i = 0; i < GlobalContext.getNumTotalBgThreads(); i++) {
             int bgId = serverContext.get().bgThreadIds[i];
             commBusSendAny.invoke(comm_bus, bgId, msg.getByteBuffer());
+            log.info("send message with type " + String.valueOf(msg.getMsgType()) + " to " + String.valueOf(bgId));
             while(!(Boolean)commBusSendAny.invoke(comm_bus, bgId, msg.getByteBuffer()))
             {
                 try {

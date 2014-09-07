@@ -187,6 +187,8 @@ public class MatrixFact {
         tableConfig.tableInfo.rowCapacity = K;
         tableConfig.processCacheCapacity = 100;
         PSTableGroup.createTable(0, tableConfig);
+        PSTableGroup.createTable(1, tableConfig);
+        PSTableGroup.createTable(2, tableConfig);
 
         //finished creating tables
         PSTableGroup.createTableDone();

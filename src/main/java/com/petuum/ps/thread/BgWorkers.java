@@ -133,7 +133,8 @@ public class BgWorkers {
         commBus.sendInproc(idStart, bgCreateTableMsg.getByteBuffer());
         //wait
         IntBox senderId = new IntBox();
-        assert new NumberedMsg(commBus.recvInproc(senderId)).getMsgType() == NumberedMsg.K_CREATE_TABLE_REPLY;
+        ByteBuffer buffer = commBus.recvInproc(senderId);
+        assert new NumberedMsg(buffer).getMsgType() == NumberedMsg.K_CREATE_TABLE_REPLY;
         return true;
     }
 
@@ -738,67 +739,70 @@ public class BgWorkers {
         private static void handleCreateTables() {
             for (int numCreatedTables = 0; numCreatedTables < GlobalContext.getNumTables();
                  numCreatedTables++) {
-                int tableId;
                 IntBox senderId = new IntBox();
                 ClientTableConfig clientTableConfig = new ClientTableConfig();
-                {
-                    ByteBuffer msgBuffer = null;
-                    msgBuffer = commBus.recvInproc(senderId);
-                    int msgType = new NumberedMsg(msgBuffer).getMsgType();
-                    Preconditions.checkArgument(msgType == NumberedMsg.K_BG_CREATE_TABLE);
-                    BgCreateTableMsg bgCreateTableMsg = new BgCreateTableMsg(msgBuffer);
-                    //set up client table config
-                    clientTableConfig.tableInfo.tableStaleness = bgCreateTableMsg.getStaleness();
-                    clientTableConfig.tableInfo.rowType = bgCreateTableMsg.getRowType();
-                    clientTableConfig.processCacheCapacity =
-                            bgCreateTableMsg.getProcessCacheCapacity();
-                    clientTableConfig.threadCacheCapacity =
-                            bgCreateTableMsg.getThreadCacheCapacity();
-                    clientTableConfig.opLogCapacity = bgCreateTableMsg.getOplogCapacity();
 
-                    CreateTableMsg createTableMsg = new CreateTableMsg(null);
-                    createTableMsg.setTableId(bgCreateTableMsg.getTableId());
-                    createTableMsg.setStaleness(bgCreateTableMsg.getStaleness());
-                    createTableMsg.setRowType(bgCreateTableMsg.getRowType());
-                    createTableMsg.setRowCapacity(bgCreateTableMsg.getRowCapacity());
-                    tableId = createTableMsg.getTableId();
+                ByteBuffer msgBuffer = null;
+                msgBuffer = commBus.recvInproc(senderId);
+                int msgType = new NumberedMsg(msgBuffer).getMsgType();
+                Preconditions.checkArgument(msgType == NumberedMsg.K_BG_CREATE_TABLE);
+                BgCreateTableMsg bgCreateTableMsg = new BgCreateTableMsg(msgBuffer);
+                //set up client table config
+                clientTableConfig.tableInfo.tableStaleness = bgCreateTableMsg.getStaleness();
+                clientTableConfig.tableInfo.rowType = bgCreateTableMsg.getRowType();
+                clientTableConfig.processCacheCapacity =
+                        bgCreateTableMsg.getProcessCacheCapacity();
+                clientTableConfig.threadCacheCapacity =
+                        bgCreateTableMsg.getThreadCacheCapacity();
+                clientTableConfig.opLogCapacity = bgCreateTableMsg.getOplogCapacity();
 
-                    //send msg to name node
-                    int nameNodeId = GlobalContext.getNameNodeId();
-                    try {
-                        commBusSendAny.invoke(commBus, nameNodeId, createTableMsg.getByteBuffer());
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                    } catch (InvocationTargetException e) {
-                        e.printStackTrace();
-                    }
+                CreateTableMsg createTableMsg = new CreateTableMsg(null);
+                createTableMsg.setTableId(bgCreateTableMsg.getTableId());
+                createTableMsg.setStaleness(bgCreateTableMsg.getStaleness());
+                createTableMsg.setRowType(bgCreateTableMsg.getRowType());
+                createTableMsg.setRowCapacity(bgCreateTableMsg.getRowCapacity());
+                int tableId = createTableMsg.getTableId();
+
+                //send msg to name node
+                try {
+                    commBusSendAny.invoke(commBus, GlobalContext.getNameNodeId(), createTableMsg.getByteBuffer());
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
                 }
+
                 //wait for response from name node
-                {
-                    ByteBuffer msgBuf = null;
-                    IntBox nameNodeId = new IntBox();
-                    try {
-                        msgBuf = (ByteBuffer) commBusRecvAny.invoke(commBus, new Object[]{nameNodeId});
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                    } catch (InvocationTargetException e) {
-                        e.printStackTrace();
-                    }
-                    int msgType = new NumberedMsg(msgBuf).getMsgType();
-                    Preconditions.checkArgument(msgType == NumberedMsg.K_CREATE_TABLE_REPLY);
-                    CreateTableReplyMsg createTableReplyMsg = new CreateTableReplyMsg(msgBuf);
-                    Preconditions.checkArgument(createTableReplyMsg.getTableId() == tableId);
-                    //Create ClientTable
-                    ClientTable clientTable = new ClientTable(tableId, clientTableConfig);
-                    tables.putIfAbsent(tableId, clientTable);   //not thread safe
-                    commBus.sendInproc(senderId.intValue, msgBuf);
+
+                ByteBuffer msgBuf = null;
+                IntBox nameNodeId = new IntBox();
+
+                try {
+                    msgBuf = (ByteBuffer) commBusRecvAny.invoke(commBus, nameNodeId);
+
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
                 }
+                msgType = new NumberedMsg(msgBuf).getMsgType();
+                log.info("receive a message with type " + String.valueOf(msgType) +" from " + String.valueOf(nameNodeId.intValue));
+                Preconditions.checkArgument(msgType == NumberedMsg.K_CREATE_TABLE_REPLY);
+
+                CreateTableReplyMsg createTableReplyMsg = new CreateTableReplyMsg(msgBuf);
+                Preconditions.checkArgument(createTableReplyMsg.getTableId() == tableId);
+                //Create ClientTable
+                ClientTable clientTable = new ClientTable(tableId, clientTableConfig);
+                tables.putIfAbsent(tableId, clientTable);   //not thread safe
+                log.info("reply app thread " + String.valueOf(senderId.intValue));
+                commBus.sendInproc(senderId.intValue, msgBuf);
+
             }
             {
                 ByteBuffer msgBuf = null;
                 IntBox senderId = new IntBox();
                 try {
-                    msgBuf = (ByteBuffer) commBusRecvAny.invoke(commBus, new Object[]{senderId});
+                    msgBuf = (ByteBuffer) commBusRecvAny.invoke(commBus, senderId);
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 } catch (InvocationTargetException e) {

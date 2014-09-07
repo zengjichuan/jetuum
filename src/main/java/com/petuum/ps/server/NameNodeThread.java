@@ -85,11 +85,13 @@ public class NameNodeThread {
                         }
                         case NumberedMsg.K_CREATE_TABLE:
                         {
+                            log.info("get CreateTableMsg from bg " + String.valueOf(senderId.intValue));
                             handleCreateTable(senderId, new CreateTableMsg(buffer));
                             break;
                         }
                         case NumberedMsg.K_CREATE_TABLE_REPLY:
                         {
+                            log.info("get CreateTableReplyMsg from bg " + String.valueOf(senderId.intValue));
                             handleCreateTableReply(new CreateTableReplyMsg(buffer));
                             break;
                         }
