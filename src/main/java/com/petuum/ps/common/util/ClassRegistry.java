@@ -17,7 +17,7 @@ public class ClassRegistry <BaseClass>{
         return instance;
     }
     public void addCreator(int key, Class productClass){
-        createMap.put(key, productClass);
+        createMap.putIfAbsent(key, productClass);
     }
     public BaseClass createObject(int key){
         Class productClass = createMap.get(key);

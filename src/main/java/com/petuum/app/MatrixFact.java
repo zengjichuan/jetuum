@@ -173,7 +173,7 @@ public class MatrixFact {
         tableGroupconfig.clientId = clientID;
         //need to register row type
         //register DenseRow<float> as 0.
-
+        PSTableGroup.registerRow(0, DenseRow.class);
         //next..
         PSTableGroup.init(tableGroupconfig, false);
         //load data

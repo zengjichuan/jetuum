@@ -14,6 +14,7 @@ import com.sun.deploy.util.SessionState;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
@@ -31,7 +32,7 @@ public class TableGroup {
 	 */
 	private  int max_table_staleness_;
 	private  AtomicInteger num_app_threads_registered_ = new AtomicInteger();
-	private  Map<Integer, ClientTable> tables_;
+	private  Map<Integer, ClientTable> tables_ = new HashMap<Integer, ClientTable>();
 	private  VectorClockMT vector_clock_;
     private Method clockInternal;
     private CyclicBarrier registerBarrier;

@@ -790,7 +790,7 @@ public class BgWorkers {
                     Preconditions.checkArgument(createTableReplyMsg.getTableId() == tableId);
                     //Create ClientTable
                     ClientTable clientTable = new ClientTable(tableId, clientTableConfig);
-                    tables.put(tableId, clientTable);   //not thread safe
+                    tables.putIfAbsent(tableId, clientTable);   //not thread safe
                     commBus.sendInproc(senderId.intValue, msgBuf);
                 }
             }
