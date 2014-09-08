@@ -12,7 +12,7 @@ import java.util.*;
 public class SSPRowRequestOpLogMgr implements RowRequestOpLogMgr {
     public SSPRowRequestOpLogMgr() {
         this.versionRequestCntMap = AtomicLongMap.create();
-        this.pendingRowRequest = new HashMap<TableRowIndex, List<RowRequestInfo>>();
+        this.pendingRowRequest = new HashMap<Integer, Map<Integer, List<RowRequestInfo>>>();
         this.versionOpLogMap = new HashMap<Integer, BgOpLog>();
     }
 
@@ -20,7 +20,7 @@ public class SSPRowRequestOpLogMgr implements RowRequestOpLogMgr {
      * map <table_id, row_id> to a list of requests
      * The list is in increasing order of clock
      */
-    private Map<TableRowIndex, List<RowRequestInfo>> pendingRowRequest;
+    private Map<Integer, Map<Integer, List<RowRequestInfo>>> pendingRowRequest;
     /**
      * version -> (table_id, OpLogPartition)
      * The version number of a request means that all oplogs up to and including
@@ -42,11 +42,13 @@ public class SSPRowRequestOpLogMgr implements RowRequestOpLogMgr {
         int version = request.version;
         request.sent = true;
         {
-            TableRowIndex requestKey = new TableRowIndex(tableId, rowId);
-            if(pendingRowRequest.containsKey(requestKey) == false){
-                pendingRowRequest.put(requestKey, new LinkedList<RowRequestInfo>());
+            if(pendingRowRequest.containsKey(tableId) == false) {
+                pendingRowRequest.putIfAbsent(tableId, new HashMap<Integer, List<RowRequestInfo>>());
             }
-            List<RowRequestInfo> requestList = pendingRowRequest.get(requestKey);
+            if(pendingRowRequest.get(tableId).containsKey(rowId) == false){
+                pendingRowRequest.get(tableId).putIfAbsent(rowId, new LinkedList<RowRequestInfo>());
+            }
+            List<RowRequestInfo> requestList = pendingRowRequest.get(tableId).get(rowId);
             boolean requestAdded = false;
             // Requests are sorted in increasing order of clock number.
             // When a request is to be inserted, start from the end as the requst's
@@ -73,8 +75,8 @@ public class SSPRowRequestOpLogMgr implements RowRequestOpLogMgr {
 
     public int informReply(int tableId, int rowId, int clock, int currentVersion, Vector<Integer> appThreadIds) {
         appThreadIds.clear();
-        TableRowIndex requestKey = new TableRowIndex(tableId, rowId);
-        List<RowRequestInfo> requestLst = pendingRowRequest.get(requestKey);
+
+        List<RowRequestInfo> requestLst = pendingRowRequest.get(tableId).get(rowId);
         int clockToRequest = -1;
         while(requestLst.isEmpty() == false){
             RowRequestInfo request = requestLst.get(0);
@@ -110,7 +112,7 @@ public class SSPRowRequestOpLogMgr implements RowRequestOpLogMgr {
         }
         // if there's no request in that list, I can remove the empty list
         if (requestLst.isEmpty())
-            pendingRowRequest.remove(requestKey);
+            pendingRowRequest.get(tableId).remove(rowId);
         return clockToRequest;
     }
 

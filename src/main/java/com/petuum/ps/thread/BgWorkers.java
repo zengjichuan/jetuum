@@ -675,8 +675,8 @@ public class BgWorkers {
                 e.printStackTrace();
             }
             TableOpLog tableOpLog = clientTable.getOpLog();
-            RowOpLog rowOpLog = null;
-            if (tableOpLog.findOpLog(rowId) != null){
+            RowOpLog rowOpLog = tableOpLog.findOpLog(rowId);
+            if (rowOpLog != null){
                 IntBox columnId = new IntBox();
                 Double update = rowOpLog.beginIterate(columnId);
                 while (update != null){
@@ -759,6 +759,7 @@ public class BgWorkers {
                 //set up client table config
                 clientTableConfig.tableInfo.tableStaleness = bgCreateTableMsg.getStaleness();
                 clientTableConfig.tableInfo.rowType = bgCreateTableMsg.getRowType();
+                clientTableConfig.tableInfo.rowCapacity = bgCreateTableMsg.getRowCapacity();
                 clientTableConfig.processCacheCapacity =
                         bgCreateTableMsg.getProcessCacheCapacity();
                 clientTableConfig.threadCacheCapacity =

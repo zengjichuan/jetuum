@@ -4,6 +4,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.petuum.ps.common.Constants;
 import com.petuum.ps.common.Row;
+import com.petuum.ps.common.TableInfo;
 import com.petuum.ps.common.client.ClientRow;
 import com.petuum.ps.common.client.ThreadTable;
 import com.petuum.ps.common.oplog.RowOpLog;
@@ -35,25 +36,6 @@ public class SSPConsistencyController extends ConsistencyController {
     protected TableOpLog opLog;
     protected TableOpLogIndex opLogIndex;
 
-	/*public SSPConsistencyController(){
-        processStorage = CacheBuilder.newBuilder()
-                .build(
-                    new CacheLoader<Integer, ClientRow>() {
-                        @Override
-                        public ClientRow load(Integer key) throws Exception {
-                            int stalest_clock = ThreadContext.getClock() - staleness;
-                            if(stalest_clock < 0){
-                                stalest_clock = 0;
-                            }
-//                            BgWorkers.RequestRow(table_id, key, stalest_clock);
-                            //need receive row data
-                            return null;
-                        }
-                    }
-                );
-        processStorage = CacheBuilder.newBuilder().build();
-	}*/
-
 	public void finalize() throws Throwable {
 		super.finalize();
 	}
@@ -64,8 +46,10 @@ public class SSPConsistencyController extends ConsistencyController {
 	 * @param sampleRow
 	 * @param threadCache
 	 */
-	public SSPConsistencyController(int tableId, final Row sampleRow, ThreadTable threadCache, int cacheSize){
+	public SSPConsistencyController(TableInfo info, int tableId, final Row sampleRow, ThreadTable threadCache, int cacheSize){
         this.threadCache = threadCache;
+        this.sampleRow = sampleRow;
+        this.sampleRow.init(info.rowCapacity);
         this.opLog = new TableOpLog(tableId, sampleRow);
         this.opLogIndex = new TableOpLogIndex();
         this.processStorage = CacheBuilder.newBuilder().

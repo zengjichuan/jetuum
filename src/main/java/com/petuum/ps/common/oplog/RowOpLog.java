@@ -1,6 +1,7 @@
 package com.petuum.ps.common.oplog;
 
 import com.petuum.ps.common.Row;
+import com.petuum.ps.common.storage.DenseRow;
 import com.petuum.ps.common.util.IntBox;
 
 import java.io.Serializable;
