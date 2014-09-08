@@ -334,12 +334,14 @@ public class ServerThreads {
                                         int rowId, int serverClock, int version){
 
         ByteBuffer serverRowBuffer = serverRow.serialize();
-        ServerRowRequestReplyMsg serverRowRequestReplyMsg = new ServerRowRequestReplyMsg(serverRowBuffer);
+        ServerRowRequestReplyMsg serverRowRequestReplyMsg = new ServerRowRequestReplyMsg(null);
+        serverRowRequestReplyMsg.setRowData(serverRowBuffer);       //need to set first
         serverRowRequestReplyMsg.setTableId(tableId);
         serverRowRequestReplyMsg.setRowId(rowId);
         serverRowRequestReplyMsg.setClock(serverClock);
         serverRowRequestReplyMsg.setVersion(version);
         serverRowRequestReplyMsg.setRowSize(serverRowBuffer.capacity());
+
         log.info("Replying client row request, version = "+version+" table id = "+tableId);
         //TransferMem ...
         if(comm_bus.isLocalEntity(bgId)){

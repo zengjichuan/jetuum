@@ -1,9 +1,13 @@
 package com.petuum.ps.thread;
 
+import com.petuum.ps.common.Row;
 import zmq.Msg;
 
+import javax.crypto.Mac;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 /**
  * Created by suyuxin on 14-8-27.
@@ -23,13 +27,15 @@ public class ServerRowRequestReplyMsg extends ArbitrarySizedMsg {
 //        sequence.putInt(MSG_TYPE_OFFSET, K_SERVER_ROW_REQUEST_REPLY);
 //    }
 
-    public ServerRowRequestReplyMsg(ByteBuffer buffer) {
-        super(null);
-        assert buffer != null;
-        sequence = ByteBuffer.allocate(getHeaderSize() + buffer.capacity());
+    public ServerRowRequestReplyMsg(ByteBuffer msgBuf) {
+        super(msgBuf);
+        if (msgBuf == null)
+            sequence = ByteBuffer.allocate(getSize());
         sequence.putInt(MSG_TYPE_OFFSET, K_SERVER_ROW_REQUEST_REPLY);
-        sequence.position(getHeaderSize());
-        sequence.put(buffer);
+    }
+
+    public static int getSize() {
+        return ROW_SIZE_OFFSET + INT_LENGTH;
     }
 
     public int getTableId() {
@@ -76,8 +82,16 @@ public class ServerRowRequestReplyMsg extends ArbitrarySizedMsg {
         return ROW_SIZE_OFFSET + INT_LENGTH;
     }
 
+    public void setRowData(ByteBuffer buffer){
+        assert buffer != null;
+        sequence = ByteBuffer.allocate(getHeaderSize() + buffer.capacity());
+        sequence.putInt(MSG_TYPE_OFFSET, K_SERVER_ROW_REQUEST_REPLY);
+        sequence.position(getHeaderSize());
+        sequence.put(buffer);
+    }
+
     public ByteBuffer getRowData() {
-        byte[] byteList = sequence.array();
-        return ByteBuffer.wrap(byteList, getHeaderSize(), byteList.length - getHeaderSize());
+        byte [] bytes = Arrays.copyOfRange(sequence.array(), getHeaderSize(), sequence.capacity());
+        return ByteBuffer.wrap(bytes);
     }
 }
