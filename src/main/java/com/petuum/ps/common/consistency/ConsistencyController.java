@@ -68,7 +68,7 @@ public abstract class ConsistencyController {
 	 * 
 	 * @param row_id    row_id
 	 */
-	public abstract ClientRow get(int row_id);
+	public abstract ClientRow get(int row_id, boolean fetchFromServer);
 
 	/**
 	 * 

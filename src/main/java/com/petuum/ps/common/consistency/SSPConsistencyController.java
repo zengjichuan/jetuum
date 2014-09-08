@@ -106,7 +106,7 @@ public class SSPConsistencyController extends ConsistencyController {
 	 * 
 	 * @param rowId
 	 */
-	public ClientRow get(int rowId) { //how to get the clock? use a list
+	public ClientRow get(int rowId, boolean fetchFromServer) { //how to get the clock? use a list
         int stalestClock = ThreadContext.getClock() - staleness;
         ClientRow clientRow = processStorage.getIfPresent(rowId);
         if (clientRow != null){
@@ -116,6 +116,7 @@ public class SSPConsistencyController extends ConsistencyController {
                 return clientRow;
             }
         }
+        if (fetchFromServer == false)   return clientRow;           //skip the fetch process, return null
         // Didn't find row_id that's fresh enough in process_storage_.
         // Fetch from server.
         do {

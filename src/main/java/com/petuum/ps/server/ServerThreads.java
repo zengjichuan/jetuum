@@ -136,7 +136,7 @@ public class ServerThreads {
         switch(consistency_model) {
             case SSP:
                 serverPushRow = ServerThreads.class.getMethod("SSPPushServerPushRow");
-                rowSubscribe = ServerThreads.class.getMethod("SSPRowSubscribe");
+                rowSubscribe = ServerThreads.class.getMethod("SSPRowSubscribe", ServerRow.class, int.class);
                 break;
             case SSPPush:
                 serverPushRow = ServerThreads.class.getMethod("SSPPushServerPushRow");
@@ -184,7 +184,7 @@ public class ServerThreads {
         serverRow.subscribe(clientId);
     }
 
-    public static void SSPRowSubscribe() {
+    public static void SSPRowSubscribe(ServerRow serverRow, int clientId) {
 
     }
     // communication function
@@ -339,10 +339,14 @@ public class ServerThreads {
         serverRowRequestReplyMsg.setRowId(rowId);
         serverRowRequestReplyMsg.setClock(serverClock);
         serverRowRequestReplyMsg.setVersion(version);
-        serverRowRequestReplyMsg.setrowSize(serverRowBuffer.capacity());
-
+        serverRowRequestReplyMsg.setRowSize(serverRowBuffer.capacity());
+        log.info("Replying client row request, version = "+version+" table id = "+tableId);
         //TransferMem ...
-
+        if(comm_bus.isLocalEntity(bgId)){
+            comm_bus.sendInproc(bgId, serverRowRequestReplyMsg.getByteBuffer());
+        }else{
+            comm_bus.sendInterproc(bgId, serverRowRequestReplyMsg.getByteBuffer());
+        }
     }
     private static void handleOpLogMsg(int senderId, ClientSendOpLogMsg clientSendOpLogMsg) throws InvocationTargetException, IllegalAccessException {
 

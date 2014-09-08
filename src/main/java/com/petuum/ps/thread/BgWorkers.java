@@ -717,7 +717,7 @@ public class BgWorkers {
 
             // Check if the row exists in process cache
             ClientTable table = tables.get(tableId);
-            ClientRow clientRow = table.get(rowId);
+            ClientRow clientRow = table.getLocally(rowId);
             if (clientRow != null){
                 if(clientRow.getClock() >= clock){
                     RowRequestReplyMsg rowRequestReplyMsg = new RowRequestReplyMsg(null);
