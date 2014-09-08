@@ -43,7 +43,7 @@ public class ClientRow {
 	}
 
 	public Row getRowData(){
-		return null;
+		return rowData;
 	}
 
 	public void incRef(){
