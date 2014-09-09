@@ -63,7 +63,7 @@ public class SerializedOpLogReader {
                 byte[] rowOpLogBytes = new byte[updateSize];
                 serializedOpLogBuf.get(rowOpLogBytes, offset, updateSize);
                 updates = (HashMap<Integer, Double>) SerializationUtils.deserialize(rowOpLogBytes);
-
+                numRowsLeftInCurrentTable--;
                 offset += updateSize;
                 return updates;
             }else{

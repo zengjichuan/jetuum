@@ -323,14 +323,19 @@ public class BgWorkers {
             entry.getValue().setVersion(bgContext.get().version);
             int serverId = entry.getKey();
 
-
-            bgContext.get().rowRequestOpLogMgr.
-                   addOpLog(bgContext.get().version, bgOpLog);
-            bgContext.get().rowRequestOpLogMgr.informVersionInc();
-
             // delete bgOpLog
-
+            try {
+                commBusSendAny.invoke(commBus, serverId, entry.getValue().getByteBuffer());
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            }
         }
+
+        bgContext.get().rowRequestOpLogMgr.
+                addOpLog(bgContext.get().version, bgOpLog);
+        bgContext.get().rowRequestOpLogMgr.informVersionInc();
 
     }
 
