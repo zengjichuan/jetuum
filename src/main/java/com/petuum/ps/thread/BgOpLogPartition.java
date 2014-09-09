@@ -48,7 +48,7 @@ public class BgOpLogPartition {
 
             mem.putInt(rowId);                          //rowId
             //Serialize the RowOpLog
-            byte[] rowOpLogBytes = SerializationUtils.serialize(rowOpLog.getMap());
+            byte[] rowOpLogBytes = rowOpLog.serialized();
 
             int rowOpLogSize = rowOpLogBytes.length;
             mem.putInt(rowOpLogSize);             //opLog mem size

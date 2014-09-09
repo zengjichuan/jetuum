@@ -432,14 +432,12 @@ public class BgWorkers {
 //                }
                 // update oplog message size
                 int serverId = GlobalContext.getRowPartitionServerId(tableId, rowId);
-                int numUpdate = rowOpLog.getSize();
+                int updateSize = rowOpLog.getSerializedSize();
                 // 1) row id
                 // 2) number of updates in that row
-                // 3) total size for column ids
-                // 4) total size for update array
+                // 3) total size for serialized updates
                 tableNumBytesByServer.put(serverId, tableNumBytesByServer.get(serverId)
-                        + Integer.BYTES + Integer.BYTES + Integer.BYTES * numUpdate
-                        + tableUpdateSize * numUpdate);
+                        + Integer.BYTES + Integer.BYTES + updateSize);
                 bgTableOplog.insertOpLog(rowId, rowOpLog);
             }
             bgOplog.add(tableId, bgTableOplog);

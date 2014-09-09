@@ -3,6 +3,7 @@ package com.petuum.ps.common.oplog;
 import com.petuum.ps.common.Row;
 import com.petuum.ps.common.storage.DenseRow;
 import com.petuum.ps.common.util.IntBox;
+import org.apache.commons.lang3.SerializationUtils;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
@@ -20,6 +21,8 @@ public class RowOpLog implements Serializable {
     private HashMap<Integer, Double> opLogs;
     private Method initUpdate;
     private Iterator<Map.Entry<Integer, Double>> iter;
+    private byte[] serializedbuf;
+
     public RowOpLog(Method initUpdate){
         this.initUpdate = initUpdate;
         opLogs = new HashMap<Integer, Double>();
@@ -70,5 +73,16 @@ public class RowOpLog implements Serializable {
 
     public HashMap<Integer, Double> getMap() {
         return opLogs;
+    }
+
+    public int getSerializedSize() {
+        serializedbuf = SerializationUtils.serialize(opLogs);
+        return serializedbuf.length;
+    }
+
+    public byte[] serialized(){
+        if (serializedbuf == null);
+            serializedbuf = SerializationUtils.serialize(opLogs);
+        return serializedbuf;
     }
 }
