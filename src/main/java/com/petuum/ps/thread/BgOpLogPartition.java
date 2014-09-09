@@ -35,7 +35,7 @@ public class BgOpLogPartition {
         Map<Integer, Integer> offsetByServer = new HashMap<Integer, Integer>();
         // init number of rows to 0
         for (int serverId : GlobalContext.getServerIds()){
-            offsetByServer.put(serverId, Integer.SIZE);
+            offsetByServer.put(serverId, Integer.BYTES);
             bufferByServer.get(serverId).putInt(0);
         }
         for (Map.Entry<Integer, RowOpLog> entry : opLogMap.entrySet()){
@@ -54,7 +54,7 @@ public class BgOpLogPartition {
             mem.putInt(rowOpLogSize);             //opLog mem size
             mem.put(rowOpLogBytes);                 //opLog mem
 
-            offsetByServer.put(serverId, offsetByServer.get(serverId) + Integer.SIZE + Integer.SIZE +
+            offsetByServer.put(serverId, offsetByServer.get(serverId) + Integer.BYTES + Integer.BYTES +
                     rowOpLogSize);
             mem.putInt(0, mem.getInt(0)+1);         //row num add 1
         }

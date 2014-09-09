@@ -20,7 +20,7 @@ public class OpLogSerializer {
     public int init(Map<Integer, Integer> tableSizeMap){
         numTables = tableSizeMap.size();
         // space for num of tables
-        int totalSize = Integer.SIZE;
+        int totalSize = Integer.BYTES;
         for (Map.Entry<Integer, Integer> entry : tableSizeMap.entrySet()){
             int tableId = entry.getKey();
             int tableSize = entry.getValue();
@@ -29,9 +29,9 @@ public class OpLogSerializer {
             // 1) the current table size and
             // 2) space for table id
             // 3) update size
-            totalSize += tableSize + Integer.SIZE + Integer.SIZE;
+            totalSize += tableSize + Integer.BYTES + Integer.BYTES;
         }
-        return totalSize;
+        return totalSize * 5;
     }
 
     //just putInt(numTables)
