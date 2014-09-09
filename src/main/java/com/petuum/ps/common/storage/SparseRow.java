@@ -97,7 +97,7 @@ public class SparseRow implements Row, Iterable<Map.Entry<Integer, Double>> {
      * @return
      */
     public int getUpdateSize() {
-        return Double.SIZE;
+        return Double.BYTES;
     }
 
     public void init(int capacity) {
