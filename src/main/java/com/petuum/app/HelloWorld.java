@@ -73,9 +73,9 @@ public class HelloWorld {
         tableConfig.tableInfo.rowType = 20; //dense row
         tableConfig.opLogCapacity = 1000;   //useless
         tableConfig.tableInfo.tableStaleness = staleness;
-        tableConfig.tableInfo.rowCapacity = 100;
-        tableConfig.processCacheCapacity = 100;
-        tableConfig.threadCacheCapacity = 100;
+        tableConfig.tableInfo.rowCapacity = 1000;
+        tableConfig.processCacheCapacity = 1000;
+        tableConfig.threadCacheCapacity = 1000;
 
         boolean suc = PSTableGroup.createTable(0, tableConfig);
         assert suc == true;
