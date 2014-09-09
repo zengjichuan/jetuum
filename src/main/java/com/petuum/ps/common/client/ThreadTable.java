@@ -37,9 +37,14 @@ public class ThreadTable {
 	 * @param row_id
 	 * @param deltas
 	 */
-	public void batchInc(int row_id, final Map<Integer, Double> deltas) throws NoSuchMethodException {
-        RowOpLog rowOpLog = opLogMap.getOrDefault(row_id,
-                new RowOpLog(Row.class.getMethod("initUpdate", int.class, Double.class)));
+	public void batchInc(int row_id, final Map<Integer, Double> deltas) {
+        RowOpLog rowOpLog = null;
+        try {
+            rowOpLog = opLogMap.getOrDefault(row_id,
+                    new RowOpLog(Row.class.getMethod("initUpdate", int.class, Double.class)));
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
 
         for(Map.Entry<Integer, Double> entry : deltas.entrySet()) {
             Double oplogDelta = rowOpLog.findCreate(entry.getKey(), sampleRow);
@@ -66,10 +71,15 @@ public class ThreadTable {
 	 * @param column_id
 	 * @param delta
 	 */
-	public void inc(int row_id, int column_id, final Double delta) throws NoSuchMethodException {
+	public void inc(int row_id, int column_id, final Double delta) {
 
-        RowOpLog rowOpLog = opLogMap.getOrDefault(row_id,
-                new RowOpLog(Row.class.getMethod("initUpdate", int.class, Double.class)));
+        RowOpLog rowOpLog = null;
+        try {
+            rowOpLog = opLogMap.getOrDefault(row_id,
+                    new RowOpLog(Row.class.getMethod("initUpdate", int.class, Double.class)));
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
         Double oplogDelta = rowOpLog.findCreate(column_id, sampleRow);
         rowOpLog.insert(column_id, oplogDelta + delta);
         Row row = rowStorage.get(row_id);
