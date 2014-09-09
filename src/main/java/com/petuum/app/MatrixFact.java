@@ -32,7 +32,7 @@ public class MatrixFact {
     private static int numWorkerThreads = 1;
     private static int clientID = 0;
     private static int K = 2;
-    private static int numIterations = 100;
+    private static int numIterations = 10;
     private static int staleness = 0;
     private static MatrixLoader dataMatrix;
 
@@ -116,6 +116,7 @@ public class MatrixFact {
 
                 initMF(tableL, tableR);
                 PSTableGroup.globalBarrier();
+                long start = System.currentTimeMillis();
                 //run mf solver
                 for(int iter = 0; iter < numIterations; iter++) {
                     if(globalWorkerId == 0) {
@@ -142,6 +143,10 @@ public class MatrixFact {
                         System.out.println("loss function = " + String.valueOf(loss));
                     }
                     PSTableGroup.clock();
+                }
+                long end = System.currentTimeMillis();
+                if(globalWorkerId == 0) {
+                    System.out.println("Total time is " + String.valueOf((end - start) / 1000f));
                 }
                 // Let stale values finish propagating (performs staleness+1 clock()s)
                 PSTableGroup.globalBarrier();

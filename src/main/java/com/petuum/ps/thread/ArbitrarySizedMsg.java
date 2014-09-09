@@ -1,8 +1,7 @@
 package com.petuum.ps.thread;
 
 import com.petuum.ps.common.NumberedMsg;
-import sun.security.x509.AVA;
-import zmq.Msg;
+
 
 import java.nio.ByteBuffer;
 
