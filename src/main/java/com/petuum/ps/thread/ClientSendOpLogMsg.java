@@ -4,6 +4,7 @@ import com.petuum.ps.common.NumberedMsg;
 import zmq.Msg;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * Created by suyuxin on 14-8-27.
@@ -24,7 +25,7 @@ public class ClientSendOpLogMsg extends ArbitrarySizedMsg {
     public ClientSendOpLogMsg(int avaiSize) {
         super(null);
         sequence = ByteBuffer.allocate(getHeaderSize() + avaiSize);
-        sequence.putInt(MSG_TYPE_OFFSET, K_SERVER_PUSH_ROW);
+        sequence.putInt(MSG_TYPE_OFFSET, K_CLIENT_SEND_OP_LOG);
         sequence.putInt(AVAI_SIZE_OFFSET, avaiSize);
     }
 
@@ -60,7 +61,11 @@ public class ClientSendOpLogMsg extends ArbitrarySizedMsg {
         return VERSION_OFFSET + INT_LENGTH;
     }
     public ByteBuffer getData() {
-        byte[] byteList = sequence.array();
-        return ByteBuffer.wrap(byteList, getHeaderSize(), byteList.length - getHeaderSize());
+        //byte[] byteList = sequence.array();
+
+        //return ByteBuffer.wrap(byteList, getHeaderSize(), byteList.length - getHeaderSize());
+
+        byte [] bytes = Arrays.copyOfRange(sequence.array(), getHeaderSize(), sequence.capacity());
+        return ByteBuffer.wrap(bytes);
     }
 }
