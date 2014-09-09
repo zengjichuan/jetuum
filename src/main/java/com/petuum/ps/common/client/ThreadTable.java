@@ -32,17 +32,29 @@ public class ThreadTable {
         opLogMap = new HashMap<Integer, RowOpLog>();
 	}
 
-	public void finalize() throws Throwable {
-
-	}
-
 	/**
 	 * 
 	 * @param row_id
 	 * @param deltas
 	 */
-	public void batchInc(int row_id, final Map<Integer, Double> deltas){
+	public void batchInc(int row_id, final Map<Integer, Double> deltas) {
+        RowOpLog rowOpLog = null;
+        try {
+            rowOpLog = opLogMap.getOrDefault(row_id,
+                    new RowOpLog(Row.class.getMethod("initUpdate", int.class, Double.class)));
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
 
+        for(Map.Entry<Integer, Double> entry : deltas.entrySet()) {
+            Double oplogDelta = rowOpLog.findCreate(entry.getKey(), sampleRow);
+            rowOpLog.insert(entry.getKey(), oplogDelta + entry.getValue());
+        }
+
+        Row row = rowStorage.get(row_id);
+        if(row != null) {
+            row.applyBatchIncUnsafe(deltas);
+        }
 	}
 
 	/**
@@ -59,8 +71,21 @@ public class ThreadTable {
 	 * @param column_id
 	 * @param delta
 	 */
-	public void inc(int row_id, int column_id, final Double delta){
+	public void inc(int row_id, int column_id, final Double delta) {
 
+        RowOpLog rowOpLog = null;
+        try {
+            rowOpLog = opLogMap.getOrDefault(row_id,
+                    new RowOpLog(Row.class.getMethod("initUpdate", int.class, Double.class)));
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        Double oplogDelta = rowOpLog.findCreate(column_id, sampleRow);
+        rowOpLog.insert(column_id, oplogDelta + delta);
+        Row row = rowStorage.get(row_id);
+        if(row != null) {
+            row.applyIncUnsafe(column_id, delta);
+        }
 	}
 
 	/**
@@ -94,6 +119,27 @@ public class ThreadTable {
 	}
 
     public void flushCache(Cache<Integer, ClientRow> processStorage, TableOpLog opLog, Row sampleRow) {
+
+        for(Map.Entry<Integer, RowOpLog> entry : opLogMap.entrySet()) {
+            int rowId = entry.getKey();
+            int partitionNum = GlobalContext.getBgPartitionNum(rowId);
+
+            RowOpLog rowOpLog = opLog.findInsertOpLog(rowId);
+            ClientRow clientRow = processStorage.getIfPresent(rowId);
+            IntBox columnId = new IntBox();
+            Double delta = entry.getValue().beginIterate(columnId);
+            while(delta != null) {
+                Double oplogDelta = rowOpLog.findCreate(columnId.intValue, sampleRow);
+                rowOpLog.insert(columnId.intValue, oplogDelta + delta);
+                opLogIndex.get(partitionNum).add(rowId);
+                if(clientRow != null) {
+                    clientRow.getRowData().applyInc(columnId.intValue, delta);
+                }
+                delta = entry.getValue().next(columnId);
+            }
+        }
+        opLogMap.clear();
+        rowStorage.clear();
     }
 
     public void flushOpLogIndex(TableOpLogIndex tableOpLogIndex) {

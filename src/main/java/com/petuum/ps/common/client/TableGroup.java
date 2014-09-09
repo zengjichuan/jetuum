@@ -88,7 +88,7 @@ public class TableGroup {
 	public void clock(){
         ThreadContext.clock();
         try {
-            clockInternal.invoke(TableGroup.class, new Object[]{});
+            clockInternal.invoke(TableGroup.this);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         } catch (InvocationTargetException e) {
@@ -155,7 +155,7 @@ public class TableGroup {
 	}
 
 	public void globalBarrier(){
-        for (int i = 0; i < max_table_staleness_; i++) {
+        for (int i = 0; i < max_table_staleness_ + 1; i++) {
             clock();
         }
     }

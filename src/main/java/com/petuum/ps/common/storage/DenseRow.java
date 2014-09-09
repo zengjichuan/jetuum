@@ -46,7 +46,7 @@ public class DenseRow implements Row {
     }
 
     public int getUpdateSize() {
-        return 0;
+        return Double.BYTES;
     }
 
     public void init(int capacity) {
