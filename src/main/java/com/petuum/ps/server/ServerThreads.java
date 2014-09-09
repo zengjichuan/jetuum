@@ -138,7 +138,7 @@ public class ServerThreads {
         ConsistencyModel consistency_model = GlobalContext.getConsistencyModel();
         switch(consistency_model) {
             case SSP:
-                serverPushRow = ServerThreads.class.getMethod("SSPPushServerPushRow");
+                serverPushRow = ServerThreads.class.getMethod("SSPServerPushRow");
                 rowSubscribe = ServerThreads.class.getMethod("SSPRowSubscribe", ServerRow.class, int.class);
                 break;
             case SSPPush:
@@ -170,6 +170,8 @@ public class ServerThreads {
         serverContext.get().serverObj.createSendServerPushRowMsgs(ServerThreads.class.getMethod("sendServerPushRowMsg"));
 
     }
+
+    public static void SSPServerPushRow(){};
 
     public static ByteBuffer commBusRecvAnyBusy(IntBox senderId) throws InvocationTargetException, IllegalAccessException {
         ByteBuffer buffer = (ByteBuffer)commBusRecvAsyncAny.invoke(comm_bus, senderId);

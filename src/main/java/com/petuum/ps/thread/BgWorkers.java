@@ -335,6 +335,7 @@ public class BgWorkers {
 
         bgContext.get().rowRequestOpLogMgr.
                 addOpLog(bgContext.get().version, bgOpLog);
+        ++bgContext.get().version;
         bgContext.get().rowRequestOpLogMgr.informVersionInc();
 
     }
