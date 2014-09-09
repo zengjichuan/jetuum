@@ -86,12 +86,15 @@ public class ServerThreads {
                                 return;
                             }
                         case NumberedMsg.K_CREATE_TABLE:
+                            log.info("get CreateTableMsg from bg " + String.valueOf(senderID.intValue));
                             handleCreateTable(senderID.intValue, new CreateTableMsg(msgBuf));
                             break;
                         case NumberedMsg.K_ROW_REQUEST:
+                            log.info("get RowRequestMsg from bg " + String.valueOf(senderID.intValue));
                             handleRowRequest(senderID.intValue, new RowRequestMsg(msgBuf));
                             break;
                         case NumberedMsg.K_CLIENT_SEND_OP_LOG:
+                            log.info("get ClientSendOpLog from bg " + String.valueOf(senderID.intValue));
                             handleOpLogMsg(senderID.intValue, new ClientSendOpLogMsg(msgBuf));
                             break;
                         default:

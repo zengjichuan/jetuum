@@ -141,12 +141,12 @@ class workThreadMain implements Runnable {
         for (int iteration = 0; iteration < threadContext.numIterations; iteration++) {
             // Test 1: read and verify my cell is valid
             for (ClientTable table : tables){
-                ClientRow row0 = table.get(0);
-                double val = row0.getRowData().get(threadId);
+                DenseRow row0 = (DenseRow)table.get(0);
+                double val = row0.get(threadId);
                 checkArgument(val == iteration + threadContext.resumeClock);
 
-                ClientRow row1 = table.get(threadId);
-                val = row1.getRowData().get(threadId);
+                DenseRow row1 = (DenseRow)table.get(threadId);
+                val = row1.get(threadId);
                 checkArgument(val == iteration + threadContext.resumeClock);
             }
             // Update my cell

@@ -83,7 +83,7 @@ public class SSPRowRequestOpLogMgr implements RowRequestOpLogMgr {
             if (request.clock <= clock){
                 //remove the request
                 int requestVersion = request.version;
-                appThreadIds.add(request.version);
+                appThreadIds.add(request.appThreadId);
                 requestLst.remove(0);
                 // decrement the version count
                 versionRequestCntMap.decrementAndGet(requestVersion);

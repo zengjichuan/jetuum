@@ -87,8 +87,8 @@ public class ClientTable {
 	 * 
 	 * @param rowId
 	 */
-	public ClientRow get(int rowId){
-        return consistencyController.get(rowId, true);
+	public Row get(int rowId){
+        return consistencyController.get(rowId, true).getRowData();
     }
 
     public ClientRow getLocally(int rowId){

@@ -50,6 +50,7 @@ public class SSPConsistencyController extends ConsistencyController {
         this.threadCache = threadCache;
         this.sampleRow = sampleRow;
         this.sampleRow.init(info.rowCapacity);
+        this.tableId = tableId;
         this.opLog = new TableOpLog(tableId, sampleRow);
         this.opLogIndex = new TableOpLogIndex();
         this.processStorage = CacheBuilder.newBuilder().
@@ -172,6 +173,11 @@ public class SSPConsistencyController extends ConsistencyController {
         do {
             BgWorkers.requestRow(tableId, rowId, stalestClock);
             clientRow = processStorage.getIfPresent(rowId);
+            try {
+                Thread.sleep(0, 500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }while(clientRow == null);
         Preconditions.checkArgument(clientRow.getClock() >= stalestClock);
         threadCache.insertRow(rowId, clientRow.getRowData());

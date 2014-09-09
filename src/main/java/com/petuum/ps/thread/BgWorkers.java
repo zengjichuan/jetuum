@@ -277,7 +277,8 @@ public class BgWorkers {
         int bgId = GlobalContext.getBgPartitionNum(rowId) + idStart;
         commBus.sendInproc(bgId, requestRowMsg.getByteBuffer());
         IntBox sendId = new IntBox();
-        int msgType = new NumberedMsg(commBus.recvInproc(sendId)).getMsgType();
+        ByteBuffer buffer = (ByteBuffer)commBus.recvInproc(sendId);
+        int msgType = new NumberedMsg(buffer).getMsgType();
         Preconditions.checkArgument(msgType == NumberedMsg.K_ROW_REQUEST_REPLY);
         return  true;
     }
@@ -726,7 +727,6 @@ public class BgWorkers {
                 }
             }
 
-            TableRowIndex requestKey = new TableRowIndex(tableId, rowId);
             RowRequestInfo rowRequest = new RowRequestInfo();
             rowRequest.appThreadId = appThreadId;
             rowRequest.clock = rowRequestMsg.getClock();

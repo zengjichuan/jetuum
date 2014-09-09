@@ -122,7 +122,7 @@ public class MatrixFact {
                         System.out.println("Iteration " + String.valueOf(iter + 1) + "/" + String.valueOf(numIterations));
                     }
                     //clear loss function table
-                    DenseRow lossRow = (DenseRow)tableLoss.threadGet(0);
+                    DenseRow lossRow = (DenseRow)tableLoss.get(0);
                     tableLoss.inc(0, globalWorkerId, - lossRow.get(globalWorkerId));
                     // Divide matrix elements across workers, and perform SGD
                     double stepSize = initStepSize * Math.pow(stepSizeOffset + iter, - stepSizePow);
