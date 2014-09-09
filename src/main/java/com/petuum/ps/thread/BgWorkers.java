@@ -361,10 +361,9 @@ public class BgWorkers {
             OpLogSerializer opLogSerializer = new OpLogSerializer();
             serverOpLogMsgSizeMap.put(serverId, opLogSerializer.init(entryServer.getValue()));
             serverOpLogMsgMap.put(serverId, new ClientSendOpLogMsg(serverOpLogMsgSizeMap.get(serverId)));
-
-            opLogSerializer.assignMem(serverOpLogMsgMap.get(serverId).getData());
-            //get the basic start buffer
             ByteBuffer mem = serverOpLogMsgMap.get(serverId).getData();
+            opLogSerializer.assignMem(mem);
+            //get the basic start buffer
 
             for (Map.Entry<Integer, ClientTable> entryTable : tables.entrySet()){
                 int tableId = entryTable.getKey();

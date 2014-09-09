@@ -158,7 +158,7 @@ public class Server {
 
         ServerTable serverTable = null;
         if(updates != null){
-            serverTable = tables.get(tableId);
+            serverTable = tables.get(tableId.intValue);
         }
         while (updates != null){
             boolean found = serverTable.applyRowOpLog(rowId.intValue, updates);
@@ -170,7 +170,7 @@ public class Server {
             updates = opLogReader.next(tableId, rowId, startedNewTable);
             if (updates == null)    break;
             if(startedNewTable.boolValue == true){
-                serverTable = tables.get(tableId);
+                serverTable = tables.get(tableId.intValue);
             }
         }
         log.info("Read and Apply Update Done");

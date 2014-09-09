@@ -36,9 +36,7 @@ public class SerializedOpLogReader {
     }
 
     public boolean restart(){
-        offset = 0;
-        numTableLeft = serializedOpLogBuf.getInt(offset);
-        offset += Integer.BYTES;
+        numTableLeft = serializedOpLogBuf.getInt();
         log.info("SerializedOpLogReader Restart(), num_tables_left = " + numTableLeft);
         if(numTableLeft == 0)
             return false;
@@ -56,15 +54,12 @@ public class SerializedOpLogReader {
             // can read from current row
             if(numRowsLeftInCurrentTable > 0){
                 tableId.intValue = currentTableId;
-                rowId.intValue = serializedOpLogBuf.getInt(offset);
-                offset += Integer.BYTES;
-                updateSize = serializedOpLogBuf.getInt(offset);
-                offset += Integer.BYTES;
+                rowId.intValue = serializedOpLogBuf.getInt();
+                updateSize = serializedOpLogBuf.getInt();
                 byte[] rowOpLogBytes = new byte[updateSize];
-                serializedOpLogBuf.get(rowOpLogBytes, offset, updateSize);
+                serializedOpLogBuf.get(rowOpLogBytes, 0, updateSize);
                 updates = (HashMap<Integer, Double>) SerializationUtils.deserialize(rowOpLogBytes);
                 numRowsLeftInCurrentTable--;
-                offset += updateSize;
                 return updates;
             }else{
                 numTableLeft --;
@@ -78,13 +73,9 @@ public class SerializedOpLogReader {
         }
     }
     private void startNewTable() {
-        currentTableId = serializedOpLogBuf.getInt(offset);
-        offset += Integer.BYTES;
-        updateSize = serializedOpLogBuf.getInt(offset);
-        offset += Integer.BYTES;
-
-        numRowsLeftInCurrentTable = serializedOpLogBuf.getInt(offset);
-        offset += Integer.BYTES;
+        currentTableId = serializedOpLogBuf.getInt();
+        updateSize = serializedOpLogBuf.getInt();
+        numRowsLeftInCurrentTable = serializedOpLogBuf.getInt();
         log.info("current_table_id = " + currentTableId + " update_size = "+ updateSize +
                 " rows_left_in_current_table_ = "+numRowsLeftInCurrentTable);
     }

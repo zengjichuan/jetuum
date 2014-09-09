@@ -62,10 +62,8 @@ public class ClientSendOpLogMsg extends ArbitrarySizedMsg {
     }
     public ByteBuffer getData() {
         //byte[] byteList = sequence.array();
-
-        //return ByteBuffer.wrap(byteList, getHeaderSize(), byteList.length - getHeaderSize());
-
-        byte [] bytes = Arrays.copyOfRange(sequence.array(), getHeaderSize(), sequence.capacity());
-        return ByteBuffer.wrap(bytes);
+        //return B(byteList, getHeaderSize(), byteList.length - getHeaderSize());
+        sequence.position(getHeaderSize());
+        return sequence.slice();
     }
 }
