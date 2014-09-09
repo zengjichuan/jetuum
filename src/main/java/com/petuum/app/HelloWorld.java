@@ -122,6 +122,7 @@ class workThreadMain implements Runnable {
         try {
             int threadId = PSTableGroup.registerThread();
             log.info("Thread has registered, thread_id = " + threadId);
+            PSTableGroup.globalBarrier();
             stalenessTest(threadContext, threadId);
             PSTableGroup.deregisterThread();
         } catch (BrokenBarrierException e) {

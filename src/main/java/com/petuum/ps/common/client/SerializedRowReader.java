@@ -43,7 +43,7 @@ public class SerializedRowReader {
     public boolean restart(){
         offset = 0;
         currentTableId = mem.getInt(offset);
-        offset += Integer.SIZE;
+        offset += Integer.BYTES;
         if(currentTableId == GlobalContext.getSerializedTableEnd()){
             return false;
         }
@@ -63,19 +63,19 @@ public class SerializedRowReader {
      * @return
      */
     public ByteBuffer next(IntBox tableId, IntBox rowId){
-        if(offset + Integer.SIZE > memSize)
+        if(offset + Integer.BYTES > memSize)
             return null;
         rowId.intValue = mem.getInt(offset);
-        offset += Integer.SIZE;
+        offset += Integer.BYTES;
         do{
             if(rowId.intValue == GlobalContext.getSerializedTableSeparator()){
-                if(offset + Integer.SIZE > memSize)
+                if(offset + Integer.BYTES > memSize)
                     return null;
                 currentTableId = mem.getInt(offset);
-                if(offset + Integer.SIZE > memSize)
+                if(offset + Integer.BYTES > memSize)
                     return null;
                 rowId.intValue = mem.getInt(offset);
-                offset += Integer.SIZE;
+                offset += Integer.BYTES;
                 // row_id could be
                 // 1) st_separator: if the table is empty and there there are other
                 // tables following;
@@ -87,7 +87,7 @@ public class SerializedRowReader {
             }else{
                 tableId.intValue = currentTableId;
                 int rowSize = mem.getInt(offset);
-                offset += Integer.SIZE;
+                offset += Integer.BYTES;
                 mem.position(offset).limit(offset + rowSize);
                 ByteBuffer dataMem = mem.slice();
                 mem.clear();                //restore limit

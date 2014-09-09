@@ -38,7 +38,7 @@ public class SerializedOpLogReader {
     public boolean restart(){
         offset = 0;
         numTableLeft = serializedOpLogBuf.getInt(offset);
-        offset += Integer.SIZE;
+        offset += Integer.BYTES;
         log.info("SerializedOpLogReader Restart(), num_tables_left = " + numTableLeft);
         if(numTableLeft == 0)
             return false;
@@ -57,9 +57,9 @@ public class SerializedOpLogReader {
             if(numRowsLeftInCurrentTable > 0){
                 tableId.intValue = currentTableId;
                 rowId.intValue = serializedOpLogBuf.getInt(offset);
-                offset += Integer.SIZE;
+                offset += Integer.BYTES;
                 updateSize = serializedOpLogBuf.getInt(offset);
-                offset += Integer.SIZE;
+                offset += Integer.BYTES;
                 byte[] rowOpLogBytes = new byte[updateSize];
                 serializedOpLogBuf.get(rowOpLogBytes, offset, updateSize);
                 updates = (HashMap<Integer, Double>) SerializationUtils.deserialize(rowOpLogBytes);
@@ -79,12 +79,12 @@ public class SerializedOpLogReader {
     }
     private void startNewTable() {
         currentTableId = serializedOpLogBuf.getInt(offset);
-        offset += Integer.SIZE;
+        offset += Integer.BYTES;
         updateSize = serializedOpLogBuf.getInt(offset);
-        offset += Integer.SIZE;
+        offset += Integer.BYTES;
 
         numRowsLeftInCurrentTable = serializedOpLogBuf.getInt(offset);
-        offset += Integer.SIZE;
+        offset += Integer.BYTES;
         log.info("current_table_id = " + currentTableId + " update_size = "+ updateSize +
                 " rows_left_in_current_table_ = "+numRowsLeftInCurrentTable);
     }

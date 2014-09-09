@@ -37,13 +37,13 @@ public class RecordBuff {
     }
 
     public boolean append(int recordId, Object record, int recordSize) {
-        if(offset + recordSize +Integer.SIZE +Integer.SIZE> memSize){
+        if(offset + recordSize +Integer.BYTES +Integer.BYTES> memSize){
             return false;
         }
         mem.putInt(offset, recordId);
-        offset += Integer.SIZE;
+        offset += Integer.BYTES;
         mem.putInt(offset, recordSize);
-        offset += Integer.SIZE;
+        offset += Integer.BYTES;
         mem.put(SerializationUtils.serialize((java.io.Serializable) record), offset, recordSize);
         offset += recordSize;
         return true;
@@ -54,12 +54,12 @@ public class RecordBuff {
     }
 
     public int getMemPos(){
-        if (offset + Integer.SIZE > memSize){
+        if (offset + Integer.BYTES > memSize){
             log.info("Exceeded! getMemPos() offset = "+ offset + " memSize = "+memSize);
             return -1;
         }
         int retPos = offset;
-        offset += Integer.SIZE;
+        offset += Integer.BYTES;
         return retPos;
     }
 

@@ -367,9 +367,9 @@ public class BgWorkers {
                 //table id
                 mem.putInt(tablePos, tableId);
                 //table update size             Useless!!
-                mem.putInt(tablePos + Integer.SIZE, entryTable.getValue().getSampleRow().getUpdateSize());
+                mem.putInt(tablePos + Integer.BYTES, entryTable.getValue().getSampleRow().getUpdateSize());
                 //offset for table rows
-                mem.position(tablePos + Integer.SIZE + Integer.SIZE);
+                mem.position(tablePos + Integer.BYTES + Integer.BYTES);
                 //slice from the position to the limit(default the end)
                 tableServerMemMap.get(tableId).put(serverId, mem.slice());
 
@@ -406,7 +406,7 @@ public class BgWorkers {
             int tableUpdateSize = entryTable.getValue().getSampleRow().getUpdateSize();
             BgOpLogPartition bgTableOplog = new BgOpLogPartition(tableId, tableUpdateSize);
             for (int serverId : serverIds){
-                tableNumBytesByServer.put(serverId, Integer.SIZE);
+                tableNumBytesByServer.put(serverId, Integer.BYTES);
             }
 
             for (Map.Entry<Integer, Boolean> entryIndex : newTableOpLogIndex.entrySet()){
@@ -432,14 +432,12 @@ public class BgWorkers {
 //                }
                 // update oplog message size
                 int serverId = GlobalContext.getRowPartitionServerId(tableId, rowId);
-                int numUpdate = rowOpLog.getSize();
+                int updateSize = rowOpLog.getSerializedSize();
                 // 1) row id
                 // 2) number of updates in that row
-                // 3) total size for column ids
-                // 4) total size for update array
+                // 3) total size for serialized updates
                 tableNumBytesByServer.put(serverId, tableNumBytesByServer.get(serverId)
-                        + Integer.SIZE + Integer.SIZE + Integer.SIZE * numUpdate
-                        + tableUpdateSize * numUpdate);
+                        + Integer.BYTES + Integer.BYTES + updateSize);
                 bgTableOplog.insertOpLog(rowId, rowOpLog);
             }
             bgOplog.add(tableId, bgTableOplog);
