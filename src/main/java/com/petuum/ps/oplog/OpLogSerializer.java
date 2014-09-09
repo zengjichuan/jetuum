@@ -31,7 +31,7 @@ public class OpLogSerializer {
             // 3) update size
             totalSize += tableSize + Integer.BYTES + Integer.BYTES;
         }
-        return totalSize;
+        return totalSize * 5;
     }
 
     //just putInt(numTables)
