@@ -64,7 +64,7 @@ public class HelloWorld {
 
         PSTableGroup.registerRow(20, DenseRow.class);
 
-        PSTableGroup.init(tableGroupconfig, true);
+        PSTableGroup.init(tableGroupconfig, false);         //true will add the bgThread to clockVec
 
         log.info("Initialized TableGroup");
 

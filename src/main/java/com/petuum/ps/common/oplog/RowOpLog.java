@@ -21,11 +21,14 @@ public class RowOpLog implements Serializable {
     private HashMap<Integer, Double> opLogs;
     private Method initUpdate;
     private Iterator<Map.Entry<Integer, Double>> iter;
-    private byte[] serializedbuf;
+    private byte[] serializedBuf;
+    private int serializedSize;
+    private boolean fresh;
 
     public RowOpLog(Method initUpdate){
         this.initUpdate = initUpdate;
         opLogs = new HashMap<Integer, Double>();
+        fresh = false;
     }
 
     public Double beginIterate(IntBox columnId){
@@ -52,6 +55,7 @@ public class RowOpLog implements Serializable {
                 e.printStackTrace();
             }
             opLogs.put(columnId, update);
+            fresh = false;
             return update;
         }
         return rst;
@@ -69,6 +73,7 @@ public class RowOpLog implements Serializable {
 
     public void insert(int columnId,Double update){
         opLogs.put(columnId, update);
+        fresh = false;
     }
 
     public HashMap<Integer, Double> getMap() {
@@ -76,13 +81,20 @@ public class RowOpLog implements Serializable {
     }
 
     public int getSerializedSize() {
-        serializedbuf = SerializationUtils.serialize(opLogs);
-        return serializedbuf.length;
+        if(fresh == false) {
+            serializedBuf = SerializationUtils.serialize(opLogs);
+            serializedSize = serializedBuf.length;
+            fresh = true;
+        }
+        return serializedSize;
     }
 
-    public byte[] serialized(){
-        if (serializedbuf == null);
-            serializedbuf = SerializationUtils.serialize(opLogs);
-        return serializedbuf;
+    public byte[] serialized() {
+        if (fresh == false){
+            serializedBuf = SerializationUtils.serialize(opLogs);
+            serializedSize = serializedBuf.length;
+            fresh = true;
+        }
+        return serializedBuf;
     }
 }
