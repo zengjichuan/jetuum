@@ -88,7 +88,7 @@ public class TableGroup {
 	public void clock(){
         ThreadContext.clock();
         try {
-            clockInternal.invoke(TableGroup.class, new Object[]{});
+            clockInternal.invoke(TableGroup.this);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         } catch (InvocationTargetException e) {
