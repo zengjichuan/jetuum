@@ -141,7 +141,7 @@ public class MatrixFact {
                         }
                         System.out.println("loss function = " + String.valueOf(loss));
                     }
-
+                    PSTableGroup.clock();
                 }
                 // Let stale values finish propagating (performs staleness+1 clock()s)
                 PSTableGroup.globalBarrier();

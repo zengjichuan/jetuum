@@ -29,6 +29,7 @@ public class ThreadTable {
             opLogIndex.add(new HashSet<Integer>());
         }
         rowStorage = new HashMap<Integer, Row>();
+        opLogMap = new HashMap<Integer, RowOpLog>();
 	}
 
 	public void finalize() throws Throwable {
