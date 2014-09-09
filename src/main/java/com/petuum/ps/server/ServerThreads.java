@@ -103,16 +103,16 @@ public class ServerThreads {
 
                 }
 
-            } catch (InterruptedException e) {
-                log.error(e.getMessage());
-            } catch (BrokenBarrierException e) {
-                log.error(e.getMessage());
-            } catch (IllegalAccessException e) {
-                log.error(e.getMessage());
-            } catch (InvocationTargetException e) {
-                log.error(e.getMessage());
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
+        }
+    }
+
+    public static void shutdown() throws InterruptedException {
+        for(int i = 0; i < GlobalContext.getNumLocalServerThreads(); i++) {
+            threads.get(i).join();
         }
     }
 
@@ -167,7 +167,7 @@ public class ServerThreads {
 
     public static void SSPPushServerPushRow() throws NoSuchMethodException {
 
-        serverContext.get().serverObj.createSendServerPushRowMsgs(ServerThreads.class.getMethod("sendServerPushRowMsg"));
+        serverContext.get().serverObj.createSendServerPushRowMsgs(ServerThreads.class.getMethod("sendServerPushRowMsg", int.class, ServerPushRowMsg.class, boolean.class));
 
     }
 
@@ -380,7 +380,7 @@ public class ServerThreads {
             }
         }
     }
-    private static void sendServerPushRowMsg(int bgId, ServerPushRowMsg msg, boolean lastMsg) throws InvocationTargetException, IllegalAccessException {
+    public static void sendServerPushRowMsg(int bgId, ServerPushRowMsg msg, boolean lastMsg) throws InvocationTargetException, IllegalAccessException {
 
         msg.setVersion(serverContext.get().serverObj.getBgVersion(bgId));
 

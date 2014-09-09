@@ -20,7 +20,8 @@ public class PSTableGroup {
         return initThreadID.intValue;
     }
 
-    public static void shutDown() {
+    public static void shutDown() throws InterruptedException {
+        tableGroup.shutDown();
         tableGroup = null;
     }
 
@@ -44,7 +45,7 @@ public class PSTableGroup {
         return tableGroup.registerThread();
     }
 
-    public static void deregisterThread() {
+    public static void deregisterThread() throws InterruptedException {
         tableGroup.deregisterThread();
     }
 

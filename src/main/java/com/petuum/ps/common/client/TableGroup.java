@@ -142,8 +142,9 @@ public class TableGroup {
 
 	}
 
-	public void deregisterThread(){
-
+	public void deregisterThread() throws InterruptedException {
+        BgWorkers.threadDeregister();
+        GlobalContext.commBus.threadDeregister();
 	}
 
 	/**
@@ -189,4 +190,14 @@ public class TableGroup {
 
 	}
 
+    public void shutDown() throws InterruptedException {
+        BgWorkers.threadDeregister();
+        ServerThreads.shutdown();
+        if(GlobalContext.getClientId() == GlobalContext.getNameNodeClientId()) {
+            NameNodeThread.shutDown();
+        }
+        BgWorkers.shutDown();
+        GlobalContext.commBus.threadDeregister();
+        GlobalContext.commBus.close();
+    }
 }

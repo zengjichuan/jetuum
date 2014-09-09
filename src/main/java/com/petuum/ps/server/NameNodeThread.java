@@ -188,7 +188,7 @@ public class NameNodeThread {
         int numShutDownBgs = ++(nameNodeContext.get().numShutdownBgs);
         if(numShutDownBgs == GlobalContext.getNumTotalBgThreads()) {
             for(int i = 0; i < GlobalContext.getNumTotalBgThreads(); i++) {
-                commBusSendAny.invoke(commbus, nameNodeContext.get().bgThreadIDs[i], new ServerShutDownAckMsg(null));
+                commBusSendAny.invoke(commbus, nameNodeContext.get().bgThreadIDs[i], new ServerShutDownAckMsg(null).getByteBuffer());
             }
             return true;
         }

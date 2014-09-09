@@ -31,6 +31,12 @@ import java.util.concurrent.locks.ReentrantLock;
 * Created by zjc on 2014/8/14.
 */
 public class BgWorkers {
+    public static void shutDown() throws InterruptedException {
+        for(int i = 0; i < GlobalContext.getNumBgThreads(); i++) {
+            threads.get(i).join();
+        }
+    }
+
     private static class BgContext {
 
 
@@ -136,6 +142,11 @@ public class BgWorkers {
         ByteBuffer buffer = commBus.recvInproc(senderId);
         assert new NumberedMsg(buffer).getMsgType() == NumberedMsg.K_CREATE_TABLE_REPLY;
         return true;
+    }
+
+    public static void threadDeregister() {
+        AppThreadDeregMsg msg = new AppThreadDeregMsg(null);
+        sendToAllLocalBgThreads(msg);
     }
 
     public static ClientRow createClientRow(int clock, Row rowData) {
@@ -335,6 +346,7 @@ public class BgWorkers {
 
         bgContext.get().rowRequestOpLogMgr.
                 addOpLog(bgContext.get().version, bgOpLog);
+        bgContext.get().version++;
         bgContext.get().rowRequestOpLogMgr.informVersionInc();
 
     }

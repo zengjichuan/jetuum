@@ -145,6 +145,7 @@ public class MatrixFact {
                 }
                 // Let stale values finish propagating (performs staleness+1 clock()s)
                 PSTableGroup.globalBarrier();
+                PSTableGroup.deregisterThread();
 
             } catch (BrokenBarrierException e) {
                 e.printStackTrace();
@@ -152,8 +153,6 @@ public class MatrixFact {
                 e.printStackTrace();
             } catch (Exception e) {
                 e.printStackTrace();
-            } finally {
-                PSTableGroup.deregisterThread();
             }
         }
         private int localThreadId;
