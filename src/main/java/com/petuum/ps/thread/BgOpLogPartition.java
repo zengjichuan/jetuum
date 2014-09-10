@@ -1,15 +1,10 @@
 package com.petuum.ps.thread;
 
 import com.petuum.ps.common.oplog.RowOpLog;
-import com.petuum.ps.common.util.IntBox;
-import com.sun.org.apache.xml.internal.serializer.SerializationHandler;
-import org.apache.commons.lang3.SerializationUtils;
 
-import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by zjc on 2014/8/14.

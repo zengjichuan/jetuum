@@ -10,7 +10,6 @@ import com.petuum.ps.server.ServerThreads;
 import com.petuum.ps.thread.BgWorkers;
 import com.petuum.ps.thread.GlobalContext;
 import com.petuum.ps.thread.ThreadContext;
-import com.sun.deploy.util.SessionState;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

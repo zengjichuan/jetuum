@@ -3,7 +3,6 @@ package com.petuum.ps.common;
 import com.petuum.ps.common.client.ClientTable;
 import com.petuum.ps.common.client.TableGroup;
 import com.petuum.ps.common.util.IntBox;
-import com.petuum.ps.common.storage.DenseRow;
 import com.petuum.ps.common.util.ClassRegistry;
 
 import java.util.concurrent.BrokenBarrierException;
