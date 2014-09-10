@@ -26,6 +26,11 @@ public class CommBus {
     private int eEnd;
     private ThreadLocal<ThreadCommInfo> threadInfo = new ThreadLocal<ThreadCommInfo>();
 
+
+    public void close() {
+        zmqContext.destroy();
+    }
+
     public static class Config{
         /**
          *  My thread id.

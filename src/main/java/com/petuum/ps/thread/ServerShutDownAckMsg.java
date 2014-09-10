@@ -11,6 +11,8 @@ import java.nio.ByteBuffer;
 public class ServerShutDownAckMsg extends NumberedMsg {
     public ServerShutDownAckMsg(ByteBuffer msgBuf) {
         super(msgBuf);
+        if(msgBuf == null)
+            sequence = ByteBuffer.allocate(getSize());
         sequence.putInt(MSG_TYPE_OFFSET, K_SERVER_SHUT_DOWN_ACK);
     }
 }
